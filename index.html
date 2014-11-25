@@ -1,7 +1,29 @@
 <html>
   <head>
     <title>The UNIX PC Emulator.</title>
+    <style>
+      .term {
+        font-family: courier.fixed,swiss,monospace,sans-serif;
+        font-size: 8px;
+        color: #00BCFF;
+        background: #F5F5F5;
+      }
+      .anti {
+        color: #000;
+        background: #000;
+      }
+      #font ¨{
+        font-size: 12px;
+      }
+    </style>
   </head>
-  <body>
+  <body onload="load_emulation()">
+    <table border="0">
+      <tr valign="top"><td>
+        <script type="text/javascript" src="js/intel_cpu.js"></script>
+        <script type="text/javascript" src="js/jsunix.js"></script>
+        <script type="text/javascript" src="js/term_preprocesator.js"></script>
+        <script type="text/javascript" src="js/trans_clipboard.js"></script>
+    </table>
   </body>
 </html>
