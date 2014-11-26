@@ -110,7 +110,7 @@ function  start_emulation()
   /*Set the Linux Kernel command line*/
   
   cmdline_addr = 0xf800;
-  pc.cpu.write_string(cmdline_addr, console=ttyS0 root=/dev/ram0 ro init=/sbin/stadistic");
+  pc.cpu.write_string(cmdline_addr,"console=ttyS0 root=/dev/ram0 ro init=/sbin/stadistic");
   
   pc.cpu.eip = 0x10000;
   pc.cpu.regs[0] = params.mem_size;
