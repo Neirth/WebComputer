@@ -1,1 +1,17 @@
 /* The terminal Styles */
+body {
+  background: #F5F5F5;
+}
+.term {
+  font-family: courier.fixed,swiss,monospace,sans-serif;
+  font-size: 8px;
+  color: #00BCFF;
+  background: #F5F5F5;
+}
+.anti {
+  color: #000;
+  background: #000;
+}
+#font ¨{
+  font-size: 12px;
+}
