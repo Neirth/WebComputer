@@ -67,7 +67,7 @@ function loadbinary(url,slot)
 };
 
 function checkbinaries() {
-  console.log("checkbinaries: ",(binaries[0]!=false),(binaries[1]!=false),(binaries[2]!=false);
+  console.log("checkbinaries: ",(binaries[0]!=false),(binaries[1]!=false),(binaries[2]!=false));
   if( ,(binaries[0]!=false) && (binaries[1]!=false) && (binaries[2]!=false)){
       console.log("The binaries done loading, calling start_emulation()");
       start_emulation();
