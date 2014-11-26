@@ -101,11 +101,11 @@ function  start_emulation()
   
   pc = new PCEmulator(params);
   
-  pc.load_binary(binaries0], 0x00100000);
+  pc.load_binary(binaries[0], 0x00100000);
   
   initrd_size = pc.load_binary(binaries[1], 0x00400000);
   
-  pc.load_binary(binaries[1], 0x10000);
+  pc.load_binary(binaries[2], 0x10000);
   
   /*Set the Linux Kernel command line*/
   
