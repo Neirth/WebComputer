@@ -7,7 +7,7 @@ var term, pc;
 
 function term_start()
 {
-  term = new Term(800, 600, term_handler);
+  term = new Term(80, 60, term_handler);
   
   term.open();
 }
