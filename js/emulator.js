@@ -8,7 +8,7 @@ var term, pc, boot_start_time, init_state;
 
 function term_start()
 {
-    term = new Term(80, 20, term_handler);
+    term = new Term(80, 25, term_handler);
 
     term.open();
 }
