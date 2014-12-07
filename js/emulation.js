@@ -42,10 +42,6 @@ function loadbinary(url,slot)
       typed_arrays_exist = false;
     }
     
-    req.onerror = function(e) {
-      throw "Error while loading" + req.statusText;
-    };
-    
     req.onload = function (e) {
       console.log('load binary')
       if (req.readyState === 4) {
