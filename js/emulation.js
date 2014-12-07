@@ -22,20 +22,78 @@ function get_boot_system_time()
 {
     return (+new Date()) - boot_start_time;
 }
+var binaries = [false,false,false];
+
+function loadbinary(url,slot)
+{
+  var req, binary_array, len, typed_arrays_exist;
+  
+  req = new XMLHttpRequest();
+  
+  req.open('GET', url, true);
+  
+  typed_arrays_exist = ('ArrayBuffer' in window && 'Uint8Array' in window);
+  if (typed_arrays_exist && 'mozResponseType' in req){
+      reg.responseType = 'arraybuffer';
+    } else if (typed_arrays_exist && 'responseType' in req) {
+      req.responseType = ' arraybuffer';
+    } else {
+      req.overrideMimeType('text/plain; charset=x-user-defined');
+      typed_arrays_exist = false;
+    }
+    
+    req.onerror = function(e) {
+      throw "Error while loading" + req.statusText;
+    };
+    
+    req.onload = function (e) {
+      console.log('load binary')
+      if (req.readyState === 4) {
+        if (req.status === 200) {
+          if (typed_arrays_exist && 'mozResponse' in req) {
+              binaries[slot] = req.mozResponse;
+            } else if (typed_arrays_exist && req.mozResponseArrayBuffer) {
+              binaries[slot] = req.mozResponseArrayBuffer;
+            } else if ('responseType' in req) {
+              binaries[slot] = req.responseText;
+            }
+            
+          } else {
+            throw"Error while loading" + url;
+          }
+        }
+      }
+      req.send(null);
+};
+
+function checkbinaries() {
+  console.log("checkbinaries: ",(binaries[0]!=false),(binaries[1]!=false),(binaries[2]!=false));
+  if((binaries[0]!=false) && (binaries[1]!=false) && (binaries[2]!=false)){
+      console.log("The binaries done loading, calling start_emulation()");
+      start_emulation();
+    } else { 
+      setTimeout(checkbinaries, 500);
+    }
+};
 
 /* Load System Disk */
-function start_emulation()
+function load_binaries()
 {
-    pc = new PCEmulator()
+    console.log('Loading binaries..')
+    pc = new PCEmulator(params)
 
-    pc.load_binary("disk/vmkernel.bin",   0x00100000, callsystem);
-    pc.load_binary("disk/boot-start.bin", 0x10000,    callsystem);
-    pc.load_binary("disk/disk.bin",       0x00400000, callsystem);
+    loadbinary("disk/vmkernel.bin",   0x00100000, 1);
+    loadbinary("disk/boot-start.bin", 0x10000,    2);
+    loadbinary("disk/disk.bin",       0x00400000, 3);
+
+    cheackbinaries()
 }
 
-function callsystem(ret)
+function start_emulation(ret)
 {
     var cmdline_addr;
+    
+    params= new Object();
 
     /* memory size (in bytes) */
     params.mem_size = 16 * 1024 * 1024;
