@@ -1,100 +1,336 @@
 /* Intel MMX Procesator
- * Created by @fabricebellard
+ * Created by @levskaya
  * Model: INTELMMX_01
  */
-"use strict";
-var aa = [1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1];
-var ba = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-var ca = [0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4];
+/* Parity Check by LUT:
+   static const bool ParityTable256[256] = {
+   #   define P2(n) n, n^1, n^1, n
+   #   define P4(n) P2(n), P2(n^1), P2(n^1), P2(n)
+   #   define P6(n) P4(n), P4(n^1), P4(n^1), P4(n)
+   P6(0), P6(1), P6(1), P6(0) };
+   unsigned char b;  // byte value to compute the parity of
+   bool parity = ParityTable256[b];
+   // OR, for 32-bit words:    unsigned int v; v ^= v >> 16; v ^= v >> 8; bool parity = ParityTable256[v & 0xff];
+   // Variation:               unsigned char * p = (unsigned char *) &v; parity = ParityTable256[p[0] ^ p[1] ^ p[2] ^ p[3]];
+*/
+var parity_LUT = [1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1];
+
+var shift16_LUT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+var shift8_LUT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4];
+
 function CPU_X86() {
-    var i, da;
-    this.regs = new Array();
-    for (i = 0; i < 8; i++)
+    var i, tlb_size;
+    /*
+      AX/EAX/RAX: Accumulator
+      BX/EBX/RBX: Base index (for use with arrays)
+      CX/ECX/RCX: Counter
+      DX/EDX/RDX: Data/general
+      SI/ESI/RSI: Source index for string operations.
+      DI/EDI/RDI: Destination index for string operations.
+      SP/ESP/RSP: Stack pointer for top address of the stack.
+      BP/EBP/RBP: Stack base pointer for holding the address of the current stack frame.
+    */
+    this.regs = new Array(); // EAX, EBX, ECX, EDX, ESI, EDI, ESP, EBP  32bit registers
+    for (i = 0; i < 8; i++) {
         this.regs[i] = 0;
-    this.eip = 0;
-    this.cc_op = 0;
-    this.cc_dst = 0;
-    this.cc_src = 0;
-    this.cc_op2 = 0;
-    this.cc_dst2 = 0;
-    this.df = 1;
-    this.eflags = 0x2;
-    this.cycle_count = 0;
-    this.hard_irq = 0;
-    this.hard_intno = -1;
-    this.cpl = 0;
-    this.cr0 = (1 << 0);
-    this.cr2 = 0;
-    this.cr3 = 0;
-    this.cr4 = 0;
-    this.idt = {base: 0,limit: 0};
-    this.gdt = {base: 0,limit: 0};
-    this.segs = new Array();
-    for (i = 0; i < 7; i++) {
-        this.segs[i] = {selector: 0,base: 0,limit: 0,flags: 0};
     }
-    this.segs[2].flags = (1 << 22);
-    this.segs[1].flags = (1 << 22);
-    this.tr = {selector: 0,base: 0,limit: 0,flags: 0};
-    this.ldt = {selector: 0,base: 0,limit: 0,flags: 0};
+
+    /* IP/EIP/RIP: Instruction pointer. Holds the program counter, the current instruction address. */
+    this.eip         = 0; //instruction pointer
+
+    this.cc_op       = 0; // current op
+    this.cc_dst      = 0; // current dest
+    this.cc_src      = 0; // current src
+    this.cc_op2      = 0; // current op, byte2
+    this.cc_dst2     = 0; // current dest, byte2
+
+    this.df          = 1; // Direction Flag
+
+    /*
+      0.    CF : Carry Flag. Set if the last arithmetic operation carried (addition) or borrowed (subtraction) a
+                 bit beyond the size of the register. This is then checked when the operation is followed with
+                 an add-with-carry or subtract-with-borrow to deal with values too large for just one register to contain.
+      2.    PF : Parity Flag. Set if the number of set bits in the least significant byte is a multiple of 2.
+      4.    AF : Adjust Flag. Carry of Binary Code Decimal (BCD) numbers arithmetic operations.
+      6.    ZF : Zero Flag. Set if the result of an operation is Zero (0).
+      7.    SF : Sign Flag. Set if the result of an operation is negative.
+      8.    TF : Trap Flag. Set if step by step debugging.
+      9.    IF : Interruption Flag. Set if interrupts are enabled.
+      10.   DF : Direction Flag. Stream direction. If set, string operations will decrement their pointer rather
+                 than incrementing it, reading memory backwards.
+      11.   OF : Overflow Flag. Set if signed arithmetic operations result in a value too large for the register to contain.
+      12-13. IOPL : I/O Privilege Level field (2 bits). I/O Privilege Level of the current process.
+      14.   NT : Nested Task flag. Controls chaining of interrupts. Set if the current process is linked to the next process.
+      16.   RF : Resume Flag. Response to debug exceptions.
+      17.   VM : Virtual-8086 Mode. Set if in 8086 compatibility mode.
+      18.   AC : Alignment Check. Set if alignment checking of memory references is done.
+      19.   VIF : Virtual Interrupt Flag. Virtual image of IF.
+      20.   VIP : Virtual Interrupt Pending flag. Set if an interrupt is pending.
+      21.   ID : Identification Flag. Support for CPUID instruction if can be set.
+    */
+    this.eflags      = 0x2; // EFLAG register
+
+    this.cycle_count = 0;
+    this.hard_irq    = 0;
+    this.hard_intno  = -1;
+    this.cpl         = 0; //current privilege level
+
+    /*
+       Control Registers
+       ==========================================================================================
+    */
+    /* CR0
+       ---
+       31    PG  Paging             If 1, enable paging and use the CR3 register, else disable paging
+       30    CD  Cache disable      Globally enables/disable the memory cache
+       29    NW  Not-write through  Globally enables/disable write-back caching
+       18    AM  Alignment mask     Alignment check enabled if AM set, AC flag (in EFLAGS register) set, and privilege level is 3
+       16    WP  Write protect      Determines whether the CPU can write to pages marked read-only
+       5     NE  Numeric error      Enable internal x87 floating point error reporting when set, else enables PC style x87 error detection
+       4     ET  Extension type     On the 386, it allowed to specify whether the external math coprocessor was an 80287 or 80387
+       3     TS  Task switched      Allows saving x87 task context only after x87 instruction used after task switch
+       2     EM  Emulation          If set, no x87 floating point unit present, if clear, x87 FPU present
+       1     MP  Monitor co-processor   Controls interaction of WAIT/FWAIT instructions with TS flag in CR0
+       0     PE  Protected Mode Enable  If 1, system is in protected mode, else system is in real mode
+    */
+    this.cr0 = (1 << 0); //PE-mode ON
+
+    /* CR2
+       ---
+       Page Fault Linear Address (PFLA) When a page fault occurs,
+       the address the program attempted to access is stored in the
+       CR2 register. */
+    this.cr2 = 0;
+
+    /* CR3
+       ---
+       Used when virtual addressing is enabled, hence when the PG
+       bit is set in CR0.  CR3 enables the processor to translate
+       virtual addresses into physical addresses by locating the page
+       directory and page tables for the current task.
+
+       Typically, the upper 20 bits of CR3 become the page directory
+       base register (PDBR), which stores the physical address of the
+       first page directory entry.  */
+    this.cr3 = 0;
+
+    /* CR4
+       ---
+       Used in protected mode to control operations such as virtual-8086 support, enabling I/O breakpoints,
+       page size extension and machine check exceptions.
+       Bit  Name    Full Name   Description
+       18   OSXSAVE XSAVE and Processor Extended States Enable
+       17   PCIDE   PCID Enable If set, enables process-context identifiers (PCIDs).
+       14   SMXE    SMX Enable
+       13   VMXE    VMX Enable
+       10   OSXMMEXCPT  Operating System Support for Unmasked SIMD Floating-Point Exceptions    If set, enables unmasked SSE exceptions.
+       9    OSFXSR  Operating system support for FXSAVE and FXSTOR instructions If set, enables SSE instructions and fast FPU save & restore
+       8    PCE Performance-Monitoring Counter enable
+              If set, RDPMC can be executed at any privilege level, else RDPMC can only be used in ring 0.
+       7    PGE Page Global Enabled If set, address translations (PDE or PTE records) may be shared between address spaces.
+       6    MCE Machine Check Exception If set, enables machine check interrupts to occur.
+       5    PAE Physical Address Extension
+              If set, changes page table layout to translate 32-bit virtual addresses into extended 36-bit physical addresses.
+       4    PSE Page Size Extensions    If unset, page size is 4 KB, else page size is increased to 4 MB (ignored with PAE set).
+       3    DE  Debugging Extensions
+       2    TSD Time Stamp Disable
+              If set, RDTSC instruction can only be executed when in ring 0, otherwise RDTSC can be used at any privilege level.
+       1    PVI Protected-mode Virtual Interrupts   If set, enables support for the virtual interrupt flag (VIF) in protected mode.
+       0    VME Virtual 8086 Mode Extensions    If set, enables support for the virtual interrupt flag (VIF) in virtual-8086 mode.
+     */
+    this.cr4 = 0;
+
+    /*
+      Segment registers:
+      --------------------
+      ES: Extra
+      CS: Code
+      SS: Stack
+      DS: Data
+      FS: Extra
+      GS: Extra
+
+      In memory addressing for Intel x86 computer architectures,
+      segment descriptors are a part of the segmentation unit, used for
+      translating a logical address to a linear address. Segment descriptors
+      describe the memory segment referred to in the logical address.
+
+      The segment descriptor (8 bytes long in 80286) contains the following
+      fields:
+
+      - A segment base address
+      - The segment limit which specifies the segment limit
+      - Access rights byte containing the protection mechanism information
+      - Control bits
+
+    */
+    /* NOTE: Only segs 0->5 appear to be used in the code, so only ES->GS */
+    this.segs = new Array();   //   [" ES", " CS", " SS", " DS", " FS", " GS", "LDT", " TR"]
+    for (i = 0; i < 7; i++) {
+        this.segs[i] = {selector: 0, base: 0, limit: 0, flags: 0};
+    }
+    this.segs[2].flags = (1 << 22); // SS
+    this.segs[1].flags = (1 << 22); // CS
+
+    /* Interrupt Descriptor Table
+       ---------------------------
+       The interrupt descriptor table (IDT) associates each interrupt
+       or exception identifier with a descriptor for the instructions
+       that service the associated event. Like the GDT and LDTs, the
+       IDT is an array of 8-byte descriptors. Unlike the GDT and LDTs,
+       the first entry of the IDT may contain a descriptor.
+
+       To form an index into the IDT, the processor multiplies the
+       interrupt or exception identifier by eight. Because there are
+       only 256 identifiers, the IDT need not contain more than 256
+       descriptors. It can contain fewer than 256 entries; entries are
+       required only for interrupt identifiers that are actually used. */
+    this.idt         = {base: 0, limit: 0};
+
+    // The Global Descriptor Table
+    this.gdt         = {base: 0, limit: 0};
+
+    // The Local Descriptor Table
+    this.ldt = {selector: 0, base: 0, limit: 0, flags: 0};
+
+    /* Task Register
+       --------------
+       The task register (TR) identifies the currently executing task
+       by pointing to the TSS.
+
+       The task register has both a "visible" portion (i.e., can be
+       read and changed by instructions) and an "invisible" portion
+       (maintained by the processor to correspond to the visible
+       portion; cannot be read by any instruction). The selector in
+       the visible portion selects a TSS descriptor in the GDT. The
+       processor uses the invisible portion to cache the base and
+       limit values from the TSS descriptor. Holding the base and
+       limit in a register makes execution of the task more efficient,
+       because the processor does not need to repeatedly fetch these
+       values from memory when it references the TSS of the current
+       task.
+
+       The instructions LTR and STR are used to modify and read the
+       visible portion of the task register. Both instructions take
+       one operand, a 16-bit selector located in memory or in a
+       general register.
+
+       LTR (Load task register) loads the visible portion of the task
+       register with the selector operand, which must select a TSS
+       descriptor in the GDT. LTR also loads the invisible portion
+       with information from the TSS descriptor selected by the
+       operand. LTR is a privileged instruction; it may be executed
+       only when CPL is zero. LTR is generally used during system
+       initialization to give an initial value to the task register;
+       thereafter, the contents of TR are changed by task switch
+       operations.
+
+       STR (Store task register) stores the visible portion of the task
+       register in a general register or memory word. STR is not privileged.
+
+      All the information the processor needs in order to manage a
+      task is stored in a special type of segment, a task state
+      segment (TSS). The fields of a TSS belong to two classes:
+
+	  1. A dynamic set that the processor updates with each switch from the
+	  task. This set includes the fields that store:
+
+      - The general registers (EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI).
+      - The segment registers (ES, CS, SS, DS, FS, GS).
+      - The flags register (EFLAGS).
+      - The instruction pointer (EIP).
+      - The selector of the TSS of the previously executing task (updated only when a return is expected).
+
+      2. A static set that the processor reads but does not change. This
+      set includes the fields that store:
+
+      - The selector of the task's LDT.
+      - The register (PDBR) that contains the base address of the task's
+        page directory (read only when paging is enabled).
+      - Pointers to the stacks for privilege levels 0-2.
+      - The T-bit (debug trap bit) which causes the processor to raise a
+        debug exception when a task switch occurs.
+      - The I/O map base
+    */
+    this.tr  = {selector: 0, base: 0, limit: 0, flags: 0};
+
     this.halted = 0;
-    this.phys_mem = null;
-    da = 0x100000;
-    this.tlb_read_kernel = new Int32Array(da);
-    this.tlb_write_kernel = new Int32Array(da);
-    this.tlb_read_user = new Int32Array(da);
-    this.tlb_write_user = new Int32Array(da);
-    for (i = 0; i < da; i++) {
-        this.tlb_read_kernel[i] = -1;
+
+    this.phys_mem = null;  //pointer to raw memory buffer allocated by browser
+
+    /*
+       A translation lookaside buffer (TLB) is a CPU cache that memory
+       management hardware uses to improve virtual address translation
+       speed.
+
+       A TLB has a fixed number of slots that contain page table
+       entries, which map virtual addresses to physical addresses. The
+       virtual memory is the space seen from a process. This space is
+       segmented in pages of a prefixed size. The page table
+       (generally loaded in memory) keeps track of where the virtual
+       pages are loaded in the physical memory. The TLB is a cache of
+       the page table; that is, only a subset of its content are
+       stored.
+     */
+
+    tlb_size = 0x100000; //2^20=1048576 * 4096 ~= 4GB total memory possible
+    this.tlb_read_kernel  = new Int32Array(tlb_size);
+    this.tlb_write_kernel = new Int32Array(tlb_size);
+    this.tlb_read_user    = new Int32Array(tlb_size);
+    this.tlb_write_user   = new Int32Array(tlb_size);
+    for (i = 0; i < tlb_size; i++) {
+        this.tlb_read_kernel[i]  = -1;
         this.tlb_write_kernel[i] = -1;
-        this.tlb_read_user[i] = -1;
-        this.tlb_write_user[i] = -1;
+        this.tlb_read_user[i]    = -1;
+        this.tlb_write_user[i]   = -1;
     }
     this.tlb_pages = new Int32Array(2048);
     this.tlb_pages_count = 0;
 }
-CPU_X86.prototype.phys_mem_resize = function(ea) {
-    this.mem_size = ea;
-    ea += ((15 + 3) & ~3);
-    this.phys_mem = new ArrayBuffer(ea);
-    this.phys_mem8 = new Uint8Array(this.phys_mem, 0, ea);
-    this.phys_mem16 = new Uint16Array(this.phys_mem, 0, ea / 2);
-    this.phys_mem32 = new Int32Array(this.phys_mem, 0, ea / 4);
+
+/* Allocates a memory chunnk new_mem_size bytes long and makes 8,16,32 bit array references into it */
+CPU_X86.prototype.phys_mem_resize = function(new_mem_size) {
+    this.mem_size = new_mem_size;
+    new_mem_size += ((15 + 3) & ~3);
+    this.phys_mem   = new ArrayBuffer(new_mem_size);
+    this.phys_mem8  = new Uint8Array(this.phys_mem, 0, new_mem_size);
+    this.phys_mem16 = new Uint16Array(this.phys_mem, 0, new_mem_size / 2);
+    this.phys_mem32 = new Int32Array(this.phys_mem, 0, new_mem_size / 4);
 };
-CPU_X86.prototype.ld8_phys = function(fa) {
-    return this.phys_mem8[fa];
-};
-CPU_X86.prototype.st8_phys = function(fa, ga) {
-    this.phys_mem8[fa] = ga;
-};
-CPU_X86.prototype.ld32_phys = function(fa) {
-    return this.phys_mem32[fa >> 2];
-};
-CPU_X86.prototype.st32_phys = function(fa, ga) {
-    this.phys_mem32[fa >> 2] = ga;
-};
-CPU_X86.prototype.tlb_set_page = function(fa, ha, ia, ja) {
-    var i, ga, j;
-    ha &= -4096;
-    fa &= -4096;
-    ga = fa ^ ha;
-    i = fa >>> 12;
+
+/* Raw, low level memory access routines to alter the host-stored memory, these are called by the higher-level
+   memory access emulation routines */
+CPU_X86.prototype.ld8_phys  = function(mem8_loc)    {  return this.phys_mem8[mem8_loc]; };
+CPU_X86.prototype.st8_phys  = function(mem8_loc, x) {         this.phys_mem8[mem8_loc] = x; };
+CPU_X86.prototype.ld32_phys = function(mem8_loc)    {  return this.phys_mem32[mem8_loc >> 2]; };
+CPU_X86.prototype.st32_phys = function(mem8_loc, x) {         this.phys_mem32[mem8_loc >> 2] = x; };
+
+/*
+   TLB Routines
+   ==========================================================================================
+*/
+CPU_X86.prototype.tlb_set_page = function(mem8_loc, page_val, set_write_tlb, set_user_tlb) {
+    var i, x, j;
+    page_val &= -4096; // only top 20bits matter
+    mem8_loc &= -4096; // only top 20bits matter
+    x = mem8_loc ^ page_val; // XOR used to simulate hashing
+    i = mem8_loc >>> 12; // top 20bits point to TLB
     if (this.tlb_read_kernel[i] == -1) {
         if (this.tlb_pages_count >= 2048) {
             this.tlb_flush_all1((i - 1) & 0xfffff);
         }
         this.tlb_pages[this.tlb_pages_count++] = i;
     }
-    this.tlb_read_kernel[i] = ga;
-    if (ia) {
-        this.tlb_write_kernel[i] = ga;
+    this.tlb_read_kernel[i] = x;
+    if (set_write_tlb) {
+        this.tlb_write_kernel[i] = x;
     } else {
         this.tlb_write_kernel[i] = -1;
     }
-    if (ja) {
-        this.tlb_read_user[i] = ga;
-        if (ia) {
-            this.tlb_write_user[i] = ga;
+    if (set_user_tlb) {
+        this.tlb_read_user[i] = x;
+        if (set_write_tlb) {
+            this.tlb_write_user[i] = x;
         } else {
             this.tlb_write_user[i] = -1;
         }
@@ -103,20 +339,22 @@ CPU_X86.prototype.tlb_set_page = function(fa, ha, ia, ja) {
         this.tlb_write_user[i] = -1;
     }
 };
-CPU_X86.prototype.tlb_flush_page = function(fa) {
+
+CPU_X86.prototype.tlb_flush_page = function(mem8_loc) {
     var i;
-    i = fa >>> 12;
+    i = mem8_loc >>> 12;
     this.tlb_read_kernel[i] = -1;
     this.tlb_write_kernel[i] = -1;
     this.tlb_read_user[i] = -1;
     this.tlb_write_user[i] = -1;
 };
+
 CPU_X86.prototype.tlb_flush_all = function() {
-    var i, j, n, ka;
-    ka = this.tlb_pages;
+    var i, j, n, tlb_pages;
+    tlb_pages = this.tlb_pages;
     n = this.tlb_pages_count;
     for (j = 0; j < n; j++) {
-        i = ka[j];
+        i = tlb_pages[j];
         this.tlb_read_kernel[i] = -1;
         this.tlb_write_kernel[i] = -1;
         this.tlb_read_user[i] = -1;
@@ -124,15 +362,16 @@ CPU_X86.prototype.tlb_flush_all = function() {
     }
     this.tlb_pages_count = 0;
 };
+
 CPU_X86.prototype.tlb_flush_all1 = function(la) {
-    var i, j, n, ka, ma;
-    ka = this.tlb_pages;
+    var i, j, n, tlb_pages, new_n;
+    tlb_pages = this.tlb_pages;
     n = this.tlb_pages_count;
-    ma = 0;
+    new_n = 0;
     for (j = 0; j < n; j++) {
-        i = ka[j];
+        i = tlb_pages[j];
         if (i == la) {
-            ka[ma++] = i;
+            tlb_pages[new_n++] = i;
         } else {
             this.tlb_read_kernel[i] = -1;
             this.tlb_write_kernel[i] = -1;
@@ -140,358 +379,420 @@ CPU_X86.prototype.tlb_flush_all1 = function(la) {
             this.tlb_write_user[i] = -1;
         }
     }
-    this.tlb_pages_count = ma;
+    this.tlb_pages_count = new_n;
 };
-CPU_X86.prototype.write_string = function(fa, na) {
+
+
+/*
+   String / Logging Routines
+   ==========================================================================================
+*/
+
+/* writes ASCII string in na into memory location mem8_loc */
+CPU_X86.prototype.write_string = function(mem8_loc, str) {
     var i;
-    for (i = 0; i < na.length; i++) {
-        this.st8_phys(fa++, na.charCodeAt(i) & 0xff);
+    for (i = 0; i < str.length; i++) {
+        this.st8_phys(mem8_loc++, str.charCodeAt(i) & 0xff);
     }
-    this.st8_phys(fa, 0);
+    this.st8_phys(mem8_loc, 0);
 };
-function oa(ga, n) {
+
+/* Represents numeric value ga as n-digit HEX */
+function hex_rep(x, n) {
     var i, s;
     var h = "0123456789ABCDEF";
     s = "";
     for (i = n - 1; i >= 0; i--) {
-        s = s + h[(ga >>> (i * 4)) & 15];
+        s = s + h[(x >>> (i * 4)) & 15];
     }
     return s;
 }
-function pa(n) {
-    return oa(n, 8);
-}
-function qa(n) {
-    return oa(n, 2);
-}
-function ra(n) {
-    return oa(n, 4);
-}
+function _4_bytes_(n) { return hex_rep(n, 8);} // Represents 8-hex bytes of n
+function _2_bytes_(n) { return hex_rep(n, 2);} // Represents 4-hex bytes of n
+function _1_byte_(n) { return hex_rep(n, 4);}  // Represents 2-hex bytes of n
+
 CPU_X86.prototype.dump_short = function() {
-    console.log(" EIP=" + pa(this.eip) + " EAX=" + pa(this.regs[0]) + " ECX=" + pa(this.regs[1]) + " EDX=" + pa(this.regs[2]) + " EBX=" + pa(this.regs[3]));
-    console.log("EFL=" + pa(this.eflags) + " ESP=" + pa(this.regs[4]) + " EBP=" + pa(this.regs[5]) + " ESI=" + pa(this.regs[6]) + " EDI=" + pa(this.regs[7]));
+    console.log(" EIP=" + _4_bytes_(this.eip)    + " EAX=" + _4_bytes_(this.regs[0])
+                + " ECX=" + _4_bytes_(this.regs[1]) + " EDX=" + _4_bytes_(this.regs[2]) + " EBX=" + _4_bytes_(this.regs[3]));
+    console.log(" EFL=" + _4_bytes_(this.eflags) + " ESP=" + _4_bytes_(this.regs[4])
+                + " EBP=" + _4_bytes_(this.regs[5]) + " ESI=" + _4_bytes_(this.regs[6]) + " EDI=" + _4_bytes_(this.regs[7]));
 };
+
 CPU_X86.prototype.dump = function() {
-    var i, sa, na;
+    var i, descriptor_table, str;
     var ta = [" ES", " CS", " SS", " DS", " FS", " GS", "LDT", " TR"];
     this.dump_short();
-    console.log("TSC=" + pa(this.cycle_count) + " OP=" + qa(this.cc_op) + " SRC=" + pa(this.cc_src) + " DST=" + pa(this.cc_dst) + " OP2=" + qa(this.cc_op2) + " DST2=" + pa(this.cc_dst2));
-    console.log("CPL=" + this.cpl + " CR0=" + pa(this.cr0) + " CR2=" + pa(this.cr2) + " CR3=" + pa(this.cr3) + " CR4=" + pa(this.cr4));
-    na = "";
+    console.log("TSC=" + _4_bytes_(this.cycle_count) + " OP=" + _2_bytes_(this.cc_op)
+                + " SRC=" + _4_bytes_(this.cc_src) + " DST=" + _4_bytes_(this.cc_dst)
+                + " OP2=" + _2_bytes_(this.cc_op2) + " DST2=" + _4_bytes_(this.cc_dst2));
+    console.log("CPL=" + this.cpl + " CR0=" + _4_bytes_(this.cr0)
+                + " CR2=" + _4_bytes_(this.cr2) + " CR3=" + _4_bytes_(this.cr3) + " CR4=" + _4_bytes_(this.cr4));
+    str = "";
     for (i = 0; i < 8; i++) {
         if (i == 6)
-            sa = this.ldt;
+            descriptor_table = this.ldt;
         else if (i == 7)
-            sa = this.tr;
+            descriptor_table = this.tr;
         else
-            sa = this.segs[i];
-        na += ta[i] + "=" + ra(sa.selector) + " " + pa(sa.base) + " " + pa(sa.limit) + " " + ra((sa.flags >> 8) & 0xf0ff);
+            descriptor_table = this.segs[i];
+        str += ta[i] + "=" + _1_byte_(descriptor_table.selector) + " " + _4_bytes_(descriptor_table.base) + " "
+            + _4_bytes_(descriptor_table.limit) + " " + _1_byte_((descriptor_table.flags >> 8) & 0xf0ff);
         if (i & 1) {
-            console.log(na);
-            na = "";
+            console.log(str);
+            str = "";
         } else {
-            na += " ";
+            str += " ";
         }
     }
-    sa = this.gdt;
-    na = "GDT=     " + pa(sa.base) + " " + pa(sa.limit) + "      ";
-    sa = this.idt;
-    na += "IDT=     " + pa(sa.base) + " " + pa(sa.limit);
-    console.log(na);
+    descriptor_table = this.gdt;
+    str = "GDT=     " + _4_bytes_(descriptor_table.base) + " " + _4_bytes_(descriptor_table.limit) + "      ";
+    descriptor_table = this.idt;
+    str += "IDT=     " + _4_bytes_(descriptor_table.base) + " " + _4_bytes_(descriptor_table.limit);
+    console.log(str);
 };
-CPU_X86.prototype.exec_internal = function(ua, va) {
-    var wa, fa, xa;
-    var ya, za, Aa, Ba, Ca;
-    var Da, Ea, Fa, b, Ga, ga, Ha, Ia, Ja, Ka, La, Ma;
-    var Na, Oa, Pa, Qa, Ra, Sa;
-    var Ta, Ua;
-    var Va, Wa;
-    var Xa, Ya, Za, ab, bb, cb;
-    function db() {
-        var eb;
-        fb(fa, 0, wa.cpl == 3);
-        eb = bb[fa >>> 12] ^ fa;
-        return Ta[eb];
+
+
+
+/*
+  The Beast
+  ==========================================================================================
+*/
+
+CPU_X86.prototype.exec_internal = function(N_cycles, interrupt) {
+    /*
+      x,y,z,v are either just general non-local values or their exact specialization is unclear,
+      esp. x,y look like they're used for everything
+
+      I don't know what 'v' should be called, it's not clear yet
+     */
+    var cpu, mem8_loc, regs;
+    var _src, _dst, _op, _op2, _dst2;
+    var CS_flags, mem8, reg_idx0, OPbyte, reg_idx1, x, y, z, conditional_var, cycles_left, exit_code, v;
+    var CS_base, SS_base, SS_mask, FS_usage_flag, init_CS_flags, iopl;//io privilege level
+    var phys_mem8, last_tlb_val;
+    var phys_mem16, phys_mem32;
+    var tlb_read_kernel, tlb_write_kernel, tlb_read_user, tlb_write_user, _tlb_read_, _tlb_write_;
+
+
+    /*
+       Paged Memory Mode Access Routines
+       ================================================================================
+    */
+
+    /* Storing XOR values as small lookup table is software equivalent of a Translation Lookaside Buffer (TLB) */
+    function __ld_8bits_mem8_read() {
+        var tlb_lookup;
+        do_tlb_set_page(mem8_loc, 0, cpu.cpl == 3);
+        tlb_lookup = _tlb_read_[mem8_loc >>> 12] ^ mem8_loc;
+        return phys_mem8[tlb_lookup];
     }
-    function gb() {
-        var Ua;
-        return (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+    function ld_8bits_mem8_read() {
+        var last_tlb_val;
+        return (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
     }
-    function hb() {
-        var ga;
-        ga = gb();
-        fa++;
-        ga |= gb() << 8;
-        fa--;
-        return ga;
+    function __ld_16bits_mem8_read() {
+        var x;
+        x = ld_8bits_mem8_read();
+        mem8_loc++;
+        x |= ld_8bits_mem8_read() << 8;
+        mem8_loc--;
+        return x;
     }
-    function ib() {
-        var Ua;
-        return (((Ua = bb[fa >>> 12]) | fa) & 1 ? hb() : Va[(fa ^ Ua) >> 1]);
+    function ld_16bits_mem8_read() {
+        var last_tlb_val;
+        return (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) | mem8_loc) & 1 ? __ld_16bits_mem8_read() : phys_mem16[(mem8_loc ^ last_tlb_val) >> 1]);
     }
-    function jb() {
-        var ga;
-        ga = gb();
-        fa++;
-        ga |= gb() << 8;
-        fa++;
-        ga |= gb() << 16;
-        fa++;
-        ga |= gb() << 24;
-        fa -= 3;
-        return ga;
+    function __ld_32bits_mem8_read() {
+        var x;
+        x = ld_8bits_mem8_read();
+        mem8_loc++;
+        x |= ld_8bits_mem8_read() << 8;
+        mem8_loc++;
+        x |= ld_8bits_mem8_read() << 16;
+        mem8_loc++;
+        x |= ld_8bits_mem8_read() << 24;
+        mem8_loc -= 3;
+        return x;
     }
-    function kb() {
-        var Ua;
-        return (((Ua = bb[fa >>> 12]) | fa) & 3 ? jb() : Wa[(fa ^ Ua) >> 2]);
+    function ld_32bits_mem8_read() {
+        var last_tlb_val;
+        return (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) | mem8_loc) & 3 ? __ld_32bits_mem8_read() : phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
     }
-    function lb() {
-        var eb;
-        fb(fa, 1, wa.cpl == 3);
-        eb = cb[fa >>> 12] ^ fa;
-        return Ta[eb];
+    function __ld_8bits_mem8_write() {
+        var tlb_lookup;
+        do_tlb_set_page(mem8_loc, 1, cpu.cpl == 3);
+        tlb_lookup = _tlb_write_[mem8_loc >>> 12] ^ mem8_loc;
+        return phys_mem8[tlb_lookup];
     }
-    function mb() {
-        var eb;
-        return ((eb = cb[fa >>> 12]) == -1) ? lb() : Ta[fa ^ eb];
+    function ld_8bits_mem8_write() {
+        var tlb_lookup;
+        return ((tlb_lookup = _tlb_write_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_write() : phys_mem8[mem8_loc ^ tlb_lookup];
     }
-    function nb() {
-        var ga;
-        ga = mb();
-        fa++;
-        ga |= mb() << 8;
-        fa--;
-        return ga;
+    function __ld_16bits_mem8_write() {
+        var x;
+        x = ld_8bits_mem8_write();
+        mem8_loc++;
+        x |= ld_8bits_mem8_write() << 8;
+        mem8_loc--;
+        return x;
     }
-    function ob() {
-        var eb;
-        return ((eb = cb[fa >>> 12]) | fa) & 1 ? nb() : Va[(fa ^ eb) >> 1];
+    function ld_16bits_mem8_write() {
+        var tlb_lookup;
+        return ((tlb_lookup = _tlb_write_[mem8_loc >>> 12]) | mem8_loc) & 1 ? __ld_16bits_mem8_write() : phys_mem16[(mem8_loc ^ tlb_lookup) >> 1];
     }
-    function pb() {
-        var ga;
-        ga = mb();
-        fa++;
-        ga |= mb() << 8;
-        fa++;
-        ga |= mb() << 16;
-        fa++;
-        ga |= mb() << 24;
-        fa -= 3;
-        return ga;
+    function __ld_32bits_mem8_write() {
+        var x;
+        x = ld_8bits_mem8_write();
+        mem8_loc++;
+        x |= ld_8bits_mem8_write() << 8;
+        mem8_loc++;
+        x |= ld_8bits_mem8_write() << 16;
+        mem8_loc++;
+        x |= ld_8bits_mem8_write() << 24;
+        mem8_loc -= 3;
+        return x;
     }
-    function qb() {
-        var eb;
-        return ((eb = cb[fa >>> 12]) | fa) & 3 ? pb() : Wa[(fa ^ eb) >> 2];
+    function ld_32bits_mem8_write() {
+        var tlb_lookup;
+        return ((tlb_lookup = _tlb_write_[mem8_loc >>> 12]) | mem8_loc) & 3 ? __ld_32bits_mem8_write() : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
     }
-    function rb(ga) {
-        var eb;
-        fb(fa, 1, wa.cpl == 3);
-        eb = cb[fa >>> 12] ^ fa;
-        Ta[eb] = ga;
+    function __st8_mem8_write(x) {
+        var tlb_lookup;
+        do_tlb_set_page(mem8_loc, 1, cpu.cpl == 3);
+        tlb_lookup = _tlb_write_[mem8_loc >>> 12] ^ mem8_loc;
+        phys_mem8[tlb_lookup] = x;
     }
-    function sb(ga) {
-        var Ua;
+    function st8_mem8_write(x) {
+        var last_tlb_val;
         {
-            Ua = cb[fa >>> 12];
-            if (Ua == -1) {
-                rb(ga);
+            last_tlb_val = _tlb_write_[mem8_loc >>> 12];
+            if (last_tlb_val == -1) {
+                __st8_mem8_write(x);
             } else {
-                Ta[fa ^ Ua] = ga;
+                phys_mem8[mem8_loc ^ last_tlb_val] = x;
             }
         }
-        ;
     }
-    function tb(ga) {
-        sb(ga);
-        fa++;
-        sb(ga >> 8);
-        fa--;
+    function __st16_mem8_write(x) {
+        st8_mem8_write(x);
+        mem8_loc++;
+        st8_mem8_write(x >> 8);
+        mem8_loc--;
     }
-    function ub(ga) {
-        var Ua;
+    function st16_mem8_write(x) {
+        var last_tlb_val;
         {
-            Ua = cb[fa >>> 12];
-            if ((Ua | fa) & 1) {
-                tb(ga);
+            last_tlb_val = _tlb_write_[mem8_loc >>> 12];
+            if ((last_tlb_val | mem8_loc) & 1) {
+                __st16_mem8_write(x);
             } else {
-                Va[(fa ^ Ua) >> 1] = ga;
+                phys_mem16[(mem8_loc ^ last_tlb_val) >> 1] = x;
             }
         }
-        ;
     }
-    function vb(ga) {
-        sb(ga);
-        fa++;
-        sb(ga >> 8);
-        fa++;
-        sb(ga >> 16);
-        fa++;
-        sb(ga >> 24);
-        fa -= 3;
+    function __st32_mem8_write(x) {
+        st8_mem8_write(x);
+        mem8_loc++;
+        st8_mem8_write(x >> 8);
+        mem8_loc++;
+        st8_mem8_write(x >> 16);
+        mem8_loc++;
+        st8_mem8_write(x >> 24);
+        mem8_loc -= 3;
     }
-    function wb(ga) {
-        var Ua;
+    function st32_mem8_write(x) {
+        var last_tlb_val;
         {
-            Ua = cb[fa >>> 12];
-            if ((Ua | fa) & 3) {
-                vb(ga);
+            last_tlb_val = _tlb_write_[mem8_loc >>> 12];
+            if ((last_tlb_val | mem8_loc) & 3) {
+                __st32_mem8_write(x);
             } else {
-                Wa[(fa ^ Ua) >> 2] = ga;
+                phys_mem32[(mem8_loc ^ last_tlb_val) >> 2] = x;
             }
         }
-        ;
     }
-    function xb() {
-        var eb;
-        fb(fa, 0, 0);
-        eb = Xa[fa >>> 12] ^ fa;
-        return Ta[eb];
+    function __ld8_mem8_kernel_read() {
+        var tlb_lookup;
+        do_tlb_set_page(mem8_loc, 0, 0);
+        tlb_lookup = tlb_read_kernel[mem8_loc >>> 12] ^ mem8_loc;
+        return phys_mem8[tlb_lookup];
     }
-    function yb() {
-        var eb;
-        return ((eb = Xa[fa >>> 12]) == -1) ? xb() : Ta[fa ^ eb];
+    function ld8_mem8_kernel_read() {
+        var tlb_lookup;
+        return ((tlb_lookup = tlb_read_kernel[mem8_loc >>> 12]) == -1) ? __ld8_mem8_kernel_read() : phys_mem8[mem8_loc ^ tlb_lookup];
     }
-    function zb() {
-        var ga;
-        ga = yb();
-        fa++;
-        ga |= yb() << 8;
-        fa--;
-        return ga;
+    function __ld16_mem8_kernel_read() {
+        var x;
+        x = ld8_mem8_kernel_read();
+        mem8_loc++;
+        x |= ld8_mem8_kernel_read() << 8;
+        mem8_loc--;
+        return x;
     }
-    function Ab() {
-        var eb;
-        return ((eb = Xa[fa >>> 12]) | fa) & 1 ? zb() : Va[(fa ^ eb) >> 1];
+    function ld16_mem8_kernel_read() {
+        var tlb_lookup;
+        return ((tlb_lookup = tlb_read_kernel[mem8_loc >>> 12]) | mem8_loc) & 1 ? __ld16_mem8_kernel_read() : phys_mem16[(mem8_loc ^ tlb_lookup) >> 1];
     }
-    function Bb() {
-        var ga;
-        ga = yb();
-        fa++;
-        ga |= yb() << 8;
-        fa++;
-        ga |= yb() << 16;
-        fa++;
-        ga |= yb() << 24;
-        fa -= 3;
-        return ga;
+    function __ld32_mem8_kernel_read() {
+        var x;
+        x = ld8_mem8_kernel_read();
+        mem8_loc++;
+        x |= ld8_mem8_kernel_read() << 8;
+        mem8_loc++;
+        x |= ld8_mem8_kernel_read() << 16;
+        mem8_loc++;
+        x |= ld8_mem8_kernel_read() << 24;
+        mem8_loc -= 3;
+        return x;
     }
-    function Cb() {
-        var eb;
-        return ((eb = Xa[fa >>> 12]) | fa) & 3 ? Bb() : Wa[(fa ^ eb) >> 2];
+    function ld32_mem8_kernel_read() {
+        var tlb_lookup;
+        return ((tlb_lookup = tlb_read_kernel[mem8_loc >>> 12]) | mem8_loc) & 3 ? __ld32_mem8_kernel_read() : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
     }
-    function Db(ga) {
-        var eb;
-        fb(fa, 1, 0);
-        eb = Ya[fa >>> 12] ^ fa;
-        Ta[eb] = ga;
+    function __st8_mem8_kernel_write(x) {
+        var tlb_lookup;
+        do_tlb_set_page(mem8_loc, 1, 0);
+        tlb_lookup = tlb_write_kernel[mem8_loc >>> 12] ^ mem8_loc;
+        phys_mem8[tlb_lookup] = x;
     }
-    function Eb(ga) {
-        var eb;
-        eb = Ya[fa >>> 12];
-        if (eb == -1) {
-            Db(ga);
+    function st8_mem8_kernel_write(x) {
+        var tlb_lookup;
+        tlb_lookup = tlb_write_kernel[mem8_loc >>> 12];
+        if (tlb_lookup == -1) {
+            __st8_mem8_kernel_write(x);
         } else {
-            Ta[fa ^ eb] = ga;
+            phys_mem8[mem8_loc ^ tlb_lookup] = x;
         }
     }
-    function Fb(ga) {
-        Eb(ga);
-        fa++;
-        Eb(ga >> 8);
-        fa--;
+    function __st16_mem8_kernel_write(x) {
+        st8_mem8_kernel_write(x);
+        mem8_loc++;
+        st8_mem8_kernel_write(x >> 8);
+        mem8_loc--;
     }
-    function Gb(ga) {
-        var eb;
-        eb = Ya[fa >>> 12];
-        if ((eb | fa) & 1) {
-            Fb(ga);
+    function st16_mem8_kernel_write(x) {
+        var tlb_lookup;
+        tlb_lookup = tlb_write_kernel[mem8_loc >>> 12];
+        if ((tlb_lookup | mem8_loc) & 1) {
+            __st16_mem8_kernel_write(x);
         } else {
-            Va[(fa ^ eb) >> 1] = ga;
+            phys_mem16[(mem8_loc ^ tlb_lookup) >> 1] = x;
         }
     }
-    function Hb(ga) {
-        Eb(ga);
-        fa++;
-        Eb(ga >> 8);
-        fa++;
-        Eb(ga >> 16);
-        fa++;
-        Eb(ga >> 24);
-        fa -= 3;
+    function __st32_mem8_kernel_write(x) {
+        st8_mem8_kernel_write(x);
+        mem8_loc++;
+        st8_mem8_kernel_write(x >> 8);
+        mem8_loc++;
+        st8_mem8_kernel_write(x >> 16);
+        mem8_loc++;
+        st8_mem8_kernel_write(x >> 24);
+        mem8_loc -= 3;
     }
-    function Ib(ga) {
-        var eb;
-        eb = Ya[fa >>> 12];
-        if ((eb | fa) & 3) {
-            Hb(ga);
+    function st32_mem8_kernel_write(x) {
+        var tlb_lookup;
+        tlb_lookup = tlb_write_kernel[mem8_loc >>> 12];
+        if ((tlb_lookup | mem8_loc) & 3) {
+            __st32_mem8_kernel_write(x);
         } else {
-            Wa[(fa ^ eb) >> 2] = ga;
+            phys_mem32[(mem8_loc ^ tlb_lookup) >> 2] = x;
         }
     }
-    var Jb, Kb, Lb, Mb, Nb;
-    function Ob() {
-        var ga, Ha;
-        ga = Ta[Kb++];
-        ;
-        Ha = Ta[Kb++];
-        ;
-        return ga | (Ha << 8);
+
+    var eip, physmem8_ptr, eip_tlb_val, initial_mem_ptr, eip_offset;
+
+    function ld16_mem8_direct() {
+        var x, y;
+        x = phys_mem8[physmem8_ptr++];
+        y = phys_mem8[physmem8_ptr++];
+        return x | (y << 8);
     }
-    function Pb(Ea) {
-        var base, fa, Qb, Rb, Sb, Tb;
-        if (Qa && (Da & (0x000f | 0x0080)) == 0) {
-            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+
+    /*
+       Segmented Memory Mode Routines
+       ================================================================================
+
+       Segmented Memory
+       -----------------
+       x86 memory segmentation refers to the implementation of memory
+       segmentation on the x86 architecture. Memory is divided into portions
+       that may be addressed by a single index register without changing a
+       16-bit segment selector. In real mode or V86 mode, a segment is always
+       64 kilobytes in size (using 16-bit offsets). In protected mode, a
+       segment can have variable length. Segments can overlap.
+
+       Within the x86 architectures, when operating in the real (compatible)
+       mode, physical address is computed as:
+
+       Address = 16*segment + offset
+
+       The 16-bit segment register is shifted
+       left by 4 bits and added to a 16-bit offset, resulting in a 20-bit
+       address.
+
+       When the 80386 is used to execute software designed for architectures
+       that don't have segments, it may be expedient to effectively "turn
+       off" the segmentation features of the 80386. The 80386 does not have a
+       mode that disables segmentation, but the same effect can be achieved
+       by initially loading the segment registers with selectors for
+       descriptors that encompass the entire 32-bit linear address
+       space. Once loaded, the segment registers don't need to be
+       changed. The 32-bit offsets used by 80386 instructions are adequate to
+       address the entire linear-address space.
+
+     */
+    /*
+       segment translation routine (I believe):
+       Translates Logical Memory Address to Linear Memory Address
+     */
+    function segment_translation(mem8) {
+        var base, mem8_loc, Qb, Rb, Sb, Tb;
+        if (FS_usage_flag && (CS_flags & (0x000f | 0x0080)) == 0) {
+            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
-                    Qb = Ta[Kb++];
-                    ;
+                    Qb = phys_mem8[physmem8_ptr++];
                     base = Qb & 7;
                     if (base == 5) {
                         {
-                            fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
                     } else {
-                        fa = xa[base];
+                        mem8_loc = regs[base];
                     }
                     Rb = (Qb >> 3) & 7;
                     if (Rb != 4) {
-                        fa = (fa + (xa[Rb] << (Qb >> 6))) >> 0;
+                        mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                     }
                     break;
                 case 0x0c:
-                    Qb = Ta[Kb++];
-                    ;
-                    fa = ((Ta[Kb++] << 24) >> 24);
-                    ;
+                    Qb = phys_mem8[physmem8_ptr++];
+                    mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     base = Qb & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     Rb = (Qb >> 3) & 7;
                     if (Rb != 4) {
-                        fa = (fa + (xa[Rb] << (Qb >> 6))) >> 0;
+                        mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                     }
                     break;
                 case 0x14:
-                    Qb = Ta[Kb++];
-                    ;
+                    Qb = phys_mem8[physmem8_ptr++];
                     {
-                        fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     base = Qb & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     Rb = (Qb >> 3) & 7;
                     if (Rb != 4) {
-                        fa = (fa + (xa[Rb] << (Qb >> 6))) >> 0;
+                        mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                     }
                     break;
                 case 0x05:
                     {
-                        fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     break;
                 case 0x00:
                 case 0x01:
@@ -499,8 +800,8 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x03:
                 case 0x06:
                 case 0x07:
-                    base = Ea & 7;
-                    fa = xa[base];
+                    base = mem8 & 7;
+                    mem8_loc = regs[base];
                     break;
                 case 0x08:
                 case 0x09:
@@ -509,10 +810,9 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x0d:
                 case 0x0e:
                 case 0x0f:
-                    fa = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    base = Ea & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    base = mem8 & 7;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     break;
                 case 0x10:
                 case 0x11:
@@ -523,130 +823,121 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x17:
                 default:
                     {
-                        fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    base = Ea & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    base = mem8 & 7;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     break;
             }
-            return fa;
-        } else if (Da & 0x0080) {
-            if ((Ea & 0xc7) == 0x06) {
-                fa = Ob();
+            return mem8_loc;
+        } else if (CS_flags & 0x0080) {
+            if ((mem8 & 0xc7) == 0x06) {
+                mem8_loc = ld16_mem8_direct();
                 Tb = 3;
             } else {
-                switch (Ea >> 6) {
+                switch (mem8 >> 6) {
                     case 0:
-                        fa = 0;
+                        mem8_loc = 0;
                         break;
                     case 1:
-                        fa = ((Ta[Kb++] << 24) >> 24);
-                        ;
+                        mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                         break;
                     default:
-                        fa = Ob();
+                        mem8_loc = ld16_mem8_direct();
                         break;
                 }
-                switch (Ea & 7) {
+                switch (mem8 & 7) {
                     case 0:
-                        fa = (fa + xa[3] + xa[6]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[3] + regs[6]) & 0xffff;
                         Tb = 3;
                         break;
                     case 1:
-                        fa = (fa + xa[3] + xa[7]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[3] + regs[7]) & 0xffff;
                         Tb = 3;
                         break;
                     case 2:
-                        fa = (fa + xa[5] + xa[6]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[5] + regs[6]) & 0xffff;
                         Tb = 2;
                         break;
                     case 3:
-                        fa = (fa + xa[5] + xa[7]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[5] + regs[7]) & 0xffff;
                         Tb = 2;
                         break;
                     case 4:
-                        fa = (fa + xa[6]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[6]) & 0xffff;
                         Tb = 3;
                         break;
                     case 5:
-                        fa = (fa + xa[7]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[7]) & 0xffff;
                         Tb = 3;
                         break;
                     case 6:
-                        fa = (fa + xa[5]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[5]) & 0xffff;
                         Tb = 2;
                         break;
                     case 7:
                     default:
-                        fa = (fa + xa[3]) & 0xffff;
+                        mem8_loc = (mem8_loc + regs[3]) & 0xffff;
                         Tb = 3;
                         break;
                 }
             }
-            Sb = Da & 0x000f;
+            Sb = CS_flags & 0x000f;
             if (Sb == 0) {
                 Sb = Tb;
             } else {
                 Sb--;
             }
-            fa = (fa + wa.segs[Sb].base) >> 0;
-            return fa;
+            mem8_loc = (mem8_loc + cpu.segs[Sb].base) >> 0;
+            return mem8_loc;
         } else {
-            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
-                    Qb = Ta[Kb++];
-                    ;
+                    Qb = phys_mem8[physmem8_ptr++];
                     base = Qb & 7;
                     if (base == 5) {
                         {
-                            fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
                         base = 0;
                     } else {
-                        fa = xa[base];
+                        mem8_loc = regs[base];
                     }
                     Rb = (Qb >> 3) & 7;
                     if (Rb != 4) {
-                        fa = (fa + (xa[Rb] << (Qb >> 6))) >> 0;
+                        mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                     }
                     break;
                 case 0x0c:
-                    Qb = Ta[Kb++];
-                    ;
-                    fa = ((Ta[Kb++] << 24) >> 24);
-                    ;
+                    Qb = phys_mem8[physmem8_ptr++];
+                    mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     base = Qb & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     Rb = (Qb >> 3) & 7;
                     if (Rb != 4) {
-                        fa = (fa + (xa[Rb] << (Qb >> 6))) >> 0;
+                        mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                     }
                     break;
                 case 0x14:
-                    Qb = Ta[Kb++];
-                    ;
+                    Qb = phys_mem8[physmem8_ptr++];
                     {
-                        fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     base = Qb & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     Rb = (Qb >> 3) & 7;
                     if (Rb != 4) {
-                        fa = (fa + (xa[Rb] << (Qb >> 6))) >> 0;
+                        mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                     }
                     break;
                 case 0x05:
                     {
-                        fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     base = 0;
                     break;
                 case 0x00:
@@ -655,8 +946,8 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x03:
                 case 0x06:
                 case 0x07:
-                    base = Ea & 7;
-                    fa = xa[base];
+                    base = mem8 & 7;
+                    mem8_loc = regs[base];
                     break;
                 case 0x08:
                 case 0x09:
@@ -665,10 +956,9 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x0d:
                 case 0x0e:
                 case 0x0f:
-                    fa = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    base = Ea & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    base = mem8 & 7;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     break;
                 case 0x10:
                 case 0x11:
@@ -679,15 +969,14 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x17:
                 default:
                     {
-                        fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    base = Ea & 7;
-                    fa = (fa + xa[base]) >> 0;
+                    base = mem8 & 7;
+                    mem8_loc = (mem8_loc + regs[base]) >> 0;
                     break;
             }
-            Sb = Da & 0x000f;
+            Sb = CS_flags & 0x000f;
             if (Sb == 0) {
                 if (base == 4 || base == 5)
                     Sb = 2;
@@ -696,249 +985,263 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
             } else {
                 Sb--;
             }
-            fa = (fa + wa.segs[Sb].base) >> 0;
-            return fa;
+            mem8_loc = (mem8_loc + cpu.segs[Sb].base) >> 0;
+            return mem8_loc;
         }
     }
-    function Ub() {
-        var fa, Sb;
-        if (Da & 0x0080) {
-            fa = Ob();
+    function segmented_mem8_loc_for_MOV() {
+        var mem8_loc, Sb;
+        if (CS_flags & 0x0080) {
+            mem8_loc = ld16_mem8_direct();
         } else {
             {
-                fa = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                Kb += 4;
+                mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                physmem8_ptr += 4;
             }
-            ;
         }
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        fa = (fa + wa.segs[Sb].base) >> 0;
-        return fa;
+        mem8_loc = (mem8_loc + cpu.segs[Sb].base) >> 0;
+        return mem8_loc;
     }
-    function Vb(Ga, ga) {
-        if (Ga & 4)
-            xa[Ga & 3] = (xa[Ga & 3] & -65281) | ((ga & 0xff) << 8);
+
+    /*
+       Register Manipulation
+       ==========================================================================================
+    */
+    function set_word_in_register(reg_idx1, x) {
+        /*
+           if arg[0] is = 1xx  then set register xx's upper two bytes to two bytes in arg[1]
+           if arg[0] is = 0xx  then set register xx's lower two bytes to two bytes in arg[1]
+        */
+        if (reg_idx1 & 4)
+            regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & -65281) | ((x & 0xff) << 8);
         else
-            xa[Ga & 3] = (xa[Ga & 3] & -256) | (ga & 0xff);
+            regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & -256) | (x & 0xff);
     }
-    function Wb(Ga, ga) {
-        xa[Ga] = (xa[Ga] & -65536) | (ga & 0xffff);
+
+    function set_lower_word_in_register(reg_idx1, x) {
+        regs[reg_idx1] = (regs[reg_idx1] & -65536) | (x & 0xffff);
     }
-    function Xb(Ja, Yb, Zb) {
+
+    /*
+      Arithmetic Operations
+      ==========================================================================================
+    */
+    function do_32bit_math(conditional_var, Yb, Zb) {
         var ac;
-        switch (Ja) {
+        switch (conditional_var) {
             case 0:
-                ya = Zb;
+                _src = Zb;
                 Yb = (Yb + Zb) >> 0;
-                za = Yb;
-                Aa = 2;
+                _dst = Yb;
+                _op = 2;
                 break;
             case 1:
                 Yb = Yb | Zb;
-                za = Yb;
-                Aa = 14;
+                _dst = Yb;
+                _op = 14;
                 break;
             case 2:
-                ac = bc();
-                ya = Zb;
+                ac = check_carry();
+                _src = Zb;
                 Yb = (Yb + Zb + ac) >> 0;
-                za = Yb;
-                Aa = ac ? 5 : 2;
+                _dst = Yb;
+                _op = ac ? 5 : 2;
                 break;
             case 3:
-                ac = bc();
-                ya = Zb;
+                ac = check_carry();
+                _src = Zb;
                 Yb = (Yb - Zb - ac) >> 0;
-                za = Yb;
-                Aa = ac ? 11 : 8;
+                _dst = Yb;
+                _op = ac ? 11 : 8;
                 break;
             case 4:
                 Yb = Yb & Zb;
-                za = Yb;
-                Aa = 14;
+                _dst = Yb;
+                _op = 14;
                 break;
             case 5:
-                ya = Zb;
+                _src = Zb;
                 Yb = (Yb - Zb) >> 0;
-                za = Yb;
-                Aa = 8;
+                _dst = Yb;
+                _op = 8;
                 break;
             case 6:
                 Yb = Yb ^ Zb;
-                za = Yb;
-                Aa = 14;
+                _dst = Yb;
+                _op = 14;
                 break;
             case 7:
-                ya = Zb;
-                za = (Yb - Zb) >> 0;
-                Aa = 8;
+                _src = Zb;
+                _dst = (Yb - Zb) >> 0;
+                _op = 8;
                 break;
             default:
                 throw "arith" + cc + ": invalid op";
         }
         return Yb;
     }
-    function dc(Ja, Yb, Zb) {
+    function do_16bit_math(conditional_var, Yb, Zb) {
         var ac;
-        switch (Ja) {
+        switch (conditional_var) {
             case 0:
-                ya = Zb;
+                _src = Zb;
                 Yb = (((Yb + Zb) << 16) >> 16);
-                za = Yb;
-                Aa = 1;
+                _dst = Yb;
+                _op = 1;
                 break;
             case 1:
                 Yb = (((Yb | Zb) << 16) >> 16);
-                za = Yb;
-                Aa = 13;
+                _dst = Yb;
+                _op = 13;
                 break;
             case 2:
-                ac = bc();
-                ya = Zb;
+                ac = check_carry();
+                _src = Zb;
                 Yb = (((Yb + Zb + ac) << 16) >> 16);
-                za = Yb;
-                Aa = ac ? 4 : 1;
+                _dst = Yb;
+                _op = ac ? 4 : 1;
                 break;
             case 3:
-                ac = bc();
-                ya = Zb;
+                ac = check_carry();
+                _src = Zb;
                 Yb = (((Yb - Zb - ac) << 16) >> 16);
-                za = Yb;
-                Aa = ac ? 10 : 7;
+                _dst = Yb;
+                _op = ac ? 10 : 7;
                 break;
             case 4:
                 Yb = (((Yb & Zb) << 16) >> 16);
-                za = Yb;
-                Aa = 13;
+                _dst = Yb;
+                _op = 13;
                 break;
             case 5:
-                ya = Zb;
+                _src = Zb;
                 Yb = (((Yb - Zb) << 16) >> 16);
-                za = Yb;
-                Aa = 7;
+                _dst = Yb;
+                _op = 7;
                 break;
             case 6:
                 Yb = (((Yb ^ Zb) << 16) >> 16);
-                za = Yb;
-                Aa = 13;
+                _dst = Yb;
+                _op = 13;
                 break;
             case 7:
-                ya = Zb;
-                za = (((Yb - Zb) << 16) >> 16);
-                Aa = 7;
+                _src = Zb;
+                _dst = (((Yb - Zb) << 16) >> 16);
+                _op = 7;
                 break;
             default:
                 throw "arith" + cc + ": invalid op";
         }
         return Yb;
     }
-    function ec(ga) {
-        if (Aa < 25) {
-            Ba = Aa;
-            Ca = za;
+    function increment_16bit(x) {
+        if (_op < 25) {
+            _op2 = _op;
+            _dst2 = _dst;
         }
-        za = (((ga + 1) << 16) >> 16);
-        Aa = 26;
-        return za;
+        _dst = (((x + 1) << 16) >> 16);
+        _op = 26;
+        return _dst;
     }
-    function fc(ga) {
-        if (Aa < 25) {
-            Ba = Aa;
-            Ca = za;
+    function decrement_16bit(x) {
+        if (_op < 25) {
+            _op2 = _op;
+            _dst2 = _dst;
         }
-        za = (((ga - 1) << 16) >> 16);
-        Aa = 29;
-        return za;
+        _dst = (((x - 1) << 16) >> 16);
+        _op = 29;
+        return _dst;
     }
-    function gc(Ja, Yb, Zb) {
+    function do_8bit_math(conditional_var, Yb, Zb) {
         var ac;
-        switch (Ja) {
+        switch (conditional_var) {
             case 0:
-                ya = Zb;
+                _src = Zb;
                 Yb = (((Yb + Zb) << 24) >> 24);
-                za = Yb;
-                Aa = 0;
+                _dst = Yb;
+                _op = 0;
                 break;
             case 1:
                 Yb = (((Yb | Zb) << 24) >> 24);
-                za = Yb;
-                Aa = 12;
+                _dst = Yb;
+                _op = 12;
                 break;
             case 2:
-                ac = bc();
-                ya = Zb;
+                ac = check_carry();
+                _src = Zb;
                 Yb = (((Yb + Zb + ac) << 24) >> 24);
-                za = Yb;
-                Aa = ac ? 3 : 0;
+                _dst = Yb;
+                _op = ac ? 3 : 0;
                 break;
             case 3:
-                ac = bc();
-                ya = Zb;
+                ac = check_carry();
+                _src = Zb;
                 Yb = (((Yb - Zb - ac) << 24) >> 24);
-                za = Yb;
-                Aa = ac ? 9 : 6;
+                _dst = Yb;
+                _op = ac ? 9 : 6;
                 break;
             case 4:
                 Yb = (((Yb & Zb) << 24) >> 24);
-                za = Yb;
-                Aa = 12;
+                _dst = Yb;
+                _op = 12;
                 break;
             case 5:
-                ya = Zb;
+                _src = Zb;
                 Yb = (((Yb - Zb) << 24) >> 24);
-                za = Yb;
-                Aa = 6;
+                _dst = Yb;
+                _op = 6;
                 break;
             case 6:
                 Yb = (((Yb ^ Zb) << 24) >> 24);
-                za = Yb;
-                Aa = 12;
+                _dst = Yb;
+                _op = 12;
                 break;
             case 7:
-                ya = Zb;
-                za = (((Yb - Zb) << 24) >> 24);
-                Aa = 6;
+                _src = Zb;
+                _dst = (((Yb - Zb) << 24) >> 24);
+                _op = 6;
                 break;
             default:
                 throw "arith" + cc + ": invalid op";
         }
         return Yb;
     }
-    function hc(ga) {
-        if (Aa < 25) {
-            Ba = Aa;
-            Ca = za;
+    function increment_8bit(x) {
+        if (_op < 25) {
+            _op2 = _op;
+            _dst2 = _dst;
         }
-        za = (((ga + 1) << 24) >> 24);
-        Aa = 25;
-        return za;
+        _dst = (((x + 1) << 24) >> 24);
+        _op = 25;
+        return _dst;
     }
-    function ic(ga) {
-        if (Aa < 25) {
-            Ba = Aa;
-            Ca = za;
+    function decrement_8bit(x) {
+        if (_op < 25) {
+            _op2 = _op;
+            _dst2 = _dst;
         }
-        za = (((ga - 1) << 24) >> 24);
-        Aa = 28;
-        return za;
+        _dst = (((x - 1) << 24) >> 24);
+        _op = 28;
+        return _dst;
     }
-    function jc(Ja, Yb, Zb) {
+    function shift8(conditional_var, Yb, Zb) {
         var kc, ac;
-        switch (Ja) {
+        switch (conditional_var) {
             case 0:
                 if (Zb & 0x1f) {
                     Zb &= 0x7;
                     Yb &= 0xff;
                     kc = Yb;
                     Yb = (Yb << Zb) | (Yb >>> (8 - Zb));
-                    ya = lc();
-                    ya |= (Yb & 0x0001) | (((kc ^ Yb) << 4) & 0x0800);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (Yb & 0x0001) | (((kc ^ Yb) << 4) & 0x0800);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 1:
@@ -947,87 +1250,87 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                     Yb &= 0xff;
                     kc = Yb;
                     Yb = (Yb >>> Zb) | (Yb << (8 - Zb));
-                    ya = lc();
-                    ya |= ((Yb >> 7) & 0x0001) | (((kc ^ Yb) << 4) & 0x0800);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= ((Yb >> 7) & 0x0001) | (((kc ^ Yb) << 4) & 0x0800);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 2:
-                Zb = ca[Zb & 0x1f];
+                Zb = shift8_LUT[Zb & 0x1f];
                 if (Zb) {
                     Yb &= 0xff;
                     kc = Yb;
-                    ac = bc();
+                    ac = check_carry();
                     Yb = (Yb << Zb) | (ac << (Zb - 1));
                     if (Zb > 1)
                         Yb |= kc >>> (9 - Zb);
-                    ya = lc();
-                    ya |= (((kc ^ Yb) << 4) & 0x0800) | ((kc >> (8 - Zb)) & 0x0001);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (((kc ^ Yb) << 4) & 0x0800) | ((kc >> (8 - Zb)) & 0x0001);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 3:
-                Zb = ca[Zb & 0x1f];
+                Zb = shift8_LUT[Zb & 0x1f];
                 if (Zb) {
                     Yb &= 0xff;
                     kc = Yb;
-                    ac = bc();
+                    ac = check_carry();
                     Yb = (Yb >>> Zb) | (ac << (8 - Zb));
                     if (Zb > 1)
                         Yb |= kc << (9 - Zb);
-                    ya = lc();
-                    ya |= (((kc ^ Yb) << 4) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (((kc ^ Yb) << 4) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 4:
             case 6:
                 Zb &= 0x1f;
                 if (Zb) {
-                    ya = Yb << (Zb - 1);
-                    za = Yb = (((Yb << Zb) << 24) >> 24);
-                    Aa = 15;
+                    _src = Yb << (Zb - 1);
+                    _dst = Yb = (((Yb << Zb) << 24) >> 24);
+                    _op = 15;
                 }
                 break;
             case 5:
                 Zb &= 0x1f;
                 if (Zb) {
                     Yb &= 0xff;
-                    ya = Yb >>> (Zb - 1);
-                    za = Yb = (((Yb >>> Zb) << 24) >> 24);
-                    Aa = 18;
+                    _src = Yb >>> (Zb - 1);
+                    _dst = Yb = (((Yb >>> Zb) << 24) >> 24);
+                    _op = 18;
                 }
                 break;
             case 7:
                 Zb &= 0x1f;
                 if (Zb) {
                     Yb = (Yb << 24) >> 24;
-                    ya = Yb >> (Zb - 1);
-                    za = Yb = (((Yb >> Zb) << 24) >> 24);
-                    Aa = 18;
+                    _src = Yb >> (Zb - 1);
+                    _dst = Yb = (((Yb >> Zb) << 24) >> 24);
+                    _op = 18;
                 }
                 break;
             default:
-                throw "unsupported shift8=" + Ja;
+                throw "unsupported shift8=" + conditional_var;
         }
         return Yb;
     }
-    function mc(Ja, Yb, Zb) {
+    function shift16(conditional_var, Yb, Zb) {
         var kc, ac;
-        switch (Ja) {
+        switch (conditional_var) {
             case 0:
                 if (Zb & 0x1f) {
                     Zb &= 0xf;
                     Yb &= 0xffff;
                     kc = Yb;
                     Yb = (Yb << Zb) | (Yb >>> (16 - Zb));
-                    ya = lc();
-                    ya |= (Yb & 0x0001) | (((kc ^ Yb) >> 4) & 0x0800);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (Yb & 0x0001) | (((kc ^ Yb) >> 4) & 0x0800);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 1:
@@ -1036,86 +1339,86 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                     Yb &= 0xffff;
                     kc = Yb;
                     Yb = (Yb >>> Zb) | (Yb << (16 - Zb));
-                    ya = lc();
-                    ya |= ((Yb >> 15) & 0x0001) | (((kc ^ Yb) >> 4) & 0x0800);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= ((Yb >> 15) & 0x0001) | (((kc ^ Yb) >> 4) & 0x0800);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 2:
-                Zb = ba[Zb & 0x1f];
+                Zb = shift16_LUT[Zb & 0x1f];
                 if (Zb) {
                     Yb &= 0xffff;
                     kc = Yb;
-                    ac = bc();
+                    ac = check_carry();
                     Yb = (Yb << Zb) | (ac << (Zb - 1));
                     if (Zb > 1)
                         Yb |= kc >>> (17 - Zb);
-                    ya = lc();
-                    ya |= (((kc ^ Yb) >> 4) & 0x0800) | ((kc >> (16 - Zb)) & 0x0001);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (((kc ^ Yb) >> 4) & 0x0800) | ((kc >> (16 - Zb)) & 0x0001);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 3:
-                Zb = ba[Zb & 0x1f];
+                Zb = shift16_LUT[Zb & 0x1f];
                 if (Zb) {
                     Yb &= 0xffff;
                     kc = Yb;
-                    ac = bc();
+                    ac = check_carry();
                     Yb = (Yb >>> Zb) | (ac << (16 - Zb));
                     if (Zb > 1)
                         Yb |= kc << (17 - Zb);
-                    ya = lc();
-                    ya |= (((kc ^ Yb) >> 4) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (((kc ^ Yb) >> 4) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 4:
             case 6:
                 Zb &= 0x1f;
                 if (Zb) {
-                    ya = Yb << (Zb - 1);
-                    za = Yb = (((Yb << Zb) << 16) >> 16);
-                    Aa = 16;
+                    _src = Yb << (Zb - 1);
+                    _dst = Yb = (((Yb << Zb) << 16) >> 16);
+                    _op = 16;
                 }
                 break;
             case 5:
                 Zb &= 0x1f;
                 if (Zb) {
                     Yb &= 0xffff;
-                    ya = Yb >>> (Zb - 1);
-                    za = Yb = (((Yb >>> Zb) << 16) >> 16);
-                    Aa = 19;
+                    _src = Yb >>> (Zb - 1);
+                    _dst = Yb = (((Yb >>> Zb) << 16) >> 16);
+                    _op = 19;
                 }
                 break;
             case 7:
                 Zb &= 0x1f;
                 if (Zb) {
                     Yb = (Yb << 16) >> 16;
-                    ya = Yb >> (Zb - 1);
-                    za = Yb = (((Yb >> Zb) << 16) >> 16);
-                    Aa = 19;
+                    _src = Yb >> (Zb - 1);
+                    _dst = Yb = (((Yb >> Zb) << 16) >> 16);
+                    _op = 19;
                 }
                 break;
             default:
-                throw "unsupported shift16=" + Ja;
+                throw "unsupported shift16=" + conditional_var;
         }
         return Yb;
     }
-    function nc(Ja, Yb, Zb) {
+    function shift32(conditional_var, Yb, Zb) {
         var kc, ac;
-        switch (Ja) {
+        switch (conditional_var) {
             case 0:
                 Zb &= 0x1f;
                 if (Zb) {
                     kc = Yb;
                     Yb = (Yb << Zb) | (Yb >>> (32 - Zb));
-                    ya = lc();
-                    ya |= (Yb & 0x0001) | (((kc ^ Yb) >> 20) & 0x0800);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (Yb & 0x0001) | (((kc ^ Yb) >> 20) & 0x0800);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 1:
@@ -1123,129 +1426,136 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 if (Zb) {
                     kc = Yb;
                     Yb = (Yb >>> Zb) | (Yb << (32 - Zb));
-                    ya = lc();
-                    ya |= ((Yb >> 31) & 0x0001) | (((kc ^ Yb) >> 20) & 0x0800);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= ((Yb >> 31) & 0x0001) | (((kc ^ Yb) >> 20) & 0x0800);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 2:
                 Zb &= 0x1f;
                 if (Zb) {
                     kc = Yb;
-                    ac = bc();
+                    ac = check_carry();
                     Yb = (Yb << Zb) | (ac << (Zb - 1));
                     if (Zb > 1)
                         Yb |= kc >>> (33 - Zb);
-                    ya = lc();
-                    ya |= (((kc ^ Yb) >> 20) & 0x0800) | ((kc >> (32 - Zb)) & 0x0001);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (((kc ^ Yb) >> 20) & 0x0800) | ((kc >> (32 - Zb)) & 0x0001);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 3:
                 Zb &= 0x1f;
                 if (Zb) {
                     kc = Yb;
-                    ac = bc();
+                    ac = check_carry();
                     Yb = (Yb >>> Zb) | (ac << (32 - Zb));
                     if (Zb > 1)
                         Yb |= kc << (33 - Zb);
-                    ya = lc();
-                    ya |= (((kc ^ Yb) >> 20) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
+                    _src = conditional_flags_for_rot_shift_ops();
+                    _src |= (((kc ^ Yb) >> 20) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
                 }
                 break;
             case 4:
             case 6:
                 Zb &= 0x1f;
                 if (Zb) {
-                    ya = Yb << (Zb - 1);
-                    za = Yb = Yb << Zb;
-                    Aa = 17;
+                    _src = Yb << (Zb - 1);
+                    _dst = Yb = Yb << Zb;
+                    _op = 17;
                 }
                 break;
             case 5:
                 Zb &= 0x1f;
                 if (Zb) {
-                    ya = Yb >>> (Zb - 1);
-                    za = Yb = Yb >>> Zb;
-                    Aa = 20;
+                    _src = Yb >>> (Zb - 1);
+                    _dst = Yb = Yb >>> Zb;
+                    _op = 20;
                 }
                 break;
             case 7:
                 Zb &= 0x1f;
                 if (Zb) {
-                    ya = Yb >> (Zb - 1);
-                    za = Yb = Yb >> Zb;
-                    Aa = 20;
+                    _src = Yb >> (Zb - 1);
+                    _dst = Yb = Yb >> Zb;
+                    _op = 20;
                 }
                 break;
             default:
-                throw "unsupported shift32=" + Ja;
+                throw "unsupported shift32=" + conditional_var;
         }
         return Yb;
     }
-    function oc(Ja, Yb, Zb, pc) {
-        var qc;
+
+
+    /*
+       Bit Twiddling Functions
+       ==========================================================================================
+    */
+
+    function op_16_SHRD_SHLD(conditional_var, Yb, Zb, pc) {
+        var bool;
         pc &= 0x1f;
         if (pc) {
-            if (Ja == 0) {
+            if (conditional_var == 0) {
                 Zb &= 0xffff;
-                qc = Zb | (Yb << 16);
-                ya = qc >> (32 - pc);
-                qc <<= pc;
+                bool = Zb | (Yb << 16);
+                _src = bool >> (32 - pc);
+                bool <<= pc;
                 if (pc > 16)
-                    qc |= Zb << (pc - 16);
-                Yb = za = qc >> 16;
-                Aa = 19;
+                    bool |= Zb << (pc - 16);
+                Yb = _dst = bool >> 16;
+                _op = 19;
             } else {
-                qc = (Yb & 0xffff) | (Zb << 16);
-                ya = qc >> (pc - 1);
-                qc >>= pc;
+                bool = (Yb & 0xffff) | (Zb << 16);
+                _src = bool >> (pc - 1);
+                bool >>= pc;
                 if (pc > 16)
-                    qc |= Zb << (32 - pc);
-                Yb = za = (((qc) << 16) >> 16);
-                Aa = 19;
+                    bool |= Zb << (32 - pc);
+                Yb = _dst = (((bool) << 16) >> 16);
+                _op = 19;
             }
         }
         return Yb;
     }
-    function rc(Yb, Zb, pc) {
+    function op_SHLD(Yb, Zb, pc) {
         pc &= 0x1f;
         if (pc) {
-            ya = Yb << (pc - 1);
-            za = Yb = (Yb << pc) | (Zb >>> (32 - pc));
-            Aa = 17;
+            _src = Yb << (pc - 1);
+            _dst = Yb = (Yb << pc) | (Zb >>> (32 - pc));
+            _op = 17;
         }
         return Yb;
     }
-    function sc(Yb, Zb, pc) {
+    function op_SHRD(Yb, Zb, pc) {
         pc &= 0x1f;
         if (pc) {
-            ya = Yb >> (pc - 1);
-            za = Yb = (Yb >>> pc) | (Zb << (32 - pc));
-            Aa = 20;
+            _src = Yb >> (pc - 1);
+            _dst = Yb = (Yb >>> pc) | (Zb << (32 - pc));
+            _op = 20;
         }
         return Yb;
     }
-    function tc(Yb, Zb) {
+    function op_16_BT(Yb, Zb) {
         Zb &= 0xf;
-        ya = Yb >> Zb;
-        Aa = 19;
+        _src = Yb >> Zb;
+        _op = 19;
     }
-    function uc(Yb, Zb) {
+    function op_BT(Yb, Zb) {
         Zb &= 0x1f;
-        ya = Yb >> Zb;
-        Aa = 20;
+        _src = Yb >> Zb;
+        _op = 20;
     }
-    function vc(Ja, Yb, Zb) {
+    function op_16_BTS_BTR_BTC(conditional_var, Yb, Zb) {
         var wc;
         Zb &= 0xf;
-        ya = Yb >> Zb;
+        _src = Yb >> Zb;
         wc = 1 << Zb;
-        switch (Ja) {
+        switch (conditional_var) {
             case 1:
                 Yb |= wc;
                 break;
@@ -1257,15 +1567,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 Yb ^= wc;
                 break;
         }
-        Aa = 19;
+        _op = 19;
         return Yb;
     }
-    function xc(Ja, Yb, Zb) {
+    function op_BTS_BTR_BTC(conditional_var, Yb, Zb) {
         var wc;
         Zb &= 0x1f;
-        ya = Yb >> Zb;
+        _src = Yb >> Zb;
         wc = 1 << Zb;
-        switch (Ja) {
+        switch (conditional_var) {
             case 1:
                 Yb |= wc;
                 break;
@@ -1277,10 +1587,10 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 Yb ^= wc;
                 break;
         }
-        Aa = 20;
+        _op = 20;
         return Yb;
     }
-    function yc(Yb, Zb) {
+    function op_16_BSF(Yb, Zb) {
         Zb &= 0xffff;
         if (Zb) {
             Yb = 0;
@@ -1288,28 +1598,28 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 Yb++;
                 Zb >>= 1;
             }
-            za = 1;
+            _dst = 1;
         } else {
-            za = 0;
+            _dst = 0;
         }
-        Aa = 14;
+        _op = 14;
         return Yb;
     }
-    function zc(Yb, Zb) {
+    function op_BSF(Yb, Zb) {
         if (Zb) {
             Yb = 0;
             while ((Zb & 1) == 0) {
                 Yb++;
                 Zb >>= 1;
             }
-            za = 1;
+            _dst = 1;
         } else {
-            za = 0;
+            _dst = 0;
         }
-        Aa = 14;
+        _op = 14;
         return Yb;
     }
-    function Ac(Yb, Zb) {
+    function op_16_BSR(Yb, Zb) {
         Zb &= 0xffff;
         if (Zb) {
             Yb = 15;
@@ -1317,101 +1627,107 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 Yb--;
                 Zb <<= 1;
             }
-            za = 1;
+            _dst = 1;
         } else {
-            za = 0;
+            _dst = 0;
         }
-        Aa = 14;
+        _op = 14;
         return Yb;
     }
-    function Bc(Yb, Zb) {
+    function op_BSR(Yb, Zb) {
         if (Zb) {
             Yb = 31;
             while (Zb >= 0) {
                 Yb--;
                 Zb <<= 1;
             }
-            za = 1;
+            _dst = 1;
         } else {
-            za = 0;
+            _dst = 0;
         }
-        Aa = 14;
+        _op = 14;
         return Yb;
     }
-    function Cc(b) {
+
+    /*
+      Multiply / Divide Functions
+      ==========================================================================================
+    */
+
+    function op_DIV(OPbyte) {
         var a, q, r;
-        a = xa[0] & 0xffff;
-        b &= 0xff;
-        if ((a >> 8) >= b)
-            Dc(0);
-        q = (a / b) >> 0;
-        r = (a % b);
-        Wb(0, (q & 0xff) | (r << 8));
+        a = regs[0] & 0xffff;
+        OPbyte &= 0xff;
+        if ((a >> 8) >= OPbyte)
+            abort(0);
+        q = (a / OPbyte) >> 0;
+        r = (a % OPbyte);
+        set_lower_word_in_register(0, (q & 0xff) | (r << 8));
     }
-    function Ec(b) {
+    function op_IDIV(OPbyte) {
         var a, q, r;
-        a = (xa[0] << 16) >> 16;
-        b = (b << 24) >> 24;
-        if (b == 0)
-            Dc(0);
-        q = (a / b) >> 0;
+        a = (regs[0] << 16) >> 16;
+        OPbyte = (OPbyte << 24) >> 24;
+        if (OPbyte == 0)
+            abort(0);
+        q = (a / OPbyte) >> 0;
         if (((q << 24) >> 24) != q)
-            Dc(0);
-        r = (a % b);
-        Wb(0, (q & 0xff) | (r << 8));
+            abort(0);
+        r = (a % OPbyte);
+        set_lower_word_in_register(0, (q & 0xff) | (r << 8));
     }
-    function Fc(b) {
+    function op_16_DIV(OPbyte) {
         var a, q, r;
-        a = (xa[2] << 16) | (xa[0] & 0xffff);
-        b &= 0xffff;
-        if ((a >>> 16) >= b)
-            Dc(0);
-        q = (a / b) >> 0;
-        r = (a % b);
-        Wb(0, q);
-        Wb(2, r);
+        a = (regs[2] << 16) | (regs[0] & 0xffff);
+        OPbyte &= 0xffff;
+        if ((a >>> 16) >= OPbyte)
+            abort(0);
+        q = (a / OPbyte) >> 0;
+        r = (a % OPbyte);
+        set_lower_word_in_register(0, q);
+        set_lower_word_in_register(2, r);
     }
-    function Gc(b) {
+    function op_16_IDIV(OPbyte) {
         var a, q, r;
-        a = (xa[2] << 16) | (xa[0] & 0xffff);
-        b = (b << 16) >> 16;
-        if (b == 0)
-            Dc(0);
-        q = (a / b) >> 0;
+        a = (regs[2] << 16) | (regs[0] & 0xffff);
+        OPbyte = (OPbyte << 16) >> 16;
+        if (OPbyte == 0)
+            abort(0);
+        q = (a / OPbyte) >> 0;
         if (((q << 16) >> 16) != q)
-            Dc(0);
-        r = (a % b);
-        Wb(0, q);
-        Wb(2, r);
+            abort(0);
+        r = (a % OPbyte);
+        set_lower_word_in_register(0, q);
+        set_lower_word_in_register(2, r);
     }
-    function Hc(Ic, Jc, b) {
+    function op_DIV32(Ic, Jc, OPbyte) {
         var a, i, Kc;
         Ic = Ic >>> 0;
         Jc = Jc >>> 0;
-        b = b >>> 0;
-        if (Ic >= b) {
-            Dc(0);
+        OPbyte = OPbyte >>> 0;
+        if (Ic >= OPbyte) {
+            abort(0);
         }
         if (Ic >= 0 && Ic <= 0x200000) {
             a = Ic * 4294967296 + Jc;
-            Ma = (a % b) >> 0;
-            return (a / b) >> 0;
+            v = (a % OPbyte) >> 0;
+            return (a / OPbyte) >> 0;
         } else {
             for (i = 0; i < 32; i++) {
                 Kc = Ic >> 31;
                 Ic = ((Ic << 1) | (Jc >>> 31)) >>> 0;
-                if (Kc || Ic >= b) {
-                    Ic = Ic - b;
+                if (Kc || Ic >= OPbyte) {
+                    Ic = Ic - OPbyte;
                     Jc = (Jc << 1) | 1;
                 } else {
                     Jc = Jc << 1;
                 }
             }
-            Ma = Ic >> 0;
+            v = Ic >> 0;
             return Jc;
         }
     }
-    function Lc(Ic, Jc, b) {
+    function op_IDIV32(Ic, Jc, OPbyte) {
         var Mc, Nc, q;
         if (Ic < 0) {
             Mc = 1;
@@ -1422,348 +1738,355 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
         } else {
             Mc = 0;
         }
-        if (b < 0) {
-            b = (-b) >> 0;
+        if (OPbyte < 0) {
+            OPbyte = (-OPbyte) >> 0;
             Nc = 1;
         } else {
             Nc = 0;
         }
-        q = Hc(Ic, Jc, b);
+        q = op_DIV32(Ic, Jc, OPbyte);
         Nc ^= Mc;
         if (Nc) {
             if ((q >>> 0) > 0x80000000)
-                Dc(0);
+                abort(0);
             q = (-q) >> 0;
         } else {
             if ((q >>> 0) >= 0x80000000)
-                Dc(0);
+                abort(0);
         }
         if (Mc) {
-            Ma = (-Ma) >> 0;
+            v = (-v) >> 0;
         }
         return q;
     }
-    function Oc(a, b) {
-        var qc;
+    function op_MUL(a, OPbyte) {
+        var bool;
         a &= 0xff;
-        b &= 0xff;
-        qc = (xa[0] & 0xff) * (b & 0xff);
-        ya = qc >> 8;
-        za = (((qc) << 24) >> 24);
-        Aa = 21;
-        return qc;
+        OPbyte &= 0xff;
+        bool = (regs[0] & 0xff) * (OPbyte & 0xff);
+        _src = bool >> 8;
+        _dst = (((bool) << 24) >> 24);
+        _op = 21;
+        return bool;
     }
-    function Pc(a, b) {
-        var qc;
+    function op_IMUL(a, OPbyte) {
+        var bool;
         a = (((a) << 24) >> 24);
-        b = (((b) << 24) >> 24);
-        qc = (a * b) >> 0;
-        za = (((qc) << 24) >> 24);
-        ya = (qc != za) >> 0;
-        Aa = 21;
-        return qc;
+        OPbyte = (((OPbyte) << 24) >> 24);
+        bool = (a * OPbyte) >> 0;
+        _dst = (((bool) << 24) >> 24);
+        _src = (bool != _dst) >> 0;
+        _op = 21;
+        return bool;
     }
-    function Qc(a, b) {
-        var qc;
-        qc = ((a & 0xffff) * (b & 0xffff)) >> 0;
-        ya = qc >>> 16;
-        za = (((qc) << 16) >> 16);
-        Aa = 22;
-        return qc;
+    function op_16_MUL(a, OPbyte) {
+        var bool;
+        bool = ((a & 0xffff) * (OPbyte & 0xffff)) >> 0;
+        _src = bool >>> 16;
+        _dst = (((bool) << 16) >> 16);
+        _op = 22;
+        return bool;
     }
-    function Rc(a, b) {
-        var qc;
+    function op_16_IMUL(a, OPbyte) {
+        var bool;
         a = (a << 16) >> 16;
-        b = (b << 16) >> 16;
-        qc = (a * b) >> 0;
-        za = (((qc) << 16) >> 16);
-        ya = (qc != za) >> 0;
-        Aa = 22;
-        return qc;
+        OPbyte = (OPbyte << 16) >> 16;
+        bool = (a * OPbyte) >> 0;
+        _dst = (((bool) << 16) >> 16);
+        _src = (bool != _dst) >> 0;
+        _op = 22;
+        return bool;
     }
-    function Sc(a, b) {
+    function do_multiply32(a, OPbyte) {
         var r, Jc, Ic, Tc, Uc, m;
         a = a >>> 0;
-        b = b >>> 0;
-        r = a * b;
+        OPbyte = OPbyte >>> 0;
+        r = a * OPbyte;
         if (r <= 0xffffffff) {
-            Ma = 0;
+            v = 0;
             r &= -1;
         } else {
             Jc = a & 0xffff;
             Ic = a >>> 16;
-            Tc = b & 0xffff;
-            Uc = b >>> 16;
+            Tc = OPbyte & 0xffff;
+            Uc = OPbyte >>> 16;
             r = Jc * Tc;
-            Ma = Ic * Uc;
+            v = Ic * Uc;
             m = Jc * Uc;
             r += (((m & 0xffff) << 16) >>> 0);
-            Ma += (m >>> 16);
+            v += (m >>> 16);
             if (r >= 4294967296) {
                 r -= 4294967296;
-                Ma++;
+                v++;
             }
             m = Ic * Tc;
             r += (((m & 0xffff) << 16) >>> 0);
-            Ma += (m >>> 16);
+            v += (m >>> 16);
             if (r >= 4294967296) {
                 r -= 4294967296;
-                Ma++;
+                v++;
             }
             r &= -1;
-            Ma &= -1;
+            v &= -1;
         }
         return r;
     }
-    function Vc(a, b) {
-        za = Sc(a, b);
-        ya = Ma;
-        Aa = 23;
-        return za;
+    function op_MUL32(a, OPbyte) {
+        _dst = do_multiply32(a, OPbyte);
+        _src = v;
+        _op = 23;
+        return _dst;
     }
-    function Wc(a, b) {
+    function op_IMUL32(a, OPbyte) {
         var s, r;
         s = 0;
         if (a < 0) {
             a = -a;
             s = 1;
         }
-        if (b < 0) {
-            b = -b;
+        if (OPbyte < 0) {
+            OPbyte = -OPbyte;
             s ^= 1;
         }
-        r = Sc(a, b);
+        r = do_multiply32(a, OPbyte);
         if (s) {
-            Ma = ~Ma;
+            v = ~v;
             r = (-r) >> 0;
             if (r == 0) {
-                Ma = (Ma + 1) >> 0;
+                v = (v + 1) >> 0;
             }
         }
-        za = r;
-        ya = (Ma - (r >> 31)) >> 0;
-        Aa = 23;
+        _dst = r;
+        _src = (v - (r >> 31)) >> 0;
+        _op = 23;
         return r;
     }
-    function bc() {
-        var Yb, qc, Xc, Yc;
-        if (Aa >= 25) {
-            Xc = Ba;
-            Yc = Ca;
+
+
+    /*
+      Status bits and Flags Routines
+      ================================================================================
+    */
+
+    function check_carry() {
+        var Yb, bool, current_op, relevant_dst;
+        if (_op >= 25) {
+            current_op = _op2;
+            relevant_dst = _dst2;
         } else {
-            Xc = Aa;
-            Yc = za;
+            current_op = _op;
+            relevant_dst = _dst;
         }
-        switch (Xc) {
+        switch (current_op) {
             case 0:
-                qc = (Yc & 0xff) < (ya & 0xff);
+                bool = (relevant_dst & 0xff) < (_src & 0xff);
                 break;
             case 1:
-                qc = (Yc & 0xffff) < (ya & 0xffff);
+                bool = (relevant_dst & 0xffff) < (_src & 0xffff);
                 break;
             case 2:
-                qc = (Yc >>> 0) < (ya >>> 0);
+                bool = (relevant_dst >>> 0) < (_src >>> 0);
                 break;
             case 3:
-                qc = (Yc & 0xff) <= (ya & 0xff);
+                bool = (relevant_dst & 0xff) <= (_src & 0xff);
                 break;
             case 4:
-                qc = (Yc & 0xffff) <= (ya & 0xffff);
+                bool = (relevant_dst & 0xffff) <= (_src & 0xffff);
                 break;
             case 5:
-                qc = (Yc >>> 0) <= (ya >>> 0);
+                bool = (relevant_dst >>> 0) <= (_src >>> 0);
                 break;
             case 6:
-                qc = ((Yc + ya) & 0xff) < (ya & 0xff);
+                bool = ((relevant_dst + _src) & 0xff) < (_src & 0xff);
                 break;
             case 7:
-                qc = ((Yc + ya) & 0xffff) < (ya & 0xffff);
+                bool = ((relevant_dst + _src) & 0xffff) < (_src & 0xffff);
                 break;
             case 8:
-                qc = ((Yc + ya) >>> 0) < (ya >>> 0);
+                bool = ((relevant_dst + _src) >>> 0) < (_src >>> 0);
                 break;
             case 9:
-                Yb = (Yc + ya + 1) & 0xff;
-                qc = Yb <= (ya & 0xff);
+                Yb = (relevant_dst + _src + 1) & 0xff;
+                bool = Yb <= (_src & 0xff);
                 break;
             case 10:
-                Yb = (Yc + ya + 1) & 0xffff;
-                qc = Yb <= (ya & 0xffff);
+                Yb = (relevant_dst + _src + 1) & 0xffff;
+                bool = Yb <= (_src & 0xffff);
                 break;
             case 11:
-                Yb = (Yc + ya + 1) >>> 0;
-                qc = Yb <= (ya >>> 0);
+                Yb = (relevant_dst + _src + 1) >>> 0;
+                bool = Yb <= (_src >>> 0);
                 break;
             case 12:
             case 13:
             case 14:
-                qc = 0;
+                bool = 0;
                 break;
             case 15:
-                qc = (ya >> 7) & 1;
+                bool = (_src >> 7) & 1;
                 break;
             case 16:
-                qc = (ya >> 15) & 1;
+                bool = (_src >> 15) & 1;
                 break;
             case 17:
-                qc = (ya >> 31) & 1;
+                bool = (_src >> 31) & 1;
                 break;
             case 18:
             case 19:
             case 20:
-                qc = ya & 1;
+                bool = _src & 1;
                 break;
             case 21:
             case 22:
             case 23:
-                qc = ya != 0;
+                bool = _src != 0;
                 break;
             case 24:
-                qc = ya & 1;
+                bool = _src & 1;
                 break;
             default:
-                throw "GET_CARRY: unsupported cc_op=" + Aa;
+                throw "GET_CARRY: unsupported cc_op=" + _op;
         }
-        return qc;
+        return bool;
     }
-    function Zc() {
-        var qc, Yb;
-        switch (Aa) {
+    function check_overflow() {
+        var bool, Yb;
+        switch (_op) {
             case 0:
-                Yb = (za - ya) >> 0;
-                qc = (((Yb ^ ya ^ -1) & (Yb ^ za)) >> 7) & 1;
+                Yb = (_dst - _src) >> 0;
+                bool = (((Yb ^ _src ^ -1) & (Yb ^ _dst)) >> 7) & 1;
                 break;
             case 1:
-                Yb = (za - ya) >> 0;
-                qc = (((Yb ^ ya ^ -1) & (Yb ^ za)) >> 15) & 1;
+                Yb = (_dst - _src) >> 0;
+                bool = (((Yb ^ _src ^ -1) & (Yb ^ _dst)) >> 15) & 1;
                 break;
             case 2:
-                Yb = (za - ya) >> 0;
-                qc = (((Yb ^ ya ^ -1) & (Yb ^ za)) >> 31) & 1;
+                Yb = (_dst - _src) >> 0;
+                bool = (((Yb ^ _src ^ -1) & (Yb ^ _dst)) >> 31) & 1;
                 break;
             case 3:
-                Yb = (za - ya - 1) >> 0;
-                qc = (((Yb ^ ya ^ -1) & (Yb ^ za)) >> 7) & 1;
+                Yb = (_dst - _src - 1) >> 0;
+                bool = (((Yb ^ _src ^ -1) & (Yb ^ _dst)) >> 7) & 1;
                 break;
             case 4:
-                Yb = (za - ya - 1) >> 0;
-                qc = (((Yb ^ ya ^ -1) & (Yb ^ za)) >> 15) & 1;
+                Yb = (_dst - _src - 1) >> 0;
+                bool = (((Yb ^ _src ^ -1) & (Yb ^ _dst)) >> 15) & 1;
                 break;
             case 5:
-                Yb = (za - ya - 1) >> 0;
-                qc = (((Yb ^ ya ^ -1) & (Yb ^ za)) >> 31) & 1;
+                Yb = (_dst - _src - 1) >> 0;
+                bool = (((Yb ^ _src ^ -1) & (Yb ^ _dst)) >> 31) & 1;
                 break;
             case 6:
-                Yb = (za + ya) >> 0;
-                qc = (((Yb ^ ya) & (Yb ^ za)) >> 7) & 1;
+                Yb = (_dst + _src) >> 0;
+                bool = (((Yb ^ _src) & (Yb ^ _dst)) >> 7) & 1;
                 break;
             case 7:
-                Yb = (za + ya) >> 0;
-                qc = (((Yb ^ ya) & (Yb ^ za)) >> 15) & 1;
+                Yb = (_dst + _src) >> 0;
+                bool = (((Yb ^ _src) & (Yb ^ _dst)) >> 15) & 1;
                 break;
             case 8:
-                Yb = (za + ya) >> 0;
-                qc = (((Yb ^ ya) & (Yb ^ za)) >> 31) & 1;
+                Yb = (_dst + _src) >> 0;
+                bool = (((Yb ^ _src) & (Yb ^ _dst)) >> 31) & 1;
                 break;
             case 9:
-                Yb = (za + ya + 1) >> 0;
-                qc = (((Yb ^ ya) & (Yb ^ za)) >> 7) & 1;
+                Yb = (_dst + _src + 1) >> 0;
+                bool = (((Yb ^ _src) & (Yb ^ _dst)) >> 7) & 1;
                 break;
             case 10:
-                Yb = (za + ya + 1) >> 0;
-                qc = (((Yb ^ ya) & (Yb ^ za)) >> 15) & 1;
+                Yb = (_dst + _src + 1) >> 0;
+                bool = (((Yb ^ _src) & (Yb ^ _dst)) >> 15) & 1;
                 break;
             case 11:
-                Yb = (za + ya + 1) >> 0;
-                qc = (((Yb ^ ya) & (Yb ^ za)) >> 31) & 1;
+                Yb = (_dst + _src + 1) >> 0;
+                bool = (((Yb ^ _src) & (Yb ^ _dst)) >> 31) & 1;
                 break;
             case 12:
             case 13:
             case 14:
-                qc = 0;
+                bool = 0;
                 break;
             case 15:
             case 18:
-                qc = ((ya ^ za) >> 7) & 1;
+                bool = ((_src ^ _dst) >> 7) & 1;
                 break;
             case 16:
             case 19:
-                qc = ((ya ^ za) >> 15) & 1;
+                bool = ((_src ^ _dst) >> 15) & 1;
                 break;
             case 17:
             case 20:
-                qc = ((ya ^ za) >> 31) & 1;
+                bool = ((_src ^ _dst) >> 31) & 1;
                 break;
             case 21:
             case 22:
             case 23:
-                qc = ya != 0;
+                bool = _src != 0;
                 break;
             case 24:
-                qc = (ya >> 11) & 1;
+                bool = (_src >> 11) & 1;
                 break;
             case 25:
-                qc = (za & 0xff) == 0x80;
+                bool = (_dst & 0xff) == 0x80;
                 break;
             case 26:
-                qc = (za & 0xffff) == 0x8000;
+                bool = (_dst & 0xffff) == 0x8000;
                 break;
             case 27:
-                qc = (za == -2147483648);
+                bool = (_dst == -2147483648);
                 break;
             case 28:
-                qc = (za & 0xff) == 0x7f;
+                bool = (_dst & 0xff) == 0x7f;
                 break;
             case 29:
-                qc = (za & 0xffff) == 0x7fff;
+                bool = (_dst & 0xffff) == 0x7fff;
                 break;
             case 30:
-                qc = za == 0x7fffffff;
+                bool = _dst == 0x7fffffff;
                 break;
             default:
-                throw "JO: unsupported cc_op=" + Aa;
+                throw "JO: unsupported cc_op=" + _op;
         }
-        return qc;
+        return bool;
     }
-    function ad() {
-        var qc;
-        switch (Aa) {
+    function check_below_or_equal() {
+        var bool;
+        switch (_op) {
             case 6:
-                qc = ((za + ya) & 0xff) <= (ya & 0xff);
+                bool = ((_dst + _src) & 0xff) <= (_src & 0xff);
                 break;
             case 7:
-                qc = ((za + ya) & 0xffff) <= (ya & 0xffff);
+                bool = ((_dst + _src) & 0xffff) <= (_src & 0xffff);
                 break;
             case 8:
-                qc = ((za + ya) >>> 0) <= (ya >>> 0);
+                bool = ((_dst + _src) >>> 0) <= (_src >>> 0);
                 break;
             case 24:
-                qc = (ya & (0x0040 | 0x0001)) != 0;
+                bool = (_src & (0x0040 | 0x0001)) != 0;
                 break;
             default:
-                qc = bc() | (za == 0);
+                bool = check_carry() | (_dst == 0);
                 break;
         }
-        return qc;
+        return bool;
     }
-    function bd() {
-        if (Aa == 24) {
-            return (ya >> 2) & 1;
+    function check_parity() {
+        if (_op == 24) {
+            return (_src >> 2) & 1;
         } else {
-            return aa[za & 0xff];
+            return parity_LUT[_dst & 0xff];
         }
     }
-    function cd() {
-        var qc;
-        switch (Aa) {
+    function check_less_than() {
+        var bool;
+        switch (_op) {
             case 6:
-                qc = ((za + ya) << 24) < (ya << 24);
+                bool = ((_dst + _src) << 24) < (_src << 24);
                 break;
             case 7:
-                qc = ((za + ya) << 16) < (ya << 16);
+                bool = ((_dst + _src) << 16) < (_src << 16);
                 break;
             case 8:
-                qc = ((za + ya) >> 0) < ya;
+                bool = ((_dst + _src) >> 0) < _src;
                 break;
             case 12:
             case 25:
@@ -1774,28 +2097,28 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
             case 14:
             case 27:
             case 30:
-                qc = za < 0;
+                bool = _dst < 0;
                 break;
             case 24:
-                qc = ((ya >> 7) ^ (ya >> 11)) & 1;
+                bool = ((_src >> 7) ^ (_src >> 11)) & 1;
                 break;
             default:
-                qc = (Aa == 24 ? ((ya >> 7) & 1) : (za < 0)) ^ Zc();
+                bool = (_op == 24 ? ((_src >> 7) & 1) : (_dst < 0)) ^ check_overflow();
                 break;
         }
-        return qc;
+        return bool;
     }
-    function dd() {
-        var qc;
-        switch (Aa) {
+    function check_less_or_equal() {
+        var bool;
+        switch (_op) {
             case 6:
-                qc = ((za + ya) << 24) <= (ya << 24);
+                bool = ((_dst + _src) << 24) <= (_src << 24);
                 break;
             case 7:
-                qc = ((za + ya) << 16) <= (ya << 16);
+                bool = ((_dst + _src) << 16) <= (_src << 16);
                 break;
             case 8:
-                qc = ((za + ya) >> 0) <= ya;
+                bool = ((_dst + _src) >> 0) <= _src;
                 break;
             case 12:
             case 25:
@@ -1806,48 +2129,48 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
             case 14:
             case 27:
             case 30:
-                qc = za <= 0;
+                bool = _dst <= 0;
                 break;
             case 24:
-                qc = (((ya >> 7) ^ (ya >> 11)) | (ya >> 6)) & 1;
+                bool = (((_src >> 7) ^ (_src >> 11)) | (_src >> 6)) & 1;
                 break;
             default:
-                qc = ((Aa == 24 ? ((ya >> 7) & 1) : (za < 0)) ^ Zc()) | (za == 0);
+                bool = ((_op == 24 ? ((_src >> 7) & 1) : (_dst < 0)) ^ check_overflow()) | (_dst == 0);
                 break;
         }
-        return qc;
+        return bool;
     }
-    function ed() {
-        var Yb, qc;
-        switch (Aa) {
+    function check_adjust_flag() {
+        var Yb, bool;
+        switch (_op) {
             case 0:
             case 1:
             case 2:
-                Yb = (za - ya) >> 0;
-                qc = (za ^ Yb ^ ya) & 0x10;
+                Yb = (_dst - _src) >> 0;
+                bool = (_dst ^ Yb ^ _src) & 0x10;
                 break;
             case 3:
             case 4:
             case 5:
-                Yb = (za - ya - 1) >> 0;
-                qc = (za ^ Yb ^ ya) & 0x10;
+                Yb = (_dst - _src - 1) >> 0;
+                bool = (_dst ^ Yb ^ _src) & 0x10;
                 break;
             case 6:
             case 7:
             case 8:
-                Yb = (za + ya) >> 0;
-                qc = (za ^ Yb ^ ya) & 0x10;
+                Yb = (_dst + _src) >> 0;
+                bool = (_dst ^ Yb ^ _src) & 0x10;
                 break;
             case 9:
             case 10:
             case 11:
-                Yb = (za + ya + 1) >> 0;
-                qc = (za ^ Yb ^ ya) & 0x10;
+                Yb = (_dst + _src + 1) >> 0;
+                bool = (_dst ^ Yb ^ _src) & 0x10;
                 break;
             case 12:
             case 13:
             case 14:
-                qc = 0;
+                bool = 0;
                 break;
             case 15:
             case 18:
@@ -1858,218 +2181,268 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
             case 21:
             case 22:
             case 23:
-                qc = 0;
+                bool = 0;
                 break;
             case 24:
-                qc = ya & 0x10;
+                bool = _src & 0x10;
                 break;
             case 25:
             case 26:
             case 27:
-                qc = (za ^ (za - 1)) & 0x10;
+                bool = (_dst ^ (_dst - 1)) & 0x10;
                 break;
             case 28:
             case 29:
             case 30:
-                qc = (za ^ (za + 1)) & 0x10;
+                bool = (_dst ^ (_dst + 1)) & 0x10;
                 break;
             default:
-                throw "AF: unsupported cc_op=" + Aa;
+                throw "AF: unsupported cc_op=" + _op;
         }
-        return qc;
+        return bool;
     }
-    function fd(gd) {
-        var qc;
+    function check_status_bits_for_jump(gd) {
+        var bool;
         switch (gd >> 1) {
             case 0:
-                qc = Zc();
+                bool = check_overflow();
                 break;
             case 1:
-                qc = bc();
+                bool = check_carry();
                 break;
             case 2:
-                qc = (za == 0);
+                bool = (_dst == 0);
                 break;
             case 3:
-                qc = ad();
+                bool = check_below_or_equal();
                 break;
             case 4:
-                qc = (Aa == 24 ? ((ya >> 7) & 1) : (za < 0));
+                bool = (_op == 24 ? ((_src >> 7) & 1) : (_dst < 0));
                 break;
             case 5:
-                qc = bd();
+                bool = check_parity();
                 break;
             case 6:
-                qc = cd();
+                bool = check_less_than();
                 break;
             case 7:
-                qc = dd();
+                bool = check_less_or_equal();
                 break;
             default:
                 throw "unsupported cond: " + gd;
         }
-        return qc ^ (gd & 1);
+        return bool ^ (gd & 1);
     }
-    function lc() {
-        return (bd() << 2) | ((za == 0) << 6) | ((Aa == 24 ? ((ya >> 7) & 1) : (za < 0)) << 7) | ed();
+    function conditional_flags_for_rot_shift_ops() {
+        return (check_parity() << 2) | ((_dst == 0) << 6) | ((_op == 24 ? ((_src >> 7) & 1) : (_dst < 0)) << 7) | check_adjust_flag();
     }
-    function hd() {
-        return (bc() << 0) | (bd() << 2) | ((za == 0) << 6) | ((Aa == 24 ? ((ya >> 7) & 1) : (za < 0)) << 7) | (Zc() << 11) | ed();
+    function get_conditional_flags() {
+        return (check_carry() << 0) | (check_parity() << 2) | ((_dst == 0) << 6) | ((_op == 24 ? ((_src >> 7) & 1) : (_dst < 0)) << 7) | (check_overflow() << 11) | check_adjust_flag();
     }
-    function id() {
-        var jd;
-        jd = hd();
-        jd |= wa.df & 0x00000400;
-        jd |= wa.eflags;
-        return jd;
+    /* The below two functions set the global condition flags */
+    function get_FLAGS() {
+        var flag_bits;
+        flag_bits = get_conditional_flags();
+        flag_bits |= cpu.df & 0x00000400; //direction flag
+        flag_bits |= cpu.eflags; //get extended flags
+        return flag_bits;
     }
-    function kd(jd, ld) {
-        ya = jd & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
-        wa.df = 1 - (2 * ((jd >> 10) & 1));
-        wa.eflags = (wa.eflags & ~ld) | (jd & ld);
+    function set_FLAGS(flag_bits, ld) {
+        _src = flag_bits & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
+        cpu.df = 1 - (2 * ((flag_bits >> 10) & 1));
+        cpu.eflags = (cpu.eflags & ~ld) | (flag_bits & ld);
     }
-    function md() {
-        return wa.cycle_count + (ua - Ka);
+
+
+    /*
+      Basic Debug Routines
+      ================================================================================
+    */
+
+    function current_cycle_count() {
+        return cpu.cycle_count + (N_cycles - cycles_left);
     }
-    function nd(na) {
-        throw "CPU abort: " + na;
+    function cpu_abort(str) {
+        throw "CPU abort: " + str;
     }
-    function od() {
-        wa.eip = Jb;
-        wa.cc_src = ya;
-        wa.cc_dst = za;
-        wa.cc_op = Aa;
-        wa.cc_op2 = Ba;
-        wa.cc_dst2 = Ca;
-        wa.dump();
+    function cpu_dump() {
+        cpu.eip = eip;
+        cpu.cc_src = _src;
+        cpu.cc_dst = _dst;
+        cpu.cc_op = _op;
+        cpu.cc_op2 = _op2;
+        cpu.cc_dst2 = _dst2;
+        cpu.dump();
     }
-    function pd() {
-        wa.eip = Jb;
-        wa.cc_src = ya;
-        wa.cc_dst = za;
-        wa.cc_op = Aa;
-        wa.cc_op2 = Ba;
-        wa.cc_dst2 = Ca;
-        wa.dump_short();
+    function cpu_dump_short() {
+        cpu.eip = eip;
+        cpu.cc_src = _src;
+        cpu.cc_dst = _dst;
+        cpu.cc_op = _op;
+        cpu.cc_op2 = _op2;
+        cpu.cc_dst2 = _dst2;
+        cpu.dump_short();
     }
-    function qd(intno, error_code) {
-        wa.cycle_count += (ua - Ka);
-        wa.eip = Jb;
-        wa.cc_src = ya;
-        wa.cc_dst = za;
-        wa.cc_op = Aa;
-        wa.cc_op2 = Ba;
-        wa.cc_dst2 = Ca;
-        throw {intno: intno,error_code: error_code};
+
+    /* Oh No You Didn't!
+       Identifier   Description
+       0            Divide error
+       1            Debug exceptions
+       2            Nonmaskable interrupt
+       3            Breakpoint (one-byte INT 3 instruction)
+       4            Overflow (INTO instruction)
+       5            Bounds check (BOUND instruction)
+       6            Invalid opcode
+       7            Coprocessor not available
+       8            Double fault
+       9            (reserved)
+       10           Invalid TSS
+       11           Segment not present
+       12           Stack exception
+       13           General protection
+       14           Page fault
+       15           (reserved)
+       16           Coprecessor error
+       17-31        (reserved)
+       32-255       Available for external interrupts via INTR pin
+
+       The identifiers of the maskable interrupts are determined by external
+       interrupt controllers (such as Intel's 8259A Programmable Interrupt
+       Controller) and communicated to the processor during the processor's
+       interrupt-acknowledge sequence. The numbers assigned by an 8259A PIC
+       can be specified by software. Any numbers in the range 32 through 255
+       can be used. Table 9-1 shows the assignment of interrupt and exception
+       identifiers.
+     */
+    function abort_with_error_code(intno, error_code) { //used only for errors 10,11,12,13,14
+        cpu.cycle_count += (N_cycles - cycles_left);
+        cpu.eip = eip;
+        cpu.cc_src = _src;
+        cpu.cc_dst = _dst;
+        cpu.cc_op = _op;
+        cpu.cc_op2 = _op2;
+        cpu.cc_dst2 = _dst2;
+        throw {intno: intno, error_code: error_code};
     }
-    function Dc(intno) {
-        qd(intno, 0);
+    function abort(intno) { //used only for errors 0, 5, 6, 7, 13
+        abort_with_error_code(intno, 0);
     }
-    function rd(sd) {
-        wa.cpl = sd;
-        if (wa.cpl == 3) {
-            bb = Za;
-            cb = ab;
+
+    function change_permission_level(sd) {
+        cpu.cpl = sd;
+        if (cpu.cpl == 3) {
+            _tlb_read_ = tlb_read_user;
+            _tlb_write_ = tlb_write_user;
         } else {
-            bb = Xa;
-            cb = Ya;
+            _tlb_read_ = tlb_read_kernel;
+            _tlb_write_ = tlb_write_kernel;
         }
     }
-    function td(fa, ud) {
-        var eb;
+    function do_tlb_lookup(mem8_loc, ud) {
+        var tlb_lookup;
         if (ud) {
-            eb = cb[fa >>> 12];
+            tlb_lookup = _tlb_write_[mem8_loc >>> 12];
         } else {
-            eb = bb[fa >>> 12];
+            tlb_lookup = _tlb_read_[mem8_loc >>> 12];
         }
-        if (eb == -1) {
-            fb(fa, ud, wa.cpl == 3);
+        if (tlb_lookup == -1) {
+            do_tlb_set_page(mem8_loc, ud, cpu.cpl == 3);
             if (ud) {
-                eb = cb[fa >>> 12];
+                tlb_lookup = _tlb_write_[mem8_loc >>> 12];
             } else {
-                eb = bb[fa >>> 12];
+                tlb_lookup = _tlb_read_[mem8_loc >>> 12];
             }
         }
-        return eb ^ fa;
+        return tlb_lookup ^ mem8_loc;
     }
-    function vd(ga) {
+
+    /*
+      Stack Operations
+      ==========================================================================================
+    */
+
+    function push_word_to_stack(x) {
         var wd;
-        wd = xa[4] - 2;
-        fa = ((wd & Pa) + Oa) >> 0;
-        ub(ga);
-        xa[4] = (xa[4] & ~Pa) | ((wd) & Pa);
+        wd = regs[4] - 2;
+        mem8_loc = ((wd & SS_mask) + SS_base) >> 0;
+        st16_mem8_write(x);
+        regs[4] = (regs[4] & ~SS_mask) | ((wd) & SS_mask);
     }
-    function xd(ga) {
+    function push_dword_to_stack(x) {
         var wd;
-        wd = xa[4] - 4;
-        fa = ((wd & Pa) + Oa) >> 0;
-        wb(ga);
-        xa[4] = (xa[4] & ~Pa) | ((wd) & Pa);
+        wd = regs[4] - 4;
+        mem8_loc = ((wd & SS_mask) + SS_base) >> 0;
+        st32_mem8_write(x);
+        regs[4] = (regs[4] & ~SS_mask) | ((wd) & SS_mask);
     }
-    function yd() {
-        fa = ((xa[4] & Pa) + Oa) >> 0;
-        return ib();
+    function pop_word_from_stack_read() {
+        mem8_loc = ((regs[4] & SS_mask) + SS_base) >> 0;
+        return ld_16bits_mem8_read();
     }
-    function zd() {
-        xa[4] = (xa[4] & ~Pa) | ((xa[4] + 2) & Pa);
+    function pop_word_from_stack_incr_ptr() {
+        regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
     }
-    function Ad() {
-        fa = ((xa[4] & Pa) + Oa) >> 0;
-        return kb();
+    function pop_dword_from_stack_read() {
+        mem8_loc = ((regs[4] & SS_mask) + SS_base) >> 0;
+        return ld_32bits_mem8_read();
     }
-    function Bd() {
-        xa[4] = (xa[4] & ~Pa) | ((xa[4] + 4) & Pa);
+    function pop_dword_from_stack_incr_ptr() {
+        regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
     }
-    function Cd(Nb, b) {
-        var n, Da, l, Ea, Dd, base, Ja, Ed;
+
+
+    /*
+      This next function is a bit mysterious to me still, it's used when the next instruction crosses a page boundary, I think.
+      It seems to determine the total size of the next operator (opcodes plus operands) up on deck.
+     */
+    function operation_size_function(eip_offset, OPbyte) {
+        var n, CS_flags, l, mem8, local_OPbyte_var, base, conditional_var, stride;
         n = 1;
-        Da = Ra;
-        if (Da & 0x0100)
-            Ed = 2;
+        CS_flags = init_CS_flags;
+        if (CS_flags & 0x0100)//are we in 16bit compatibility mode?
+            stride = 2;
         else
-            Ed = 4;
-        Fd: for (; ; ) {
-            switch (b) {
-                case 0x66:
-                    if (Ra & 0x0100) {
-                        Ed = 4;
-                        Da &= ~0x0100;
+            stride = 4;
+        EXEC_LOOP: for (; ; ) {
+            switch (OPbyte) {
+                case 0x66://   Operand-size override prefix
+                    if (init_CS_flags & 0x0100) {
+                        stride = 4;
+                        CS_flags &= ~0x0100;
                     } else {
-                        Ed = 2;
-                        Da |= 0x0100;
+                        stride = 2;
+                        CS_flags |= 0x0100;
                     }
-                case 0xf0:
-                case 0xf2:
-                case 0xf3:
-                case 0x26:
-                case 0x2e:
-                case 0x36:
-                case 0x3e:
-                case 0x64:
-                case 0x65:
+                case 0xf0://LOCK   Assert LOCK# Signal Prefix
+                case 0xf2://REPNZ  eCX Repeat String Operation Prefix
+                case 0xf3://REPZ  eCX Repeat String Operation Prefix
+                case 0x26://ES ES  ES segment override prefix
+                case 0x2e://CS CS  CS segment override prefix
+                case 0x36://SS SS  SS segment override prefix
+                case 0x3e://DS DS  DS segment override prefix
+                case 0x64://FS FS  FS segment override prefix
+                case 0x65://GS GS  GS segment override prefix
                     {
                         if ((n + 1) > 15)
-                            Dc(6);
-                        fa = (Nb + (n++)) >> 0;
-                        b = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                            abort(6);
+                        mem8_loc = (eip_offset + (n++)) >> 0;
+                        OPbyte = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                     }
-                    ;
                     break;
-                case 0x67:
-                    if (Ra & 0x0080) {
-                        Da &= ~0x0080;
+                case 0x67://   Address-size override prefix
+                    if (init_CS_flags & 0x0080) {
+                        CS_flags &= ~0x0080;
                     } else {
-                        Da |= 0x0080;
+                        CS_flags |= 0x0080;
                     }
                     {
                         if ((n + 1) > 15)
-                            Dc(6);
-                        fa = (Nb + (n++)) >> 0;
-                        b = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                            abort(6);
+                        mem8_loc = (eip_offset + (n++)) >> 0;
+                        OPbyte = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                     }
-                    ;
                     break;
                 case 0x91:
                 case 0x92:
@@ -2078,23 +2451,23 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x95:
                 case 0x96:
                 case 0x97:
-                case 0x40:
-                case 0x41:
-                case 0x42:
-                case 0x43:
-                case 0x44:
-                case 0x45:
-                case 0x46:
-                case 0x47:
-                case 0x48:
-                case 0x49:
-                case 0x4a:
-                case 0x4b:
-                case 0x4c:
-                case 0x4d:
-                case 0x4e:
-                case 0x4f:
-                case 0x50:
+                case 0x40://INC  Zv Increment by 1
+                case 0x41://REX.B   Extension of r/m field, base field, or opcode reg field
+                case 0x42://REX.X   Extension of SIB index field
+                case 0x43://REX.XB   REX.X and REX.B combination
+                case 0x44://REX.R   Extension of ModR/M reg field
+                case 0x45://REX.RB   REX.R and REX.B combination
+                case 0x46://REX.RX   REX.R and REX.X combination
+                case 0x47://REX.RXB   REX.R, REX.X and REX.B combination
+                case 0x48://DEC  Zv Decrement by 1
+                case 0x49://REX.WB   REX.W and REX.B combination
+                case 0x4a://REX.WX   REX.W and REX.X combination
+                case 0x4b://REX.WXB   REX.W, REX.X and REX.B combination
+                case 0x4c://REX.WR   REX.W and REX.R combination
+                case 0x4d://REX.WRB   REX.W, REX.R and REX.B combination
+                case 0x4e://REX.WRX   REX.W, REX.R and REX.X combination
+                case 0x4f://REX.WRXB   REX.W, REX.R, REX.X and REX.B combination
+                case 0x50://PUSH Zv SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                 case 0x51:
                 case 0x52:
                 case 0x53:
@@ -2102,7 +2475,7 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x55:
                 case 0x56:
                 case 0x57:
-                case 0x58:
+                case 0x58://POP SS:[rSP] Zv Pop a Value from the Stack
                 case 0x59:
                 case 0x5a:
                 case 0x5b:
@@ -2110,62 +2483,62 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x5d:
                 case 0x5e:
                 case 0x5f:
-                case 0x98:
-                case 0x99:
-                case 0xc9:
-                case 0x9c:
-                case 0x9d:
-                case 0x06:
-                case 0x0e:
-                case 0x16:
-                case 0x1e:
-                case 0x07:
-                case 0x17:
-                case 0x1f:
-                case 0xc3:
-                case 0xcb:
-                case 0x90:
-                case 0xcc:
-                case 0xce:
-                case 0xcf:
-                case 0xf5:
-                case 0xf8:
-                case 0xf9:
-                case 0xfc:
-                case 0xfd:
-                case 0xfa:
-                case 0xfb:
-                case 0x9e:
-                case 0x9f:
-                case 0xf4:
-                case 0xa4:
-                case 0xa5:
-                case 0xaa:
-                case 0xab:
-                case 0xa6:
-                case 0xa7:
-                case 0xac:
-                case 0xad:
-                case 0xae:
-                case 0xaf:
-                case 0x9b:
-                case 0xec:
-                case 0xed:
-                case 0xee:
-                case 0xef:
-                case 0xd7:
-                case 0x27:
-                case 0x2f:
-                case 0x37:
-                case 0x3f:
-                case 0x60:
-                case 0x61:
-                case 0x6c:
-                case 0x6d:
-                case 0x6e:
-                case 0x6f:
-                    break Fd;
-                case 0xb0:
+                case 0x98://CBW AL AX Convert Byte to Word
+                case 0x99://CWD AX DX Convert Word to Doubleword
+                case 0xc9://LEAVE SS:[rSP] eBP High Level Procedure Exit
+                case 0x9c://PUSHF Flags SS:[rSP] Push FLAGS Register onto the Stack
+                case 0x9d://POPF SS:[rSP] Flags Pop Stack into FLAGS Register
+                case 0x06://PUSH ES SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x0e://PUSH CS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x16://PUSH SS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x1e://PUSH DS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x07://POP SS:[rSP] ES Pop a Value from the Stack
+                case 0x17://POP SS:[rSP] SS Pop a Value from the Stack
+                case 0x1f://POP SS:[rSP] DS Pop a Value from the Stack
+                case 0xc3://RETN SS:[rSP]  Return from procedure
+                case 0xcb://RETF SS:[rSP]  Return from procedure
+                case 0x90://XCHG  Zvqp Exchange Register/Memory with Register
+                case 0xcc://INT 3 SS:[rSP] Call to Interrupt Procedure
+                case 0xce://INTO eFlags SS:[rSP] Call to Interrupt Procedure
+                case 0xcf://IRET SS:[rSP] Flags Interrupt Return
+                case 0xf5://CMC   Complement Carry Flag
+                case 0xf8://CLC   Clear Carry Flag
+                case 0xf9://STC   Set Carry Flag
+                case 0xfc://CLD   Clear Direction Flag
+                case 0xfd://STD   Set Direction Flag
+                case 0xfa://CLI   Clear Interrupt Flag
+                case 0xfb://STI   Set Interrupt Flag
+                case 0x9e://SAHF AH  Store AH into Flags
+                case 0x9f://LAHF  AH Load Status Flags into AH Register
+                case 0xf4://HLT   Halt
+                case 0xa4://MOVS (DS:)[rSI] (ES:)[rDI] Move Data from String to String
+                case 0xa5://MOVS DS:[SI] ES:[DI] Move Data from String to String
+                case 0xaa://STOS AL (ES:)[rDI] Store String
+                case 0xab://STOS AX ES:[DI] Store String
+                case 0xa6://CMPS (ES:)[rDI]  Compare String Operands
+                case 0xa7://CMPS ES:[DI]  Compare String Operands
+                case 0xac://LODS (DS:)[rSI] AL Load String
+                case 0xad://LODS DS:[SI] AX Load String
+                case 0xae://SCAS (ES:)[rDI]  Scan String
+                case 0xaf://SCAS ES:[DI]  Scan String
+                case 0x9b://FWAIT   Check pending unmasked floating-point exceptions
+                case 0xec://IN DX AL Input from Port
+                case 0xed://IN DX eAX Input from Port
+                case 0xee://OUT AL DX Output to Port
+                case 0xef://OUT eAX DX Output to Port
+                case 0xd7://XLAT (DS:)[rBX+AL] AL Table Look-up Translation
+                case 0x27://DAA  AL Decimal Adjust AL after Addition
+                case 0x2f://DAS  AL Decimal Adjust AL after Subtraction
+                case 0x37://AAA  AL ASCII Adjust After Addition
+                case 0x3f://AAS  AL ASCII Adjust AL After Subtraction
+                case 0x60://PUSHA AX SS:[rSP] Push All General-Purpose Registers
+                case 0x61://POPA SS:[rSP] DI Pop All General-Purpose Registers
+                case 0x6c://INS DX (ES:)[rDI] Input from Port to String
+                case 0x6d://INS DX ES:[DI] Input from Port to String
+                case 0x6e://OUTS (DS):[rSI] DX Output String to Port
+                case 0x6f://OUTS DS:[SI] DX Output String to Port
+                    break EXEC_LOOP;
+                case 0xb0://MOV Ib Zb Move
                 case 0xb1:
                 case 0xb2:
                 case 0xb3:
@@ -2173,49 +2546,49 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0xb5:
                 case 0xb6:
                 case 0xb7:
-                case 0x04:
-                case 0x0c:
-                case 0x14:
-                case 0x1c:
-                case 0x24:
-                case 0x2c:
-                case 0x34:
-                case 0x3c:
-                case 0xa8:
-                case 0x6a:
-                case 0xeb:
-                case 0x70:
-                case 0x71:
-                case 0x72:
-                case 0x73:
-                case 0x76:
-                case 0x77:
-                case 0x78:
-                case 0x79:
-                case 0x7a:
-                case 0x7b:
-                case 0x7c:
-                case 0x7d:
-                case 0x7e:
-                case 0x7f:
-                case 0x74:
-                case 0x75:
-                case 0xe0:
-                case 0xe1:
-                case 0xe2:
-                case 0xe3:
-                case 0xcd:
-                case 0xe4:
-                case 0xe5:
-                case 0xe6:
-                case 0xe7:
-                case 0xd4:
-                case 0xd5:
+                case 0x04://ADD Ib AL Add
+                case 0x0c://OR Ib AL Logical Inclusive OR
+                case 0x14://ADC Ib AL Add with Carry
+                case 0x1c://SBB Ib AL Integer Subtraction with Borrow
+                case 0x24://AND Ib AL Logical AND
+                case 0x2c://SUB Ib AL Subtract
+                case 0x34://XOR Ib AL Logical Exclusive OR
+                case 0x3c://CMP AL  Compare Two Operands
+                case 0xa8://TEST AL  Logical Compare
+                case 0x6a://PUSH Ibss SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0xeb://JMP Jbs  Jump
+                case 0x70://JO Jbs  Jump short if overflow (OF=1)
+                case 0x71://JNO Jbs  Jump short if not overflow (OF=0)
+                case 0x72://JB Jbs  Jump short if below/not above or equal/carry (CF=1)
+                case 0x73://JNB Jbs  Jump short if not below/above or equal/not carry (CF=0)
+                case 0x76://JBE Jbs  Jump short if below or equal/not above (CF=1 AND ZF=1)
+                case 0x77://JNBE Jbs  Jump short if not below or equal/above (CF=0 AND ZF=0)
+                case 0x78://JS Jbs  Jump short if sign (SF=1)
+                case 0x79://JNS Jbs  Jump short if not sign (SF=0)
+                case 0x7a://JP Jbs  Jump short if parity/parity even (PF=1)
+                case 0x7b://JNP Jbs  Jump short if not parity/parity odd
+                case 0x7c://JL Jbs  Jump short if less/not greater (SF!=OF)
+                case 0x7d://JNL Jbs  Jump short if not less/greater or equal (SF=OF)
+                case 0x7e://JLE Jbs  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
+                case 0x7f://JNLE Jbs  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
+                case 0x74://JZ Jbs  Jump short if zero/equal (ZF=0)
+                case 0x75://JNZ Jbs  Jump short if not zero/not equal (ZF=1)
+                case 0xe0://LOOPNZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=0
+                case 0xe1://LOOPZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=1
+                case 0xe2://LOOP Jbs eCX Decrement count; Jump short if count!=0
+                case 0xe3://JCXZ Jbs  Jump short if eCX register is 0
+                case 0xcd://INT Ib SS:[rSP] Call to Interrupt Procedure
+                case 0xe4://IN Ib AL Input from Port
+                case 0xe5://IN Ib eAX Input from Port
+                case 0xe6://OUT AL Ib Output to Port
+                case 0xe7://OUT eAX Ib Output to Port
+                case 0xd4://AAM  AL ASCII Adjust AX After Multiply
+                case 0xd5://AAD  AL ASCII Adjust AX Before Division
                     n++;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xb8:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xb8://MOV Ivqp Zvqp Move
                 case 0xb9:
                 case 0xba:
                 case 0xbb:
@@ -2223,96 +2596,95 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0xbd:
                 case 0xbe:
                 case 0xbf:
-                case 0x05:
-                case 0x0d:
-                case 0x15:
-                case 0x1d:
-                case 0x25:
-                case 0x2d:
-                case 0x35:
-                case 0x3d:
-                case 0xa9:
-                case 0x68:
-                case 0xe9:
-                case 0xe8:
-                    n += Ed;
+                case 0x05://ADD Ivds rAX Add
+                case 0x0d://OR Ivds rAX Logical Inclusive OR
+                case 0x15://ADC Ivds rAX Add with Carry
+                case 0x1d://SBB Ivds rAX Integer Subtraction with Borrow
+                case 0x25://AND Ivds rAX Logical AND
+                case 0x2d://SUB Ivds rAX Subtract
+                case 0x35://XOR Ivds rAX Logical Exclusive OR
+                case 0x3d://CMP rAX  Compare Two Operands
+                case 0xa9://TEST rAX  Logical Compare
+                case 0x68://PUSH Ivs SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0xe9://JMP Jvds  Jump
+                case 0xe8://CALL Jvds SS:[rSP] Call Procedure
+                    n += stride;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0x88:
-                case 0x89:
-                case 0x8a:
-                case 0x8b:
-                case 0x86:
-                case 0x87:
-                case 0x8e:
-                case 0x8c:
-                case 0xc4:
-                case 0xc5:
-                case 0x00:
-                case 0x08:
-                case 0x10:
-                case 0x18:
-                case 0x20:
-                case 0x28:
-                case 0x30:
-                case 0x38:
-                case 0x01:
-                case 0x09:
-                case 0x11:
-                case 0x19:
-                case 0x21:
-                case 0x29:
-                case 0x31:
-                case 0x39:
-                case 0x02:
-                case 0x0a:
-                case 0x12:
-                case 0x1a:
-                case 0x22:
-                case 0x2a:
-                case 0x32:
-                case 0x3a:
-                case 0x03:
-                case 0x0b:
-                case 0x13:
-                case 0x1b:
-                case 0x23:
-                case 0x2b:
-                case 0x33:
-                case 0x3b:
-                case 0x84:
-                case 0x85:
-                case 0xd0:
-                case 0xd1:
-                case 0xd2:
-                case 0xd3:
-                case 0x8f:
-                case 0x8d:
-                case 0xfe:
-                case 0xff:
-                case 0xd8:
-                case 0xd9:
-                case 0xda:
-                case 0xdb:
-                case 0xdc:
-                case 0xdd:
-                case 0xde:
-                case 0xdf:
-                case 0x62:
-                case 0x63:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0x88://MOV Gb Eb Move
+                case 0x89://MOV Gvqp Evqp Move
+                case 0x8a://MOV Eb Gb Move
+                case 0x8b://MOV Evqp Gvqp Move
+                case 0x86://XCHG  Gb Exchange Register/Memory with Register
+                case 0x87://XCHG  Gvqp Exchange Register/Memory with Register
+                case 0x8e://MOV Ew Sw Move
+                case 0x8c://MOV Sw Mw Move
+                case 0xc4://LES Mp ES Load Far Pointer
+                case 0xc5://LDS Mp DS Load Far Pointer
+                case 0x00://ADD Gb Eb Add
+                case 0x08://OR Gb Eb Logical Inclusive OR
+                case 0x10://ADC Gb Eb Add with Carry
+                case 0x18://SBB Gb Eb Integer Subtraction with Borrow
+                case 0x20://AND Gb Eb Logical AND
+                case 0x28://SUB Gb Eb Subtract
+                case 0x30://XOR Gb Eb Logical Exclusive OR
+                case 0x38://CMP Eb  Compare Two Operands
+                case 0x01://ADD Gvqp Evqp Add
+                case 0x09://OR Gvqp Evqp Logical Inclusive OR
+                case 0x11://ADC Gvqp Evqp Add with Carry
+                case 0x19://SBB Gvqp Evqp Integer Subtraction with Borrow
+                case 0x21://AND Gvqp Evqp Logical AND
+                case 0x29://SUB Gvqp Evqp Subtract
+                case 0x31://XOR Gvqp Evqp Logical Exclusive OR
+                case 0x39://CMP Evqp  Compare Two Operands
+                case 0x02://ADD Eb Gb Add
+                case 0x0a://OR Eb Gb Logical Inclusive OR
+                case 0x12://ADC Eb Gb Add with Carry
+                case 0x1a://SBB Eb Gb Integer Subtraction with Borrow
+                case 0x22://AND Eb Gb Logical AND
+                case 0x2a://SUB Eb Gb Subtract
+                case 0x32://XOR Eb Gb Logical Exclusive OR
+                case 0x3a://CMP Gb  Compare Two Operands
+                case 0x03://ADD Evqp Gvqp Add
+                case 0x0b://OR Evqp Gvqp Logical Inclusive OR
+                case 0x13://ADC Evqp Gvqp Add with Carry
+                case 0x1b://SBB Evqp Gvqp Integer Subtraction with Borrow
+                case 0x23://AND Evqp Gvqp Logical AND
+                case 0x2b://SUB Evqp Gvqp Subtract
+                case 0x33://XOR Evqp Gvqp Logical Exclusive OR
+                case 0x3b://CMP Gvqp  Compare Two Operands
+                case 0x84://TEST Eb  Logical Compare
+                case 0x85://TEST Evqp  Logical Compare
+                case 0xd0://ROL 1 Eb Rotate
+                case 0xd1://ROL 1 Evqp Rotate
+                case 0xd2://ROL CL Eb Rotate
+                case 0xd3://ROL CL Evqp Rotate
+                case 0x8f://POP SS:[rSP] Ev Pop a Value from the Stack
+                case 0x8d://LEA M Gvqp Load Effective Address
+                case 0xfe://INC  Eb Increment by 1
+                case 0xff://INC  Evqp Increment by 1
+                case 0xd8://FADD Msr ST Add
+                case 0xd9://FLD ESsr ST Load Floating Point Value
+                case 0xda://FIADD Mdi ST Add
+                case 0xdb://FILD Mdi ST Load Integer
+                case 0xdc://FADD Mdr ST Add
+                case 0xdd://FLD Mdr ST Load Floating Point Value
+                case 0xde://FIADD Mwi ST Add
+                case 0xdf://FILD Mwi ST Load Integer
+                case 0x62://BOUND Gv SS:[rSP] Check Array Index Against Bounds
+                case 0x63://ARPL Ew  Adjust RPL Field of Segment Selector
                     {
                         {
                             if ((n + 1) > 15)
-                                Dc(6);
-                            fa = (Nb + (n++)) >> 0;
-                            Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                abort(6);
+                            mem8_loc = (eip_offset + (n++)) >> 0;
+                            mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                         }
-                        ;
-                        if (Da & 0x0080) {
-                            switch (Ea >> 6) {
+                        if (CS_flags & 0x0080) {
+                            switch (mem8 >> 6) {
                                 case 0:
-                                    if ((Ea & 7) == 6)
+                                    if ((mem8 & 7) == 6)
                                         n += 2;
                                     break;
                                 case 1:
@@ -2323,16 +2695,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     break;
                             }
                         } else {
-                            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                 case 0x04:
                                     {
                                         if ((n + 1) > 15)
-                                            Dc(6);
-                                        fa = (Nb + (n++)) >> 0;
-                                        Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                            abort(6);
+                                        mem8_loc = (eip_offset + (n++)) >> 0;
+                                        local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                     }
-                                    ;
-                                    if ((Dd & 7) == 5) {
+                                    if ((local_OPbyte_var & 7) == 5) {
                                         n += 4;
                                     }
                                     break;
@@ -2373,40 +2744,38 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                             }
                         }
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    ;
-                    break Fd;
-                case 0xa0:
-                case 0xa1:
-                case 0xa2:
-                case 0xa3:
-                    if (Da & 0x0100)
+                    break EXEC_LOOP;
+                case 0xa0://MOV Ob AL Move
+                case 0xa1://MOV Ovqp rAX Move
+                case 0xa2://MOV AL Ob Move
+                case 0xa3://MOV rAX Ovqp Move
+                    if (CS_flags & 0x0100)
                         n += 2;
                     else
                         n += 4;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xc6:
-                case 0x80:
-                case 0x82:
-                case 0x83:
-                case 0x6b:
-                case 0xc0:
-                case 0xc1:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xc6://MOV Ib Eb Move
+                case 0x80://ADD Ib Eb Add
+                case 0x82://ADD Ib Eb Add
+                case 0x83://ADD Ibs Evqp Add
+                case 0x6b://IMUL Evqp Gvqp Signed Multiply
+                case 0xc0://ROL Ib Eb Rotate
+                case 0xc1://ROL Ib Evqp Rotate
                     {
                         {
                             if ((n + 1) > 15)
-                                Dc(6);
-                            fa = (Nb + (n++)) >> 0;
-                            Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                abort(6);
+                            mem8_loc = (eip_offset + (n++)) >> 0;
+                            mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                         }
-                        ;
-                        if (Da & 0x0080) {
-                            switch (Ea >> 6) {
+                        if (CS_flags & 0x0080) {
+                            switch (mem8 >> 6) {
                                 case 0:
-                                    if ((Ea & 7) == 6)
+                                    if ((mem8 & 7) == 6)
                                         n += 2;
                                     break;
                                 case 1:
@@ -2417,16 +2786,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     break;
                             }
                         } else {
-                            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                 case 0x04:
                                     {
                                         if ((n + 1) > 15)
-                                            Dc(6);
-                                        fa = (Nb + (n++)) >> 0;
-                                        Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                            abort(6);
+                                        mem8_loc = (eip_offset + (n++)) >> 0;
+                                        local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                     }
-                                    ;
-                                    if ((Dd & 7) == 5) {
+                                    if ((local_OPbyte_var & 7) == 5) {
                                         n += 4;
                                     }
                                     break;
@@ -2467,28 +2835,26 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                             }
                         }
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    ;
                     n++;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xc7:
-                case 0x81:
-                case 0x69:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xc7://MOV Ivds Evqp Move
+                case 0x81://ADD Ivds Evqp Add
+                case 0x69://IMUL Evqp Gvqp Signed Multiply
                     {
                         {
                             if ((n + 1) > 15)
-                                Dc(6);
-                            fa = (Nb + (n++)) >> 0;
-                            Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                abort(6);
+                            mem8_loc = (eip_offset + (n++)) >> 0;
+                            mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                         }
-                        ;
-                        if (Da & 0x0080) {
-                            switch (Ea >> 6) {
+                        if (CS_flags & 0x0080) {
+                            switch (mem8 >> 6) {
                                 case 0:
-                                    if ((Ea & 7) == 6)
+                                    if ((mem8 & 7) == 6)
                                         n += 2;
                                     break;
                                 case 1:
@@ -2499,16 +2865,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     break;
                             }
                         } else {
-                            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                 case 0x04:
                                     {
                                         if ((n + 1) > 15)
-                                            Dc(6);
-                                        fa = (Nb + (n++)) >> 0;
-                                        Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                            abort(6);
+                                        mem8_loc = (eip_offset + (n++)) >> 0;
+                                        local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                     }
-                                    ;
-                                    if ((Dd & 7) == 5) {
+                                    if ((local_OPbyte_var & 7) == 5) {
                                         n += 4;
                                     }
                                     break;
@@ -2549,26 +2914,24 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                             }
                         }
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    ;
-                    n += Ed;
+                    n += stride;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xf6:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xf6://TEST Eb  Logical Compare
                     {
                         {
                             if ((n + 1) > 15)
-                                Dc(6);
-                            fa = (Nb + (n++)) >> 0;
-                            Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                abort(6);
+                            mem8_loc = (eip_offset + (n++)) >> 0;
+                            mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                         }
-                        ;
-                        if (Da & 0x0080) {
-                            switch (Ea >> 6) {
+                        if (CS_flags & 0x0080) {
+                            switch (mem8 >> 6) {
                                 case 0:
-                                    if ((Ea & 7) == 6)
+                                    if ((mem8 & 7) == 6)
                                         n += 2;
                                     break;
                                 case 1:
@@ -2579,16 +2942,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     break;
                             }
                         } else {
-                            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                 case 0x04:
                                     {
                                         if ((n + 1) > 15)
-                                            Dc(6);
-                                        fa = (Nb + (n++)) >> 0;
-                                        Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                            abort(6);
+                                        mem8_loc = (eip_offset + (n++)) >> 0;
+                                        local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                     }
-                                    ;
-                                    if ((Dd & 7) == 5) {
+                                    if ((local_OPbyte_var & 7) == 5) {
                                         n += 4;
                                     }
                                     break;
@@ -2629,29 +2991,27 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                             }
                         }
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if (Ja == 0) {
+                    conditional_var = (mem8 >> 3) & 7;
+                    if (conditional_var == 0) {
                         n++;
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    break Fd;
-                case 0xf7:
+                    break EXEC_LOOP;
+                case 0xf7://TEST Evqp  Logical Compare
                     {
                         {
                             if ((n + 1) > 15)
-                                Dc(6);
-                            fa = (Nb + (n++)) >> 0;
-                            Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                abort(6);
+                            mem8_loc = (eip_offset + (n++)) >> 0;
+                            mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                         }
-                        ;
-                        if (Da & 0x0080) {
-                            switch (Ea >> 6) {
+                        if (CS_flags & 0x0080) {
+                            switch (mem8 >> 6) {
                                 case 0:
-                                    if ((Ea & 7) == 6)
+                                    if ((mem8 & 7) == 6)
                                         n += 2;
                                     break;
                                 case 1:
@@ -2662,16 +3022,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     break;
                             }
                         } else {
-                            switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                            switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                 case 0x04:
                                     {
                                         if ((n + 1) > 15)
-                                            Dc(6);
-                                        fa = (Nb + (n++)) >> 0;
-                                        Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                            abort(6);
+                                        mem8_loc = (eip_offset + (n++)) >> 0;
+                                        local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                     }
-                                    ;
-                                    if ((Dd & 7) == 5) {
+                                    if ((local_OPbyte_var & 7) == 5) {
                                         n += 4;
                                     }
                                     break;
@@ -2712,54 +3071,52 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                             }
                         }
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if (Ja == 0) {
-                        n += Ed;
+                    conditional_var = (mem8 >> 3) & 7;
+                    if (conditional_var == 0) {
+                        n += stride;
                         if (n > 15)
-                            Dc(6);
+                            abort(6);
                     }
-                    break Fd;
-                case 0xea:
-                case 0x9a:
-                    n += 2 + Ed;
+                    break EXEC_LOOP;
+                case 0xea://JMPF Ap  Jump
+                case 0x9a://CALLF Ap SS:[rSP] Call Procedure
+                    n += 2 + stride;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xc2:
-                case 0xca:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xc2://RETN SS:[rSP]  Return from procedure
+                case 0xca://RETF Iw  Return from procedure
                     n += 2;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xc8:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xc8://ENTER Iw SS:[rSP] Make Stack Frame for Procedure Parameters
                     n += 3;
                     if (n > 15)
-                        Dc(6);
-                    break Fd;
-                case 0xd6:
-                case 0xf1:
+                        abort(6);
+                    break EXEC_LOOP;
+                case 0xd6://SALC   Undefined and Reserved; Does not Generate #UD
+                case 0xf1://INT1   Undefined and Reserved; Does not Generate #UD
                 default:
-                    Dc(6);
-                case 0x0f:
+                    abort(6);
+                case 0x0f://two-op instruction prefix
                     {
                         if ((n + 1) > 15)
-                            Dc(6);
-                        fa = (Nb + (n++)) >> 0;
-                        b = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                            abort(6);
+                        mem8_loc = (eip_offset + (n++)) >> 0;
+                        OPbyte = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                     }
-                    ;
-                    switch (b) {
-                        case 0x06:
-                        case 0xa2:
-                        case 0x31:
-                        case 0xa0:
-                        case 0xa8:
-                        case 0xa1:
-                        case 0xa9:
-                        case 0xc8:
+                    switch (OPbyte) {
+                        case 0x06://CLTS  CR0 Clear Task-Switched Flag in CR0
+                        case 0xa2://CPUID  IA32_BIOS_SIGN_ID CPU Identification
+                        case 0x31://RDTSC IA32_TIME_STAMP_COUNTER EAX Read Time-Stamp Counter
+                        case 0xa0://PUSH FS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                        case 0xa8://PUSH GS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                        case 0xa1://POP SS:[rSP] FS Pop a Value from the Stack
+                        case 0xa9://POP SS:[rSP] GS Pop a Value from the Stack
+                        case 0xc8://BSWAP  Zvqp Byte Swap
                         case 0xc9:
                         case 0xca:
                         case 0xcb:
@@ -2767,98 +3124,97 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0xcd:
                         case 0xce:
                         case 0xcf:
-                            break Fd;
-                        case 0x80:
-                        case 0x81:
-                        case 0x82:
-                        case 0x83:
-                        case 0x84:
-                        case 0x85:
-                        case 0x86:
-                        case 0x87:
-                        case 0x88:
-                        case 0x89:
-                        case 0x8a:
-                        case 0x8b:
-                        case 0x8c:
-                        case 0x8d:
-                        case 0x8e:
-                        case 0x8f:
-                            n += Ed;
+                            break EXEC_LOOP;
+                        case 0x80://JO Jvds  Jump short if overflow (OF=1)
+                        case 0x81://JNO Jvds  Jump short if not overflow (OF=0)
+                        case 0x82://JB Jvds  Jump short if below/not above or equal/carry (CF=1)
+                        case 0x83://JNB Jvds  Jump short if not below/above or equal/not carry (CF=0)
+                        case 0x84://JZ Jvds  Jump short if zero/equal (ZF=0)
+                        case 0x85://JNZ Jvds  Jump short if not zero/not equal (ZF=1)
+                        case 0x86://JBE Jvds  Jump short if below or equal/not above (CF=1 AND ZF=1)
+                        case 0x87://JNBE Jvds  Jump short if not below or equal/above (CF=0 AND ZF=0)
+                        case 0x88://JS Jvds  Jump short if sign (SF=1)
+                        case 0x89://JNS Jvds  Jump short if not sign (SF=0)
+                        case 0x8a://JP Jvds  Jump short if parity/parity even (PF=1)
+                        case 0x8b://JNP Jvds  Jump short if not parity/parity odd
+                        case 0x8c://JL Jvds  Jump short if less/not greater (SF!=OF)
+                        case 0x8d://JNL Jvds  Jump short if not less/greater or equal (SF=OF)
+                        case 0x8e://JLE Jvds  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x8f://JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
+                            n += stride;
                             if (n > 15)
-                                Dc(6);
-                            break Fd;
-                        case 0x90:
-                        case 0x91:
-                        case 0x92:
-                        case 0x93:
-                        case 0x94:
-                        case 0x95:
-                        case 0x96:
-                        case 0x97:
-                        case 0x98:
-                        case 0x99:
-                        case 0x9a:
-                        case 0x9b:
-                        case 0x9c:
-                        case 0x9d:
-                        case 0x9e:
-                        case 0x9f:
-                        case 0x40:
-                        case 0x41:
-                        case 0x42:
-                        case 0x43:
-                        case 0x44:
-                        case 0x45:
-                        case 0x46:
-                        case 0x47:
-                        case 0x48:
-                        case 0x49:
-                        case 0x4a:
-                        case 0x4b:
-                        case 0x4c:
-                        case 0x4d:
-                        case 0x4e:
-                        case 0x4f:
-                        case 0xb6:
-                        case 0xb7:
-                        case 0xbe:
-                        case 0xbf:
-                        case 0x00:
-                        case 0x01:
-                        case 0x02:
-                        case 0x03:
-                        case 0x20:
-                        case 0x22:
-                        case 0x23:
-                        case 0xb2:
-                        case 0xb4:
-                        case 0xb5:
-                        case 0xa5:
-                        case 0xad:
-                        case 0xa3:
-                        case 0xab:
-                        case 0xb3:
-                        case 0xbb:
-                        case 0xbc:
-                        case 0xbd:
-                        case 0xaf:
-                        case 0xc0:
-                        case 0xc1:
-                        case 0xb0:
-                        case 0xb1:
+                                abort(6);
+                            break EXEC_LOOP;
+                        case 0x90://SETO  Eb Set Byte on Condition - overflow (OF=1)
+                        case 0x91://SETNO  Eb Set Byte on Condition - not overflow (OF=0)
+                        case 0x92://SETB  Eb Set Byte on Condition - below/not above or equal/carry (CF=1)
+                        case 0x93://SETNB  Eb Set Byte on Condition - not below/above or equal/not carry (CF=0)
+                        case 0x94://SETZ  Eb Set Byte on Condition - zero/equal (ZF=0)
+                        case 0x95://SETNZ  Eb Set Byte on Condition - not zero/not equal (ZF=1)
+                        case 0x96://SETBE  Eb Set Byte on Condition - below or equal/not above (CF=1 AND ZF=1)
+                        case 0x97://SETNBE  Eb Set Byte on Condition - not below or equal/above (CF=0 AND ZF=0)
+                        case 0x98://SETS  Eb Set Byte on Condition - sign (SF=1)
+                        case 0x99://SETNS  Eb Set Byte on Condition - not sign (SF=0)
+                        case 0x9a://SETP  Eb Set Byte on Condition - parity/parity even (PF=1)
+                        case 0x9b://SETNP  Eb Set Byte on Condition - not parity/parity odd
+                        case 0x9c://SETL  Eb Set Byte on Condition - less/not greater (SF!=OF)
+                        case 0x9d://SETNL  Eb Set Byte on Condition - not less/greater or equal (SF=OF)
+                        case 0x9e://SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x9f://SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND (SF=OF))
+                        case 0x40://CMOVO Evqp Gvqp Conditional Move - overflow (OF=1)
+                        case 0x41://CMOVNO Evqp Gvqp Conditional Move - not overflow (OF=0)
+                        case 0x42://CMOVB Evqp Gvqp Conditional Move - below/not above or equal/carry (CF=1)
+                        case 0x43://CMOVNB Evqp Gvqp Conditional Move - not below/above or equal/not carry (CF=0)
+                        case 0x44://CMOVZ Evqp Gvqp Conditional Move - zero/equal (ZF=0)
+                        case 0x45://CMOVNZ Evqp Gvqp Conditional Move - not zero/not equal (ZF=1)
+                        case 0x46://CMOVBE Evqp Gvqp Conditional Move - below or equal/not above (CF=1 AND ZF=1)
+                        case 0x47://CMOVNBE Evqp Gvqp Conditional Move - not below or equal/above (CF=0 AND ZF=0)
+                        case 0x48://CMOVS Evqp Gvqp Conditional Move - sign (SF=1)
+                        case 0x49://CMOVNS Evqp Gvqp Conditional Move - not sign (SF=0)
+                        case 0x4a://CMOVP Evqp Gvqp Conditional Move - parity/parity even (PF=1)
+                        case 0x4b://CMOVNP Evqp Gvqp Conditional Move - not parity/parity odd
+                        case 0x4c://CMOVL Evqp Gvqp Conditional Move - less/not greater (SF!=OF)
+                        case 0x4d://CMOVNL Evqp Gvqp Conditional Move - not less/greater or equal (SF=OF)
+                        case 0x4e://CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x4f://CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND (SF=OF))
+                        case 0xb6://MOVZX Eb Gvqp Move with Zero-Extend
+                        case 0xb7://MOVZX Ew Gvqp Move with Zero-Extend
+                        case 0xbe://MOVSX Eb Gvqp Move with Sign-Extension
+                        case 0xbf://MOVSX Ew Gvqp Move with Sign-Extension
+                        case 0x00://SLDT LDTR Mw Store Local Descriptor Table Register
+                        case 0x01://SGDT GDTR Ms Store Global Descriptor Table Register
+                        case 0x02://LAR Mw Gvqp Load Access Rights Byte
+                        case 0x03://LSL Mw Gvqp Load Segment Limit
+                        case 0x20://MOV Cd Rd Move to/from Control Registers
+                        case 0x22://MOV Rd Cd Move to/from Control Registers
+                        case 0x23://MOV Rd Dd Move to/from Debug Registers
+                        case 0xb2://LSS Mptp SS Load Far Pointer
+                        case 0xb4://LFS Mptp FS Load Far Pointer
+                        case 0xb5://LGS Mptp GS Load Far Pointer
+                        case 0xa5://SHLD Gvqp Evqp Double Precision Shift Left
+                        case 0xad://SHRD Gvqp Evqp Double Precision Shift Right
+                        case 0xa3://BT Evqp  Bit Test
+                        case 0xab://BTS Gvqp Evqp Bit Test and Set
+                        case 0xb3://BTR Gvqp Evqp Bit Test and Reset
+                        case 0xbb://BTC Gvqp Evqp Bit Test and Complement
+                        case 0xbc://BSF Evqp Gvqp Bit Scan Forward
+                        case 0xbd://BSR Evqp Gvqp Bit Scan Reverse
+                        case 0xaf://IMUL Evqp Gvqp Signed Multiply
+                        case 0xc0://XADD  Eb Exchange and Add
+                        case 0xc1://XADD  Evqp Exchange and Add
+                        case 0xb0://CMPXCHG Gb Eb Compare and Exchange
+                        case 0xb1://CMPXCHG Gvqp Evqp Compare and Exchange
                             {
                                 {
                                     if ((n + 1) > 15)
-                                        Dc(6);
-                                    fa = (Nb + (n++)) >> 0;
-                                    Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                        abort(6);
+                                    mem8_loc = (eip_offset + (n++)) >> 0;
+                                    mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                 }
-                                ;
-                                if (Da & 0x0080) {
-                                    switch (Ea >> 6) {
+                                if (CS_flags & 0x0080) {
+                                    switch (mem8 >> 6) {
                                         case 0:
-                                            if ((Ea & 7) == 6)
+                                            if ((mem8 & 7) == 6)
                                                 n += 2;
                                             break;
                                         case 1:
@@ -2869,16 +3225,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                             break;
                                     }
                                 } else {
-                                    switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                         case 0x04:
                                             {
                                                 if ((n + 1) > 15)
-                                                    Dc(6);
-                                                fa = (Nb + (n++)) >> 0;
-                                                Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                                    abort(6);
+                                                mem8_loc = (eip_offset + (n++)) >> 0;
+                                                local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                             }
-                                            ;
-                                            if ((Dd & 7) == 5) {
+                                            if ((local_OPbyte_var & 7) == 5) {
                                                 n += 4;
                                             }
                                             break;
@@ -2919,25 +3274,23 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     }
                                 }
                                 if (n > 15)
-                                    Dc(6);
+                                    abort(6);
                             }
-                            ;
-                            break Fd;
-                        case 0xa4:
-                        case 0xac:
-                        case 0xba:
+                            break EXEC_LOOP;
+                        case 0xa4://SHLD Gvqp Evqp Double Precision Shift Left
+                        case 0xac://SHRD Gvqp Evqp Double Precision Shift Right
+                        case 0xba://BT Evqp  Bit Test
                             {
                                 {
                                     if ((n + 1) > 15)
-                                        Dc(6);
-                                    fa = (Nb + (n++)) >> 0;
-                                    Ea = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                        abort(6);
+                                    mem8_loc = (eip_offset + (n++)) >> 0;
+                                    mem8 = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                 }
-                                ;
-                                if (Da & 0x0080) {
-                                    switch (Ea >> 6) {
+                                if (CS_flags & 0x0080) {
+                                    switch (mem8 >> 6) {
                                         case 0:
-                                            if ((Ea & 7) == 6)
+                                            if ((mem8 & 7) == 6)
                                                 n += 2;
                                             break;
                                         case 1:
@@ -2948,16 +3301,15 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                             break;
                                     }
                                 } else {
-                                    switch ((Ea & 7) | ((Ea >> 3) & 0x18)) {
+                                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                                         case 0x04:
                                             {
                                                 if ((n + 1) > 15)
-                                                    Dc(6);
-                                                fa = (Nb + (n++)) >> 0;
-                                                Dd = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                                    abort(6);
+                                                mem8_loc = (eip_offset + (n++)) >> 0;
+                                                local_OPbyte_var = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                                             }
-                                            ;
-                                            if ((Dd & 7) == 5) {
+                                            if ((local_OPbyte_var & 7) == 5) {
                                                 n += 4;
                                             }
                                             break;
@@ -2998,152 +3350,157 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                                     }
                                 }
                                 if (n > 15)
-                                    Dc(6);
+                                    abort(6);
                             }
-                            ;
                             n++;
                             if (n > 15)
-                                Dc(6);
-                            break Fd;
+                                abort(6);
+                            break EXEC_LOOP;
                         case 0x04:
-                        case 0x05:
-                        case 0x07:
-                        case 0x08:
-                        case 0x09:
+                        case 0x05://LOADALL  AX Load All of the CPU Registers
+                        case 0x07://LOADALL  EAX Load All of the CPU Registers
+                        case 0x08://INVD   Invalidate Internal Caches
+                        case 0x09://WBINVD   Write Back and Invalidate Cache
                         case 0x0a:
-                        case 0x0b:
+                        case 0x0b://UD2   Undefined Instruction
                         case 0x0c:
-                        case 0x0d:
+                        case 0x0d://NOP Ev  No Operation
                         case 0x0e:
                         case 0x0f:
-                        case 0x10:
-                        case 0x11:
-                        case 0x12:
-                        case 0x13:
-                        case 0x14:
-                        case 0x15:
-                        case 0x16:
-                        case 0x17:
-                        case 0x18:
-                        case 0x19:
-                        case 0x1a:
-                        case 0x1b:
-                        case 0x1c:
-                        case 0x1d:
-                        case 0x1e:
-                        case 0x1f:
-                        case 0x21:
-                        case 0x24:
+                        case 0x10://MOVUPS Wps Vps Move Unaligned Packed Single-FP Values
+                        case 0x11://MOVUPS Vps Wps Move Unaligned Packed Single-FP Values
+                        case 0x12://MOVHLPS Uq Vq Move Packed Single-FP Values High to Low
+                        case 0x13://MOVLPS Vq Mq Move Low Packed Single-FP Values
+                        case 0x14://UNPCKLPS Wq Vps Unpack and Interleave Low Packed Single-FP Values
+                        case 0x15://UNPCKHPS Wq Vps Unpack and Interleave High Packed Single-FP Values
+                        case 0x16://MOVLHPS Uq Vq Move Packed Single-FP Values Low to High
+                        case 0x17://MOVHPS Vq Mq Move High Packed Single-FP Values
+                        case 0x18://HINT_NOP Ev  Hintable NOP
+                        case 0x19://HINT_NOP Ev  Hintable NOP
+                        case 0x1a://HINT_NOP Ev  Hintable NOP
+                        case 0x1b://HINT_NOP Ev  Hintable NOP
+                        case 0x1c://HINT_NOP Ev  Hintable NOP
+                        case 0x1d://HINT_NOP Ev  Hintable NOP
+                        case 0x1e://HINT_NOP Ev  Hintable NOP
+                        case 0x1f://HINT_NOP Ev  Hintable NOP
+                        case 0x21://MOV Dd Rd Move to/from Debug Registers
+                        case 0x24://MOV Td Rd Move to/from Test Registers
                         case 0x25:
-                        case 0x26:
+                        case 0x26://MOV Rd Td Move to/from Test Registers
                         case 0x27:
-                        case 0x28:
-                        case 0x29:
-                        case 0x2a:
-                        case 0x2b:
-                        case 0x2c:
-                        case 0x2d:
-                        case 0x2e:
-                        case 0x2f:
-                        case 0x30:
-                        case 0x32:
-                        case 0x33:
-                        case 0x34:
-                        case 0x35:
+                        case 0x28://MOVAPS Wps Vps Move Aligned Packed Single-FP Values
+                        case 0x29://MOVAPS Vps Wps Move Aligned Packed Single-FP Values
+                        case 0x2a://CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
+                        case 0x2b://MOVNTPS Vps Mps Store Packed Single-FP Values Using Non-Temporal Hint
+                        case 0x2c://CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW Integers
+                        case 0x2d://CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW Integers
+                        case 0x2e://UCOMISS Vss  Unordered Compare Scalar Single-FP Values and Set EFLAGS
+                        case 0x2f://COMISS Vss  Compare Scalar Ordered Single-FP Values and Set EFLAGS
+                        case 0x30://WRMSR rCX MSR Write to Model Specific Register
+                        case 0x32://RDMSR rCX rAX Read from Model Specific Register
+                        case 0x33://RDPMC PMC EAX Read Performance-Monitoring Counters
+                        case 0x34://SYSENTER IA32_SYSENTER_CS SS Fast System Call
+                        case 0x35://SYSEXIT IA32_SYSENTER_CS SS Fast Return from Fast System Call
                         case 0x36:
-                        case 0x37:
-                        case 0x38:
+                        case 0x37://GETSEC EAX  GETSEC Leaf Functions
+                        case 0x38://PSHUFB Qq Pq Packed Shuffle Bytes
                         case 0x39:
-                        case 0x3a:
+                        case 0x3a://ROUNDPS Wps Vps Round Packed Single-FP Values
                         case 0x3b:
                         case 0x3c:
                         case 0x3d:
                         case 0x3e:
                         case 0x3f:
-                        case 0x50:
-                        case 0x51:
-                        case 0x52:
-                        case 0x53:
-                        case 0x54:
-                        case 0x55:
-                        case 0x56:
-                        case 0x57:
-                        case 0x58:
-                        case 0x59:
-                        case 0x5a:
-                        case 0x5b:
-                        case 0x5c:
-                        case 0x5d:
-                        case 0x5e:
-                        case 0x5f:
-                        case 0x60:
-                        case 0x61:
-                        case 0x62:
-                        case 0x63:
-                        case 0x64:
-                        case 0x65:
-                        case 0x66:
-                        case 0x67:
-                        case 0x68:
-                        case 0x69:
-                        case 0x6a:
-                        case 0x6b:
-                        case 0x6c:
-                        case 0x6d:
-                        case 0x6e:
-                        case 0x6f:
-                        case 0x70:
-                        case 0x71:
-                        case 0x72:
-                        case 0x73:
-                        case 0x74:
-                        case 0x75:
-                        case 0x76:
-                        case 0x77:
-                        case 0x78:
-                        case 0x79:
+                        case 0x50://MOVMSKPS Ups Gdqp Extract Packed Single-FP Sign Mask
+                        case 0x51://SQRTPS Wps Vps Compute Square Roots of Packed Single-FP Values
+                        case 0x52://RSQRTPS Wps Vps Compute Recipr. of Square Roots of Packed Single-FP Values
+                        case 0x53://RCPPS Wps Vps Compute Reciprocals of Packed Single-FP Values
+                        case 0x54://ANDPS Wps Vps Bitwise Logical AND of Packed Single-FP Values
+                        case 0x55://ANDNPS Wps Vps Bitwise Logical AND NOT of Packed Single-FP Values
+                        case 0x56://ORPS Wps Vps Bitwise Logical OR of Single-FP Values
+                        case 0x57://XORPS Wps Vps Bitwise Logical XOR for Single-FP Values
+                        case 0x58://ADDPS Wps Vps Add Packed Single-FP Values
+                        case 0x59://MULPS Wps Vps Multiply Packed Single-FP Values
+                        case 0x5a://CVTPS2PD Wps Vpd Convert Packed Single-FP Values to1.11 PackedDouble-FP Values
+                        case 0x5b://CVTDQ2PS Wdq Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
+                        case 0x5c://SUBPS Wps Vps Subtract Packed Single-FP Values
+                        case 0x5d://MINPS Wps Vps Return Minimum Packed Single-FP Values
+                        case 0x5e://DIVPS Wps Vps Divide Packed Single-FP Values
+                        case 0x5f://MAXPS Wps Vps Return Maximum Packed Single-FP Values
+                        case 0x60://PUNPCKLBW Qd Pq Unpack Low Data
+                        case 0x61://PUNPCKLWD Qd Pq Unpack Low Data
+                        case 0x62://PUNPCKLDQ Qd Pq Unpack Low Data
+                        case 0x63://PACKSSWB Qd Pq Pack with Signed Saturation
+                        case 0x64://PCMPGTB Qd Pq Compare Packed Signed Integers for Greater Than
+                        case 0x65://PCMPGTW Qd Pq Compare Packed Signed Integers for Greater Than
+                        case 0x66://PCMPGTD Qd Pq Compare Packed Signed Integers for Greater Than
+                        case 0x67://PACKUSWB Qq Pq Pack with Unsigned Saturation
+                        case 0x68://PUNPCKHBW Qq Pq Unpack High Data
+                        case 0x69://PUNPCKHWD Qq Pq Unpack High Data
+                        case 0x6a://PUNPCKHDQ Qq Pq Unpack High Data
+                        case 0x6b://PACKSSDW Qq Pq Pack with Signed Saturation
+                        case 0x6c://PUNPCKLQDQ Wdq Vdq Unpack Low Data
+                        case 0x6d://PUNPCKHQDQ Wdq Vdq Unpack High Data
+                        case 0x6e://MOVD Ed Pq Move Doubleword
+                        case 0x6f://MOVQ Qq Pq Move Quadword
+                        case 0x70://PSHUFW Qq Pq Shuffle Packed Words
+                        case 0x71://PSRLW Ib Nq Shift Packed Data Right Logical
+                        case 0x72://PSRLD Ib Nq Shift Double Quadword Right Logical
+                        case 0x73://PSRLQ Ib Nq Shift Packed Data Right Logical
+                        case 0x74://PCMPEQB Qq Pq Compare Packed Data for Equal
+                        case 0x75://PCMPEQW Qq Pq Compare Packed Data for Equal
+                        case 0x76://PCMPEQD Qq Pq Compare Packed Data for Equal
+                        case 0x77://EMMS   Empty MMX Technology State
+                        case 0x78://VMREAD Gd Ed Read Field from Virtual-Machine Control Structure
+                        case 0x79://VMWRITE Gd  Write Field to Virtual-Machine Control Structure
                         case 0x7a:
                         case 0x7b:
-                        case 0x7c:
-                        case 0x7d:
-                        case 0x7e:
-                        case 0x7f:
+                        case 0x7c://HADDPD Wpd Vpd Packed Double-FP Horizontal Add
+                        case 0x7d://HSUBPD Wpd Vpd Packed Double-FP Horizontal Subtract
+                        case 0x7e://MOVD Pq Ed Move Doubleword
+                        case 0x7f://MOVQ Pq Qq Move Quadword
                         case 0xa6:
                         case 0xa7:
-                        case 0xaa:
-                        case 0xae:
-                        case 0xb8:
-                        case 0xb9:
-                        case 0xc2:
-                        case 0xc3:
-                        case 0xc4:
-                        case 0xc5:
-                        case 0xc6:
-                        case 0xc7:
+                        case 0xaa://RSM  Flags Resume from System Management Mode
+                        case 0xae://FXSAVE ST Mstx Save x87 FPU, MMX, XMM, and MXCSR State
+                        case 0xb8://JMPE   Jump to IA-64 Instruction Set
+                        case 0xb9://UD G  Undefined Instruction
+                        case 0xc2://CMPPS Wps Vps Compare Packed Single-FP Values
+                        case 0xc3://MOVNTI Gdqp Mdqp Store Doubleword Using Non-Temporal Hint
+                        case 0xc4://PINSRW Rdqp Pq Insert Word
+                        case 0xc5://PEXTRW Nq Gdqp Extract Word
+                        case 0xc6://SHUFPS Wps Vps Shuffle Packed Single-FP Values
+                        case 0xc7://CMPXCHG8B EBX Mq Compare and Exchange Bytes
                         default:
-                            Dc(6);
+                            abort(6);
                     }
                     break;
             }
         }
         return n;
     }
-    function fb(Gd, Hd, ja) {
+
+
+    /*
+       Typically, the upper 20 bits of CR3 become the page directory base register (PDBR),
+       which stores the physical address of the first page directory entry.
+    */
+    function do_tlb_set_page(Gd, Hd, ja) {
         var Id, Jd, error_code, Kd, Ld, Md, Nd, ud, Od;
-        if (!(wa.cr0 & (1 << 31))) {
-            wa.tlb_set_page(Gd & -4096, Gd & -4096, 1);
+        if (!(cpu.cr0 & (1 << 31))) { //CR0: bit31 PG Paging If 1, enable paging and use the CR3 register, else disable paging
+            cpu.tlb_set_page(Gd & -4096, Gd & -4096, 1);
         } else {
-            Id = (wa.cr3 & -4096) + ((Gd >> 20) & 0xffc);
-            Jd = wa.ld32_phys(Id);
+            Id = (cpu.cr3 & -4096) + ((Gd >> 20) & 0xffc);
+            Jd = cpu.ld32_phys(Id);
             if (!(Jd & 0x00000001)) {
                 error_code = 0;
             } else {
                 if (!(Jd & 0x00000020)) {
                     Jd |= 0x00000020;
-                    wa.st32_phys(Id, Jd);
+                    cpu.st32_phys(Id, Jd);
                 }
                 Kd = (Jd & -4096) + ((Gd >> 10) & 0xffc);
-                Ld = wa.ld32_phys(Kd);
+                Ld = cpu.ld32_phys(Kd);
                 if (!(Ld & 0x00000001)) {
                     error_code = 0;
                 } else {
@@ -3158,7 +3515,7 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                             Ld |= 0x00000020;
                             if (Nd)
                                 Ld |= 0x00000040;
-                            wa.st32_phys(Kd, Ld);
+                            cpu.st32_phys(Kd, Ld);
                         }
                         ud = 0;
                         if ((Ld & 0x00000040) && (Md & 0x00000002))
@@ -3166,7 +3523,7 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         Od = 0;
                         if (Md & 0x00000004)
                             Od = 1;
-                        wa.tlb_set_page(Gd & -4096, Ld & -4096, ud, Od);
+                        cpu.tlb_set_page(Gd & -4096, Ld & -4096, ud, Od);
                         return;
                     }
                 }
@@ -3174,110 +3531,129 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
             error_code |= Hd << 1;
             if (ja)
                 error_code |= 0x04;
-            wa.cr2 = Gd;
-            qd(14, error_code);
+            cpu.cr2 = Gd;
+            abort_with_error_code(14, error_code);
         }
     }
-    function Pd(Qd) {
-        if (!(Qd & (1 << 0)))
-            nd("real mode not supported");
-        if ((Qd & ((1 << 31) | (1 << 16) | (1 << 0))) != (wa.cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
-            wa.tlb_flush_all();
+    function set_CR0(Qd) {
+        if (!(Qd & (1 << 0)))  //0th bit protected or real, real not supported!
+            cpu_abort("real mode not supported");
+        //if changing flags 31, 16, or 0 must flush tlb
+        if ((Qd & ((1 << 31) | (1 << 16) | (1 << 0))) != (cpu.cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
+            cpu.tlb_flush_all();
         }
-        wa.cr0 = Qd | (1 << 4);
+        cpu.cr0 = Qd | (1 << 4); //keep bit 4 set to 1
     }
-    function Rd(Sd) {
-        wa.cr3 = Sd;
-        if (wa.cr0 & (1 << 31)) {
-            wa.tlb_flush_all();
+    function set_CR3(new_pdb) { // page directory base register PDBR
+        cpu.cr3 = new_pdb;
+        if (cpu.cr0 & (1 << 31)) { //if in paging mode must reset tables
+            cpu.tlb_flush_all();
         }
     }
-    function Td(Ud) {
-        wa.cr4 = Ud;
+    function set_CR4(newval) {
+        cpu.cr4 = newval;
     }
-    function Vd(Wd) {
-        if (Wd & (1 << 22))
+
+    /*
+      Segment / Descriptor Handling Functions
+      -----------------------------------------
+    */
+
+    function SS_mask_from_flags(descriptor_high4bytes) {
+        if (descriptor_high4bytes & (1 << 22))
             return -1;
         else
             return 0xffff;
     }
-    function Xd(selector) {
-        var sa, Rb, Yd, Wd;
+    function load_from_descriptor_table(selector) {
+        var descriptor_table, Rb, descriptor_low4bytes, descriptor_high4bytes;
         if (selector & 0x4)
-            sa = wa.ldt;
+            descriptor_table = cpu.ldt;
         else
-            sa = wa.gdt;
+            descriptor_table = cpu.gdt;
         Rb = selector & ~7;
-        if ((Rb + 7) > sa.limit)
+        if ((Rb + 7) > descriptor_table.limit)
             return null;
-        fa = sa.base + Rb;
-        Yd = Cb();
-        fa += 4;
-        Wd = Cb();
-        return [Yd, Wd];
+        mem8_loc = descriptor_table.base + Rb;
+        descriptor_low4bytes = ld32_mem8_kernel_read();
+        mem8_loc += 4;
+        descriptor_high4bytes = ld32_mem8_kernel_read();
+        return [descriptor_low4bytes, descriptor_high4bytes];
     }
-    function Zd(Yd, Wd) {
+    function calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes) {
         var limit;
-        limit = (Yd & 0xffff) | (Wd & 0x000f0000);
-        if (Wd & (1 << 23))
+        limit = (descriptor_low4bytes & 0xffff) | (descriptor_high4bytes & 0x000f0000);
+        if (descriptor_high4bytes & (1 << 23))
             limit = (limit << 12) | 0xfff;
         return limit;
     }
-    function ae(Yd, Wd) {
-        return (((Yd >>> 16) | ((Wd & 0xff) << 16) | (Wd & 0xff000000))) & -1;
+    function calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes) {
+        return (((descriptor_low4bytes >>> 16) | ((descriptor_high4bytes & 0xff) << 16) | (descriptor_high4bytes & 0xff000000))) & -1;
     }
-    function be(sa, Yd, Wd) {
-        sa.base = ae(Yd, Wd);
-        sa.limit = Zd(Yd, Wd);
-        sa.flags = Wd;
+    /* Used to set TR and LDTR */
+    function set_descriptor_register(descriptor_table, descriptor_low4bytes, descriptor_high4bytes) {
+        descriptor_table.base = calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes);
+        descriptor_table.limit = calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes);
+        descriptor_table.flags = descriptor_high4bytes;
     }
-    function ce() {
-        Na = wa.segs[1].base;
-        Oa = wa.segs[2].base;
-        if (wa.segs[2].flags & (1 << 22))
-            Pa = -1;
+    function init_segment_local_vars() {
+        CS_base = cpu.segs[1].base;//CS
+        SS_base = cpu.segs[2].base;//SS
+        if (cpu.segs[2].flags & (1 << 22))
+            SS_mask = -1;
         else
-            Pa = 0xffff;
-        Qa = (((Na | Oa | wa.segs[3].base | wa.segs[0].base) == 0) && Pa == -1);
-        if (wa.segs[1].flags & (1 << 22))
-            Ra = 0;
+            SS_mask = 0xffff;
+        FS_usage_flag = (((CS_base | SS_base | cpu.segs[3].base | cpu.segs[0].base) == 0) && SS_mask == -1);
+        if (cpu.segs[1].flags & (1 << 22))
+            init_CS_flags = 0;
         else
-            Ra = 0x0100 | 0x0080;
+            init_CS_flags = 0x0100 | 0x0080;
     }
-    function de(ee, selector, base, limit, flags) {
-        wa.segs[ee] = {selector: selector,base: base,limit: limit,flags: flags};
-        ce();
+    function set_segment_vars(ee, selector, base, limit, flags) {
+        cpu.segs[ee] = {selector: selector,base: base,limit: limit,flags: flags};
+        init_segment_local_vars();
     }
-    function fe(Sb, selector) {
-        de(Sb, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 8) | (1 << 12) | (1 << 9));
+    function init_segment_vars_with_selector(Sb, selector) {
+        set_segment_vars(Sb, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 8) | (1 << 12) | (1 << 9));
     }
-    function ge(he) {
-        var ie, Rb, je, ke, le;
-        if (!(wa.tr.flags & (1 << 15)))
-            nd("invalid tss");
-        ie = (wa.tr.flags >> 8) & 0xf;
-        if ((ie & 7) != 1)
-            nd("invalid tss type");
-        je = ie >> 3;
-        Rb = (he * 4 + 2) << je;
-        if (Rb + (4 << je) - 1 > wa.tr.limit)
-            qd(10, wa.tr.selector & 0xfffc);
-        fa = (wa.tr.base + Rb) & -1;
-        if (je == 0) {
-            le = Ab();
-            fa += 2;
+
+
+    /*
+      Flow Control Functions
+      -----------------------------------------------------
+      These are some of the most complicated subroutines here as they involve storing / retrieving the TSS and other
+      key data structures when transferring control to other locations.
+    */
+
+
+    /* used only in CALLF, and InterruptF in paged mode */
+    function load_from_TR(he) {
+        var tr_type, Rb, is_32_bit, ke, le;
+        if (!(cpu.tr.flags & (1 << 15)))
+            cpu_abort("invalid tss");  //task state segment
+        tr_type = (cpu.tr.flags >> 8) & 0xf;
+        if ((tr_type & 7) != 1)
+            cpu_abort("invalid tss type");
+        is_32_bit = tr_type >> 3;
+        Rb = (he * 4 + 2) << is_32_bit;
+        if (Rb + (4 << is_32_bit) - 1 > cpu.tr.limit)
+            abort_with_error_code(10, cpu.tr.selector & 0xfffc);
+        mem8_loc = (cpu.tr.base + Rb) & -1;
+        if (is_32_bit == 0) {
+            le = ld16_mem8_kernel_read();
+            mem8_loc += 2;
         } else {
-            le = Cb();
-            fa += 4;
+            le = ld32_mem8_kernel_read();
+            mem8_loc += 4;
         }
-        ke = Ab();
+        ke = ld16_mem8_kernel_read();
         return [ke, le];
     }
-    function me(intno, ne, error_code, oe, pe) {
-        var sa, qe, ie, he, selector, re, se;
-        var te, ue, je;
-        var e, Yd, Wd, ve, ke, le, we, xe;
-        var ye, Pa;
+    function do_interrupt_protected_mode(intno, ne, error_code, oe, pe) {
+        var descriptor_table, qe, descriptor_type, he, selector, re, cpl_var;
+        var te, ue, is_32_bit;
+        var e, descriptor_low4bytes, descriptor_high4bytes, ve, ke, le, we, xe;
+        var ye, SS_mask;
         te = 0;
         if (!ne && !pe) {
             switch (intno) {
@@ -3295,16 +3671,16 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
         if (ne)
             ye = oe;
         else
-            ye = Jb;
-        sa = wa.idt;
-        if (intno * 8 + 7 > sa.limit)
-            qd(13, intno * 8 + 2);
-        fa = (sa.base + intno * 8) & -1;
-        Yd = Cb();
-        fa += 4;
-        Wd = Cb();
-        ie = (Wd >> 8) & 0x1f;
-        switch (ie) {
+            ye = eip;
+        descriptor_table = cpu.idt;
+        if (intno * 8 + 7 > descriptor_table.limit)
+            abort_with_error_code(13, intno * 8 + 2);
+        mem8_loc = (descriptor_table.base + intno * 8) & -1;
+        descriptor_low4bytes = ld32_mem8_kernel_read();
+        mem8_loc += 4;
+        descriptor_high4bytes = ld32_mem8_kernel_read();
+        descriptor_type = (descriptor_high4bytes >> 8) & 0x1f;
+        switch (descriptor_type) {
             case 5:
             case 7:
             case 6:
@@ -3313,580 +3689,555 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
             case 15:
                 break;
             default:
-                qd(13, intno * 8 + 2);
+                abort_with_error_code(13, intno * 8 + 2);
                 break;
         }
-        he = (Wd >> 13) & 3;
-        se = wa.cpl;
-        if (ne && he < se)
-            qd(13, intno * 8 + 2);
-        if (!(Wd & (1 << 15)))
-            qd(11, intno * 8 + 2);
-        selector = Yd >> 16;
-        ve = (Wd & -65536) | (Yd & 0x0000ffff);
+        dpl = (descriptor_high4bytes >> 13) & 3;
+        cpl_var = cpu.cpl;
+        if (ne && dpl < cpl_var)
+            abort_with_error_code(13, intno * 8 + 2);
+        if (!(descriptor_high4bytes & (1 << 15)))
+            abort_with_error_code(11, intno * 8 + 2);
+        selector = descriptor_low4bytes >> 16;
+        ve = (descriptor_high4bytes & -65536) | (descriptor_low4bytes & 0x0000ffff);
         if ((selector & 0xfffc) == 0)
-            qd(13, 0);
-        e = Xd(selector);
+            abort_with_error_code(13, 0);
+        e = load_from_descriptor_table(selector);
         if (!e)
-            qd(13, selector & 0xfffc);
-        Yd = e[0];
-        Wd = e[1];
-        if (!(Wd & (1 << 12)) || !(Wd & ((1 << 11))))
-            qd(13, selector & 0xfffc);
-        he = (Wd >> 13) & 3;
-        if (he > se)
-            qd(13, selector & 0xfffc);
-        if (!(Wd & (1 << 15)))
-            qd(11, selector & 0xfffc);
-        if (!(Wd & (1 << 10)) && he < se) {
-            e = ge(he);
+            abort_with_error_code(13, selector & 0xfffc);
+        descriptor_low4bytes = e[0];
+        descriptor_high4bytes = e[1];
+        if (!(descriptor_high4bytes & (1 << 12)) || !(descriptor_high4bytes & ((1 << 11))))
+            abort_with_error_code(13, selector & 0xfffc);
+        dpl = (descriptor_high4bytes >> 13) & 3;
+        if (dpl > cpl_var)
+            abort_with_error_code(13, selector & 0xfffc);
+        if (!(descriptor_high4bytes & (1 << 15)))
+            abort_with_error_code(11, selector & 0xfffc);
+        if (!(descriptor_high4bytes & (1 << 10)) && dpl < cpl_var) {
+            e = load_from_TR(dpl);
             ke = e[0];
             le = e[1];
             if ((ke & 0xfffc) == 0)
-                qd(10, ke & 0xfffc);
-            if ((ke & 3) != he)
-                qd(10, ke & 0xfffc);
-            e = Xd(ke);
+                abort_with_error_code(10, ke & 0xfffc);
+            if ((ke & 3) != dpl)
+                abort_with_error_code(10, ke & 0xfffc);
+            e = load_from_descriptor_table(ke);
             if (!e)
-                qd(10, ke & 0xfffc);
+                abort_with_error_code(10, ke & 0xfffc);
             we = e[0];
             xe = e[1];
             re = (xe >> 13) & 3;
-            if (re != he)
-                qd(10, ke & 0xfffc);
+            if (re != dpl)
+                abort_with_error_code(10, ke & 0xfffc);
             if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9)))
-                qd(10, ke & 0xfffc);
+                abort_with_error_code(10, ke & 0xfffc);
             if (!(xe & (1 << 15)))
-                qd(10, ke & 0xfffc);
+                abort_with_error_code(10, ke & 0xfffc);
             ue = 1;
-            Pa = Vd(xe);
-            qe = ae(we, xe);
-        } else if ((Wd & (1 << 10)) || he == se) {
-            if (wa.eflags & 0x00020000)
-                qd(13, selector & 0xfffc);
+            SS_mask = SS_mask_from_flags(xe);
+            qe = calculate_descriptor_base(we, xe);
+        } else if ((descriptor_high4bytes & (1 << 10)) || dpl == cpl_var) {
+            if (cpu.eflags & 0x00020000)
+                abort_with_error_code(13, selector & 0xfffc);
             ue = 0;
-            Pa = Vd(wa.segs[2].flags);
-            qe = wa.segs[2].base;
-            le = xa[4];
-            he = se;
+            SS_mask = SS_mask_from_flags(cpu.segs[2].flags);
+            qe = cpu.segs[2].base;
+            le = regs[4];
+            dpl = cpl_var;
         } else {
-            qd(13, selector & 0xfffc);
+            abort_with_error_code(13, selector & 0xfffc);
             ue = 0;
-            Pa = 0;
+            SS_mask = 0;
             qe = 0;
             le = 0;
         }
-        je = ie >> 3;
-        if (je == 1) {
+        is_32_bit = descriptor_type >> 3;
+        if (is_32_bit == 1) {
             if (ue) {
-                if (wa.eflags & 0x00020000) {
+                if (cpu.eflags & 0x00020000) {
                     {
                         le = (le - 4) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Ib(wa.segs[5].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st32_mem8_kernel_write(cpu.segs[5].selector);
                     }
-                    ;
                     {
                         le = (le - 4) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Ib(wa.segs[4].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st32_mem8_kernel_write(cpu.segs[4].selector);
                     }
-                    ;
                     {
                         le = (le - 4) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Ib(wa.segs[3].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st32_mem8_kernel_write(cpu.segs[3].selector);
                     }
-                    ;
                     {
                         le = (le - 4) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Ib(wa.segs[0].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st32_mem8_kernel_write(cpu.segs[0].selector);
                     }
-                    ;
                 }
                 {
                     le = (le - 4) & -1;
-                    fa = (qe + (le & Pa)) & -1;
-                    Ib(wa.segs[2].selector);
+                    mem8_loc = (qe + (le & SS_mask)) & -1;
+                    st32_mem8_kernel_write(cpu.segs[2].selector);
                 }
-                ;
                 {
                     le = (le - 4) & -1;
-                    fa = (qe + (le & Pa)) & -1;
-                    Ib(xa[4]);
+                    mem8_loc = (qe + (le & SS_mask)) & -1;
+                    st32_mem8_kernel_write(regs[4]);
                 }
-                ;
             }
             {
                 le = (le - 4) & -1;
-                fa = (qe + (le & Pa)) & -1;
-                Ib(id());
+                mem8_loc = (qe + (le & SS_mask)) & -1;
+                st32_mem8_kernel_write(get_FLAGS());
             }
-            ;
             {
                 le = (le - 4) & -1;
-                fa = (qe + (le & Pa)) & -1;
-                Ib(wa.segs[1].selector);
+                mem8_loc = (qe + (le & SS_mask)) & -1;
+                st32_mem8_kernel_write(cpu.segs[1].selector);
             }
-            ;
             {
                 le = (le - 4) & -1;
-                fa = (qe + (le & Pa)) & -1;
-                Ib(ye);
+                mem8_loc = (qe + (le & SS_mask)) & -1;
+                st32_mem8_kernel_write(ye);
             }
-            ;
             if (te) {
                 {
                     le = (le - 4) & -1;
-                    fa = (qe + (le & Pa)) & -1;
-                    Ib(error_code);
+                    mem8_loc = (qe + (le & SS_mask)) & -1;
+                    st32_mem8_kernel_write(error_code);
                 }
-                ;
             }
         } else {
             if (ue) {
-                if (wa.eflags & 0x00020000) {
+                if (cpu.eflags & 0x00020000) {
                     {
                         le = (le - 2) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Gb(wa.segs[5].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st16_mem8_kernel_write(cpu.segs[5].selector);
                     }
-                    ;
                     {
                         le = (le - 2) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Gb(wa.segs[4].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st16_mem8_kernel_write(cpu.segs[4].selector);
                     }
-                    ;
                     {
                         le = (le - 2) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Gb(wa.segs[3].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st16_mem8_kernel_write(cpu.segs[3].selector);
                     }
-                    ;
                     {
                         le = (le - 2) & -1;
-                        fa = (qe + (le & Pa)) & -1;
-                        Gb(wa.segs[0].selector);
+                        mem8_loc = (qe + (le & SS_mask)) & -1;
+                        st16_mem8_kernel_write(cpu.segs[0].selector);
                     }
-                    ;
                 }
                 {
                     le = (le - 2) & -1;
-                    fa = (qe + (le & Pa)) & -1;
-                    Gb(wa.segs[2].selector);
+                    mem8_loc = (qe + (le & SS_mask)) & -1;
+                    st16_mem8_kernel_write(cpu.segs[2].selector);
                 }
-                ;
                 {
                     le = (le - 2) & -1;
-                    fa = (qe + (le & Pa)) & -1;
-                    Gb(xa[4]);
+                    mem8_loc = (qe + (le & SS_mask)) & -1;
+                    st16_mem8_kernel_write(regs[4]);
                 }
-                ;
             }
             {
                 le = (le - 2) & -1;
-                fa = (qe + (le & Pa)) & -1;
-                Gb(id());
+                mem8_loc = (qe + (le & SS_mask)) & -1;
+                st16_mem8_kernel_write(get_FLAGS());
             }
-            ;
             {
                 le = (le - 2) & -1;
-                fa = (qe + (le & Pa)) & -1;
-                Gb(wa.segs[1].selector);
+                mem8_loc = (qe + (le & SS_mask)) & -1;
+                st16_mem8_kernel_write(cpu.segs[1].selector);
             }
-            ;
             {
                 le = (le - 2) & -1;
-                fa = (qe + (le & Pa)) & -1;
-                Gb(ye);
+                mem8_loc = (qe + (le & SS_mask)) & -1;
+                st16_mem8_kernel_write(ye);
             }
-            ;
             if (te) {
                 {
                     le = (le - 2) & -1;
-                    fa = (qe + (le & Pa)) & -1;
-                    Gb(error_code);
+                    mem8_loc = (qe + (le & SS_mask)) & -1;
+                    st16_mem8_kernel_write(error_code);
                 }
-                ;
             }
         }
         if (ue) {
-            if (wa.eflags & 0x00020000) {
-                de(0, 0, 0, 0, 0);
-                de(3, 0, 0, 0, 0);
-                de(4, 0, 0, 0, 0);
-                de(5, 0, 0, 0, 0);
+            if (cpu.eflags & 0x00020000) {
+                set_segment_vars(0, 0, 0, 0, 0);
+                set_segment_vars(3, 0, 0, 0, 0);
+                set_segment_vars(4, 0, 0, 0, 0);
+                set_segment_vars(5, 0, 0, 0, 0);
             }
-            ke = (ke & ~3) | he;
-            de(2, ke, qe, Zd(we, xe), xe);
+            ke = (ke & ~3) | dpl;
+            set_segment_vars(2, ke, qe, calculate_descriptor_limit(we, xe), xe);
         }
-        xa[4] = (xa[4] & ~Pa) | ((le) & Pa);
-        selector = (selector & ~3) | he;
-        de(1, selector, ae(Yd, Wd), Zd(Yd, Wd), Wd);
-        rd(he);
-        Jb = ve, Kb = Mb = 0;
-        if ((ie & 1) == 0) {
-            wa.eflags &= ~0x00000200;
+        regs[4] = (regs[4] & ~SS_mask) | ((le) & SS_mask);
+        selector = (selector & ~3) | dpl;
+        set_segment_vars(1, selector, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes), descriptor_high4bytes);
+        change_permission_level(dpl);
+        eip = ve, physmem8_ptr = initial_mem_ptr = 0;
+        if ((descriptor_type & 1) == 0) {
+            cpu.eflags &= ~0x00000200;
         }
-        wa.eflags &= ~(0x00000100 | 0x00020000 | 0x00010000 | 0x00004000);
+        cpu.eflags &= ~(0x00000100 | 0x00020000 | 0x00010000 | 0x00004000);
     }
-    function ze(intno, ne, error_code, oe, pe) {
-        var sa, qe, selector, ve, le, ye;
-        sa = wa.idt;
-        if (intno * 4 + 3 > sa.limit)
-            qd(13, intno * 8 + 2);
-        fa = (sa.base + (intno << 2)) >> 0;
-        ve = Ab();
-        fa = (fa + 2) >> 0;
-        selector = Ab();
-        le = xa[4];
+    function do_interrupt_not_protected_mode(intno, ne, error_code, oe, pe) {
+        var descriptor_table, qe, selector, ve, le, ye;
+        descriptor_table = cpu.idt;
+        if (intno * 4 + 3 > descriptor_table.limit)
+            abort_with_error_code(13, intno * 8 + 2);
+        mem8_loc = (descriptor_table.base + (intno << 2)) >> 0;
+        ve = ld16_mem8_kernel_read();
+        mem8_loc = (mem8_loc + 2) >> 0;
+        selector = ld16_mem8_kernel_read();
+        le = regs[4];
         if (ne)
             ye = oe;
         else
-            ye = Jb;
+            ye = eip;
         {
             le = (le - 2) >> 0;
-            fa = ((le & Pa) + Oa) >> 0;
-            ub(id());
+            mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+            st16_mem8_write(get_FLAGS());
         }
-        ;
         {
             le = (le - 2) >> 0;
-            fa = ((le & Pa) + Oa) >> 0;
-            ub(wa.segs[1].selector);
+            mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+            st16_mem8_write(cpu.segs[1].selector);
         }
-        ;
         {
             le = (le - 2) >> 0;
-            fa = ((le & Pa) + Oa) >> 0;
-            ub(ye);
+            mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+            st16_mem8_write(ye);
         }
-        ;
-        xa[4] = (xa[4] & ~Pa) | ((le) & Pa);
-        Jb = ve, Kb = Mb = 0;
-        wa.segs[1].selector = selector;
-        wa.segs[1].base = (selector << 4);
-        wa.eflags &= ~(0x00000200 | 0x00000100 | 0x00040000 | 0x00010000);
+        regs[4] = (regs[4] & ~SS_mask) | ((le) & SS_mask);
+        eip = ve, physmem8_ptr = initial_mem_ptr = 0;
+        cpu.segs[1].selector = selector;
+        cpu.segs[1].base = (selector << 4);
+        cpu.eflags &= ~(0x00000200 | 0x00000100 | 0x00040000 | 0x00010000);
     }
-    function Ae(intno, ne, error_code, oe, pe) {
+    function do_interrupt(intno, ne, error_code, oe, pe) {
         if (intno == 0x06) {
-            var Be = Jb;
-            var Nb;
-            na = "do_interrupt: intno=" + qa(intno) + " error_code=" + pa(error_code) + " EIP=" + pa(Be) + " ESP=" + pa(xa[4]) + " EAX=" + pa(xa[0]) + " EBX=" + pa(xa[3]) + " ECX=" + pa(xa[1]);
+            var eip_tmp = eip;
+            var eip_offset;
+            str = "do_interrupt: intno=" + _2_bytes_(intno) + " error_code=" + _4_bytes_(error_code)
+                + " EIP=" + _4_bytes_(eip_tmp) + " ESP=" + _4_bytes_(regs[4]) + " EAX=" + _4_bytes_(regs[0])
+                + " EBX=" + _4_bytes_(regs[3]) + " ECX=" + _4_bytes_(regs[1]);
             if (intno == 0x0e) {
-                na += " CR2=" + pa(wa.cr2);
+                str += " CR2=" + _4_bytes_(cpu.cr2);
             }
-            console.log(na);
+            console.log(str);
             if (intno == 0x06) {
-                var na, i, n;
-                na = "Code:";
-                Nb = (Be + Na) >> 0;
-                n = 4096 - (Nb & 0xfff);
+                var str, i, n;
+                str = "Code:";
+                eip_offset = (eip_tmp + CS_base) >> 0;
+                n = 4096 - (eip_offset & 0xfff);
                 if (n > 15)
                     n = 15;
                 for (i = 0; i < n; i++) {
-                    fa = (Nb + i) & -1;
-                    na += " " + qa(gb());
+                    mem8_loc = (eip_offset + i) & -1;
+                    str += " " + _2_bytes_(ld_8bits_mem8_read());
                 }
-                console.log(na);
+                console.log(str);
             }
         }
-        if (wa.cr0 & (1 << 0)) {
-            me(intno, ne, error_code, oe, pe);
+        if (cpu.cr0 & (1 << 0)) {
+            do_interrupt_protected_mode(intno, ne, error_code, oe, pe);
         } else {
-            ze(intno, ne, error_code, oe, pe);
+            do_interrupt_not_protected_mode(intno, ne, error_code, oe, pe);
         }
     }
-    function Ce(selector) {
-        var sa, Yd, Wd, Rb, De;
+    //SLDT routines
+    function op_LDTR(selector) {
+        var descriptor_table, descriptor_low4bytes, descriptor_high4bytes, Rb, De;
         selector &= 0xffff;
         if ((selector & 0xfffc) == 0) {
-            wa.ldt.base = 0;
-            wa.ldt.limit = 0;
+            cpu.ldt.base = 0;
+            cpu.ldt.limit = 0;
         } else {
             if (selector & 0x4)
-                qd(13, selector & 0xfffc);
-            sa = wa.gdt;
+                abort_with_error_code(13, selector & 0xfffc);
+            descriptor_table = cpu.gdt;
             Rb = selector & ~7;
             De = 7;
-            if ((Rb + De) > sa.limit)
-                qd(13, selector & 0xfffc);
-            fa = (sa.base + Rb) & -1;
-            Yd = Cb();
-            fa += 4;
-            Wd = Cb();
-            if ((Wd & (1 << 12)) || ((Wd >> 8) & 0xf) != 2)
-                qd(13, selector & 0xfffc);
-            if (!(Wd & (1 << 15)))
-                qd(11, selector & 0xfffc);
-            be(wa.ldt, Yd, Wd);
+            if ((Rb + De) > descriptor_table.limit)
+                abort_with_error_code(13, selector & 0xfffc);
+            mem8_loc = (descriptor_table.base + Rb) & -1;
+            descriptor_low4bytes = ld32_mem8_kernel_read();
+            mem8_loc += 4;
+            descriptor_high4bytes = ld32_mem8_kernel_read();
+            if ((descriptor_high4bytes & (1 << 12)) || ((descriptor_high4bytes >> 8) & 0xf) != 2)
+                abort_with_error_code(13, selector & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 15)))
+                abort_with_error_code(11, selector & 0xfffc);
+            set_descriptor_register(cpu.ldt, descriptor_low4bytes, descriptor_high4bytes);
         }
-        wa.ldt.selector = selector;
+        cpu.ldt.selector = selector;
     }
-    function Ee(selector) {
-        var sa, Yd, Wd, Rb, ie, De;
+    function op_LTR(selector) {
+        var descriptor_table, descriptor_low4bytes, descriptor_high4bytes, Rb, descriptor_type, De;
         selector &= 0xffff;
         if ((selector & 0xfffc) == 0) {
-            wa.tr.base = 0;
-            wa.tr.limit = 0;
-            wa.tr.flags = 0;
+            cpu.tr.base = 0;
+            cpu.tr.limit = 0;
+            cpu.tr.flags = 0;
         } else {
             if (selector & 0x4)
-                qd(13, selector & 0xfffc);
-            sa = wa.gdt;
+                abort_with_error_code(13, selector & 0xfffc);
+            descriptor_table = cpu.gdt;
             Rb = selector & ~7;
             De = 7;
-            if ((Rb + De) > sa.limit)
-                qd(13, selector & 0xfffc);
-            fa = (sa.base + Rb) & -1;
-            Yd = Cb();
-            fa += 4;
-            Wd = Cb();
-            ie = (Wd >> 8) & 0xf;
-            if ((Wd & (1 << 12)) || (ie != 1 && ie != 9))
-                qd(13, selector & 0xfffc);
-            if (!(Wd & (1 << 15)))
-                qd(11, selector & 0xfffc);
-            be(wa.tr, Yd, Wd);
-            Wd |= (1 << 9);
-            Ib(Wd);
+            if ((Rb + De) > descriptor_table.limit)
+                abort_with_error_code(13, selector & 0xfffc);
+            mem8_loc = (descriptor_table.base + Rb) & -1;
+            descriptor_low4bytes = ld32_mem8_kernel_read();
+            mem8_loc += 4;
+            descriptor_high4bytes = ld32_mem8_kernel_read();
+            descriptor_type = (descriptor_high4bytes >> 8) & 0xf;
+            if ((descriptor_high4bytes & (1 << 12)) || (descriptor_type != 1 && descriptor_type != 9))
+                abort_with_error_code(13, selector & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 15)))
+                abort_with_error_code(11, selector & 0xfffc);
+            set_descriptor_register(cpu.tr, descriptor_low4bytes, descriptor_high4bytes);
+            descriptor_high4bytes |= (1 << 9);
+            st32_mem8_kernel_write(descriptor_high4bytes);
         }
-        wa.tr.selector = selector;
+        cpu.tr.selector = selector;
     }
-    function Fe(Ge, selector) {
-        var Yd, Wd, se, he, He, sa, Rb;
-        se = wa.cpl;
-        if ((selector & 0xfffc) == 0) {
-            if (Ge == 2)
-                qd(13, 0);
-            de(Ge, selector, 0, 0, 0);
+    function set_protected_mode_segment_register(register, selector) {
+        var descriptor_low4bytes, descriptor_high4bytes, cpl_var, dpl, rpl, descriptor_table, selector_index;
+        cpl_var = cpu.cpl;
+        if ((selector & 0xfffc) == 0) {                        //null selector
+            if (register == 2)                                 //(SS == null) => #GP(0)
+                abort_with_error_code(13, 0);
+            set_segment_vars(register, selector, 0, 0, 0);
         } else {
             if (selector & 0x4)
-                sa = wa.ldt;
+                descriptor_table = cpu.ldt;
             else
-                sa = wa.gdt;
-            Rb = selector & ~7;
-            if ((Rb + 7) > sa.limit)
-                qd(13, selector & 0xfffc);
-            fa = (sa.base + Rb) & -1;
-            Yd = Cb();
-            fa += 4;
-            Wd = Cb();
-            if (!(Wd & (1 << 12)))
-                qd(13, selector & 0xfffc);
-            He = selector & 3;
-            he = (Wd >> 13) & 3;
-            if (Ge == 2) {
-                if ((Wd & (1 << 11)) || !(Wd & (1 << 9)))
-                    qd(13, selector & 0xfffc);
-                if (He != se || he != se)
-                    qd(13, selector & 0xfffc);
+                descriptor_table = cpu.gdt;
+            selector_index = selector & ~7;
+            if ((selector_index + 7) > descriptor_table.limit)
+                abort_with_error_code(13, selector & 0xfffc);
+            mem8_loc = (descriptor_table.base + selector_index) & -1;
+            descriptor_low4bytes = ld32_mem8_kernel_read();
+            mem8_loc += 4;
+            descriptor_high4bytes = ld32_mem8_kernel_read();
+            if (!(descriptor_high4bytes & (1 << 12)))
+                abort_with_error_code(13, selector & 0xfffc);
+            rpl = selector & 3;
+            dpl = (descriptor_high4bytes >> 13) & 3;
+            if (register == 2) {
+                if ((descriptor_high4bytes & (1 << 11)) || !(descriptor_high4bytes & (1 << 9)))
+                    abort_with_error_code(13, selector & 0xfffc);
+                if (rpl != cpl_var || dpl != cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
             } else {
-                if ((Wd & ((1 << 11) | (1 << 9))) == (1 << 11))
-                    qd(13, selector & 0xfffc);
-                if (!(Wd & (1 << 11)) || !(Wd & (1 << 10))) {
-                    if (he < se || he < He)
-                        qd(13, selector & 0xfffc);
+                if ((descriptor_high4bytes & ((1 << 11) | (1 << 9))) == (1 << 11))
+                    abort_with_error_code(13, selector & 0xfffc);
+                if (!(descriptor_high4bytes & (1 << 11)) || !(descriptor_high4bytes & (1 << 10))) {
+                    if (dpl < cpl_var || dpl < rpl)
+                        abort_with_error_code(13, selector & 0xfffc);
                 }
             }
-            if (!(Wd & (1 << 15))) {
-                if (Ge == 2)
-                    qd(12, selector & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 15))) {
+                if (register == 2)
+                    abort_with_error_code(12, selector & 0xfffc);
                 else
-                    qd(11, selector & 0xfffc);
+                    abort_with_error_code(11, selector & 0xfffc);
             }
-            if (!(Wd & (1 << 8))) {
-                Wd |= (1 << 8);
-                Ib(Wd);
+            if (!(descriptor_high4bytes & (1 << 8))) {
+                descriptor_high4bytes |= (1 << 8);
+                st32_mem8_kernel_write(descriptor_high4bytes);
             }
-            de(Ge, selector, ae(Yd, Wd), Zd(Yd, Wd), Wd);
+            set_segment_vars(register, selector, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes), descriptor_high4bytes);
         }
     }
-    function Ie(Ge, selector) {
-        var sa;
+    function set_segment_register(register, selector) {
+        var descriptor_table;
         selector &= 0xffff;
-        if (!(wa.cr0 & (1 << 0))) {
-            sa = wa.segs[Ge];
-            sa.selector = selector;
-            sa.base = selector << 4;
-        } else if (wa.eflags & 0x00020000) {
-            fe(Ge, selector);
-        } else {
-            Fe(Ge, selector);
-        }
+        if (!(cpu.cr0 & (1 << 0))) {          //CR0.PE (0 == real mode)
+            descriptor_table = cpu.segs[register];
+            descriptor_table.selector = selector;
+            descriptor_table.base = selector << 4;
+        } else if (cpu.eflags & 0x00020000) { //EFLAGS.VM (1 == v86 mode)
+            init_segment_vars_with_selector(register, selector);
+        } else {                              //protected mode
+            set_protected_mode_segment_register(register, selector);
+         }
     }
-    function Je(Ke, Le) {
-        Jb = Le, Kb = Mb = 0;
-        wa.segs[1].selector = Ke;
-        wa.segs[1].base = (Ke << 4);
-        ce();
+    function do_JMPF_virtual_mode(selector, Le) {
+        eip = Le, physmem8_ptr = initial_mem_ptr = 0;
+        cpu.segs[1].selector = selector;
+        cpu.segs[1].base = (selector << 4);
+        init_segment_local_vars();
     }
-    function Me(Ke, Le) {
-        var Ne, ie, Yd, Wd, se, he, He, limit, e;
-        if ((Ke & 0xfffc) == 0)
-            qd(13, 0);
-        e = Xd(Ke);
+    function do_JMPF(selector, Le) {
+        var Ne, ie, descriptor_low4bytes, descriptor_high4bytes, cpl_var, dpl, rpl, limit, e;
+        if ((selector & 0xfffc) == 0)
+            abort_with_error_code(13, 0);
+        e = load_from_descriptor_table(selector);
         if (!e)
-            qd(13, Ke & 0xfffc);
-        Yd = e[0];
-        Wd = e[1];
-        se = wa.cpl;
-        if (Wd & (1 << 12)) {
-            if (!(Wd & (1 << 11)))
-                qd(13, Ke & 0xfffc);
-            he = (Wd >> 13) & 3;
-            if (Wd & (1 << 10)) {
-                if (he > se)
-                    qd(13, Ke & 0xfffc);
+            abort_with_error_code(13, selector & 0xfffc);
+        descriptor_low4bytes = e[0];
+        descriptor_high4bytes = e[1];
+        cpl_var = cpu.cpl;
+        if (descriptor_high4bytes & (1 << 12)) {
+            if (!(descriptor_high4bytes & (1 << 11)))
+                abort_with_error_code(13, selector & 0xfffc);
+            dpl = (descriptor_high4bytes >> 13) & 3;
+            if (descriptor_high4bytes & (1 << 10)) {
+                if (dpl > cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
             } else {
-                He = Ke & 3;
-                if (He > se)
-                    qd(13, Ke & 0xfffc);
-                if (he != se)
-                    qd(13, Ke & 0xfffc);
+                rpl = selector & 3;
+                if (rpl > cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
+                if (dpl != cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
             }
-            if (!(Wd & (1 << 15)))
-                qd(11, Ke & 0xfffc);
-            limit = Zd(Yd, Wd);
+            if (!(descriptor_high4bytes & (1 << 15)))
+                abort_with_error_code(11, selector & 0xfffc);
+            limit = calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes);
             if ((Le >>> 0) > (limit >>> 0))
-                qd(13, Ke & 0xfffc);
-            de(1, (Ke & 0xfffc) | se, ae(Yd, Wd), limit, Wd);
-            Jb = Le, Kb = Mb = 0;
+                abort_with_error_code(13, selector & 0xfffc);
+            set_segment_vars(1, (selector & 0xfffc) | cpl_var, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), limit, descriptor_high4bytes);
+            eip = Le, physmem8_ptr = initial_mem_ptr = 0;
         } else {
-            nd("unsupported jump to call or task gate");
+            cpu_abort("unsupported jump to call or task gate");
         }
     }
-    function Oe(Ke, Le) {
-        if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000)) {
-            Je(Ke, Le);
+    function op_JMPF(selector, Le) {
+        if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000)) {
+            do_JMPF_virtual_mode(selector, Le);
         } else {
-            Me(Ke, Le);
+            do_JMPF(selector, Le);
         }
     }
-    function Pe(Ge, se) {
-        var he, Wd;
-        if ((Ge == 4 || Ge == 5) && (wa.segs[Ge].selector & 0xfffc) == 0)
+
+    /* used only in do_return_protected_mode */
+    function Pe(register, cpl_var) {
+        var dpl, descriptor_high4bytes;
+        if ((register == 4 || register == 5) && (cpu.segs[register].selector & 0xfffc) == 0)
             return;
-        Wd = wa.segs[Ge].flags;
-        he = (Wd >> 13) & 3;
-        if (!(Wd & (1 << 11)) || !(Wd & (1 << 10))) {
-            if (he < se) {
-                de(Ge, 0, 0, 0, 0);
+        descriptor_high4bytes = cpu.segs[register].flags;
+        dpl = (descriptor_high4bytes >> 13) & 3;
+        if (!(descriptor_high4bytes & (1 << 11)) || !(descriptor_high4bytes & (1 << 10))) {
+            if (dpl < cpl_var) {
+                set_segment_vars(register, 0, 0, 0, 0);
             }
         }
     }
-    function Qe(je, Ke, Le, oe) {
+
+    function op_CALLF_not_protected_mode(is_32_bit, selector, Le, oe) {
         var le;
-        le = xa[4];
-        if (je) {
+        le = regs[4];
+        if (is_32_bit) {
             {
                 le = (le - 4) >> 0;
-                fa = ((le & Pa) + Oa) >> 0;
-                wb(wa.segs[1].selector);
+                mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                st32_mem8_write(cpu.segs[1].selector);
             }
-            ;
             {
                 le = (le - 4) >> 0;
-                fa = ((le & Pa) + Oa) >> 0;
-                wb(oe);
+                mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                st32_mem8_write(oe);
             }
-            ;
         } else {
             {
                 le = (le - 2) >> 0;
-                fa = ((le & Pa) + Oa) >> 0;
-                ub(wa.segs[1].selector);
+                mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                st16_mem8_write(cpu.segs[1].selector);
             }
-            ;
             {
                 le = (le - 2) >> 0;
-                fa = ((le & Pa) + Oa) >> 0;
-                ub(oe);
+                mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                st16_mem8_write(oe);
             }
-            ;
         }
-        xa[4] = (xa[4] & ~Pa) | ((le) & Pa);
-        Jb = Le, Kb = Mb = 0;
-        wa.segs[1].selector = Ke;
-        wa.segs[1].base = (Ke << 4);
-        ce();
+        regs[4] = (regs[4] & ~SS_mask) | ((le) & SS_mask);
+        eip = Le, physmem8_ptr = initial_mem_ptr = 0;
+        cpu.segs[1].selector = selector;
+        cpu.segs[1].base = (selector << 4);
+        init_segment_local_vars();
     }
-    function Re(je, Ke, Le, oe) {
+    function op_CALLF_protected_mode(is_32_bit, selector, Le, oe) {
         var ue, i, e;
-        var Yd, Wd, se, he, He, selector, ve, Se;
-        var ke, we, xe, Te, ie, re, Pa;
-        var ga, limit, Ue;
+        var descriptor_low4bytes, descriptor_high4bytes, cpl_var, dpl, rpl, selector, ve, Se;
+        var ke, we, xe, esp, descriptor_type, re, SS_mask;
+        var x, limit, Ue;
         var qe, Ve, We;
-        if ((Ke & 0xfffc) == 0)
-            qd(13, 0);
-        e = Xd(Ke);
+        if ((selector & 0xfffc) == 0)
+            abort_with_error_code(13, 0);
+        e = load_from_descriptor_table(selector);
         if (!e)
-            qd(13, Ke & 0xfffc);
-        Yd = e[0];
-        Wd = e[1];
-        se = wa.cpl;
-        We = xa[4];
-        if (Wd & (1 << 12)) {
-            if (!(Wd & (1 << 11)))
-                qd(13, Ke & 0xfffc);
-            he = (Wd >> 13) & 3;
-            if (Wd & (1 << 10)) {
-                if (he > se)
-                    qd(13, Ke & 0xfffc);
+            abort_with_error_code(13, selector & 0xfffc);
+        descriptor_low4bytes = e[0];
+        descriptor_high4bytes = e[1];
+        cpl_var = cpu.cpl;
+        We = regs[4];
+        if (descriptor_high4bytes & (1 << 12)) {
+            if (!(descriptor_high4bytes & (1 << 11)))
+                abort_with_error_code(13, selector & 0xfffc);
+            dpl = (descriptor_high4bytes >> 13) & 3;
+            if (descriptor_high4bytes & (1 << 10)) {
+                if (dpl > cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
             } else {
-                He = Ke & 3;
-                if (He > se)
-                    qd(13, Ke & 0xfffc);
-                if (he != se)
-                    qd(13, Ke & 0xfffc);
+                rpl = selector & 3;
+                if (rpl > cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
+                if (dpl != cpl_var)
+                    abort_with_error_code(13, selector & 0xfffc);
             }
-            if (!(Wd & (1 << 15)))
-                qd(11, Ke & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 15)))
+                abort_with_error_code(11, selector & 0xfffc);
             {
-                Te = We;
-                Pa = Vd(wa.segs[2].flags);
-                qe = wa.segs[2].base;
-                if (je) {
+                esp = We;
+                SS_mask = SS_mask_from_flags(cpu.segs[2].flags);
+                qe = cpu.segs[2].base;
+                if (is_32_bit) {
                     {
-                        Te = (Te - 4) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Ib(wa.segs[1].selector);
+                        esp = (esp - 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st32_mem8_kernel_write(cpu.segs[1].selector);
                     }
-                    ;
                     {
-                        Te = (Te - 4) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Ib(oe);
+                        esp = (esp - 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st32_mem8_kernel_write(oe);
                     }
-                    ;
                 } else {
                     {
-                        Te = (Te - 2) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Gb(wa.segs[1].selector);
+                        esp = (esp - 2) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st16_mem8_kernel_write(cpu.segs[1].selector);
                     }
-                    ;
                     {
-                        Te = (Te - 2) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Gb(oe);
+                        esp = (esp - 2) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st16_mem8_kernel_write(oe);
                     }
-                    ;
                 }
-                limit = Zd(Yd, Wd);
+                limit = calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes);
                 if (Le > limit)
-                    qd(13, Ke & 0xfffc);
-                xa[4] = (xa[4] & ~Pa) | ((Te) & Pa);
-                de(1, (Ke & 0xfffc) | se, ae(Yd, Wd), limit, Wd);
-                Jb = Le, Kb = Mb = 0;
+                    abort_with_error_code(13, selector & 0xfffc);
+                regs[4] = (regs[4] & ~SS_mask) | ((esp) & SS_mask);
+                set_segment_vars(1, (selector & 0xfffc) | cpl_var, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), limit, descriptor_high4bytes);
+                eip = Le, physmem8_ptr = initial_mem_ptr = 0;
             }
         } else {
-            ie = (Wd >> 8) & 0x1f;
-            he = (Wd >> 13) & 3;
-            He = Ke & 3;
-            switch (ie) {
+            descriptor_type = (descriptor_high4bytes >> 8) & 0x1f;
+            dpl = (descriptor_high4bytes >> 13) & 3;
+            rpl = selector & 3;
+            switch (descriptor_type) {
                 case 1:
                 case 9:
                 case 5:
@@ -3896,456 +4247,428 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 12:
                     break;
                 default:
-                    qd(13, Ke & 0xfffc);
+                    abort_with_error_code(13, selector & 0xfffc);
                     break;
             }
-            je = ie >> 3;
-            if (he < se || he < He)
-                qd(13, Ke & 0xfffc);
-            if (!(Wd & (1 << 15)))
-                qd(11, Ke & 0xfffc);
-            selector = Yd >> 16;
-            ve = (Wd & 0xffff0000) | (Yd & 0x0000ffff);
-            Se = Wd & 0x1f;
+            is_32_bit = descriptor_type >> 3;
+            if (dpl < cpl_var || dpl < rpl)
+                abort_with_error_code(13, selector & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 15)))
+                abort_with_error_code(11, selector & 0xfffc);
+            selector = descriptor_low4bytes >> 16;
+            ve = (descriptor_high4bytes & 0xffff0000) | (descriptor_low4bytes & 0x0000ffff);
+            Se = descriptor_high4bytes & 0x1f;
             if ((selector & 0xfffc) == 0)
-                qd(13, 0);
-            e = Xd(selector);
+                abort_with_error_code(13, 0);
+            e = load_from_descriptor_table(selector);
             if (!e)
-                qd(13, selector & 0xfffc);
-            Yd = e[0];
-            Wd = e[1];
-            if (!(Wd & (1 << 12)) || !(Wd & ((1 << 11))))
-                qd(13, selector & 0xfffc);
-            he = (Wd >> 13) & 3;
-            if (he > se)
-                qd(13, selector & 0xfffc);
-            if (!(Wd & (1 << 15)))
-                qd(11, selector & 0xfffc);
-            if (!(Wd & (1 << 10)) && he < se) {
-                e = ge(he);
+                abort_with_error_code(13, selector & 0xfffc);
+            descriptor_low4bytes = e[0];
+            descriptor_high4bytes = e[1];
+            if (!(descriptor_high4bytes & (1 << 12)) || !(descriptor_high4bytes & ((1 << 11))))
+                abort_with_error_code(13, selector & 0xfffc);
+            dpl = (descriptor_high4bytes >> 13) & 3;
+            if (dpl > cpl_var)
+                abort_with_error_code(13, selector & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 15)))
+                abort_with_error_code(11, selector & 0xfffc);
+            if (!(descriptor_high4bytes & (1 << 10)) && dpl < cpl_var) {
+                e = load_from_TR(dpl);
                 ke = e[0];
-                Te = e[1];
+                esp = e[1];
                 if ((ke & 0xfffc) == 0)
-                    qd(10, ke & 0xfffc);
-                if ((ke & 3) != he)
-                    qd(10, ke & 0xfffc);
-                e = Xd(ke);
+                    abort_with_error_code(10, ke & 0xfffc);
+                if ((ke & 3) != dpl)
+                    abort_with_error_code(10, ke & 0xfffc);
+                e = load_from_descriptor_table(ke);
                 if (!e)
-                    qd(10, ke & 0xfffc);
+                    abort_with_error_code(10, ke & 0xfffc);
                 we = e[0];
                 xe = e[1];
                 re = (xe >> 13) & 3;
-                if (re != he)
-                    qd(10, ke & 0xfffc);
+                if (re != dpl)
+                    abort_with_error_code(10, ke & 0xfffc);
                 if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9)))
-                    qd(10, ke & 0xfffc);
+                    abort_with_error_code(10, ke & 0xfffc);
                 if (!(xe & (1 << 15)))
-                    qd(10, ke & 0xfffc);
-                Ue = Vd(wa.segs[2].flags);
-                Ve = wa.segs[2].base;
-                Pa = Vd(xe);
-                qe = ae(we, xe);
-                if (je) {
+                    abort_with_error_code(10, ke & 0xfffc);
+                Ue = SS_mask_from_flags(cpu.segs[2].flags);
+                Ve = cpu.segs[2].base;
+                SS_mask = SS_mask_from_flags(xe);
+                qe = calculate_descriptor_base(we, xe);
+                if (is_32_bit) {
                     {
-                        Te = (Te - 4) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Ib(wa.segs[2].selector);
+                        esp = (esp - 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st32_mem8_kernel_write(cpu.segs[2].selector);
                     }
-                    ;
                     {
-                        Te = (Te - 4) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Ib(We);
+                        esp = (esp - 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st32_mem8_kernel_write(We);
                     }
-                    ;
                     for (i = Se - 1; i >= 0; i--) {
-                        ga = Xe(Ve + ((We + i * 4) & Ue));
+                        x = Xe(Ve + ((We + i * 4) & Ue));
                         {
-                            Te = (Te - 4) & -1;
-                            fa = (qe + (Te & Pa)) & -1;
-                            Ib(ga);
+                            esp = (esp - 4) & -1;
+                            mem8_loc = (qe + (esp & SS_mask)) & -1;
+                            st32_mem8_kernel_write(x);
                         }
-                        ;
                     }
                 } else {
                     {
-                        Te = (Te - 2) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Gb(wa.segs[2].selector);
+                        esp = (esp - 2) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st16_mem8_kernel_write(cpu.segs[2].selector);
                     }
-                    ;
                     {
-                        Te = (Te - 2) & -1;
-                        fa = (qe + (Te & Pa)) & -1;
-                        Gb(We);
+                        esp = (esp - 2) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        st16_mem8_kernel_write(We);
                     }
-                    ;
                     for (i = Se - 1; i >= 0; i--) {
-                        ga = Ye(Ve + ((We + i * 2) & Ue));
+                        x = Ye(Ve + ((We + i * 2) & Ue));
                         {
-                            Te = (Te - 2) & -1;
-                            fa = (qe + (Te & Pa)) & -1;
-                            Gb(ga);
+                            esp = (esp - 2) & -1;
+                            mem8_loc = (qe + (esp & SS_mask)) & -1;
+                            st16_mem8_kernel_write(x);
                         }
-                        ;
                     }
                 }
                 ue = 1;
             } else {
-                Te = We;
-                Pa = Vd(wa.segs[2].flags);
-                qe = wa.segs[2].base;
+                esp = We;
+                SS_mask = SS_mask_from_flags(cpu.segs[2].flags);
+                qe = cpu.segs[2].base;
                 ue = 0;
             }
-            if (je) {
+            if (is_32_bit) {
                 {
-                    Te = (Te - 4) & -1;
-                    fa = (qe + (Te & Pa)) & -1;
-                    Ib(wa.segs[1].selector);
+                    esp = (esp - 4) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    st32_mem8_kernel_write(cpu.segs[1].selector);
                 }
-                ;
                 {
-                    Te = (Te - 4) & -1;
-                    fa = (qe + (Te & Pa)) & -1;
-                    Ib(oe);
+                    esp = (esp - 4) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    st32_mem8_kernel_write(oe);
                 }
-                ;
             } else {
                 {
-                    Te = (Te - 2) & -1;
-                    fa = (qe + (Te & Pa)) & -1;
-                    Gb(wa.segs[1].selector);
+                    esp = (esp - 2) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    st16_mem8_kernel_write(cpu.segs[1].selector);
                 }
-                ;
                 {
-                    Te = (Te - 2) & -1;
-                    fa = (qe + (Te & Pa)) & -1;
-                    Gb(oe);
+                    esp = (esp - 2) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    st16_mem8_kernel_write(oe);
                 }
-                ;
             }
             if (ue) {
-                ke = (ke & ~3) | he;
-                de(2, ke, qe, Zd(we, xe), xe);
+                ke = (ke & ~3) | dpl;
+                set_segment_vars(2, ke, qe, calculate_descriptor_limit(we, xe), xe);
             }
-            selector = (selector & ~3) | he;
-            de(1, selector, ae(Yd, Wd), Zd(Yd, Wd), Wd);
-            rd(he);
-            xa[4] = (xa[4] & ~Pa) | ((Te) & Pa);
-            Jb = ve, Kb = Mb = 0;
+            selector = (selector & ~3) | dpl;
+            set_segment_vars(1, selector, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes), descriptor_high4bytes);
+            change_permission_level(dpl);
+            regs[4] = (regs[4] & ~SS_mask) | ((esp) & SS_mask);
+            eip = ve, physmem8_ptr = initial_mem_ptr = 0;
         }
     }
-    function Ze(je, Ke, Le, oe) {
-        if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000)) {
-            Qe(je, Ke, Le, oe);
+    function op_CALLF(is_32_bit, selector, Le, oe) {
+        if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000)) {
+            op_CALLF_not_protected_mode(is_32_bit, selector, Le, oe);
         } else {
-            Re(je, Ke, Le, oe);
+            op_CALLF_protected_mode(is_32_bit, selector, Le, oe);
         }
     }
-    function af(je, bf, cf) {
-        var Te, Ke, Le, df, Pa, qe, ef;
-        Pa = 0xffff;
-        Te = xa[4];
-        qe = wa.segs[2].base;
-        if (je == 1) {
+    function do_return_not_protected_mode(is_32_bit, is_iret, imm16) {
+        var esp, selector, stack_eip, stack_eflags, SS_mask, qe, ef;
+        SS_mask = 0xffff;
+        esp = regs[4];
+        qe = cpu.segs[2].base;
+        if (is_32_bit == 1) {
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Le = Cb();
-                Te = (Te + 4) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eip = ld32_mem8_kernel_read();
+                esp = (esp + 4) & -1;
             }
-            ;
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Ke = Cb();
-                Te = (Te + 4) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                selector = ld32_mem8_kernel_read();
+                esp = (esp + 4) & -1;
             }
-            ;
-            Ke &= 0xffff;
-            if (bf) {
-                fa = (qe + (Te & Pa)) & -1;
-                df = Cb();
-                Te = (Te + 4) & -1;
+            selector &= 0xffff;
+            if (is_iret) {
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eflags = ld32_mem8_kernel_read();
+                esp = (esp + 4) & -1;
             }
-            ;
         } else {
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Le = Ab();
-                Te = (Te + 2) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eip = ld16_mem8_kernel_read();
+                esp = (esp + 2) & -1;
             }
-            ;
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Ke = Ab();
-                Te = (Te + 2) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                selector = ld16_mem8_kernel_read();
+                esp = (esp + 2) & -1;
             }
-            ;
-            if (bf) {
-                fa = (qe + (Te & Pa)) & -1;
-                df = Ab();
-                Te = (Te + 2) & -1;
+            if (is_iret) {
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eflags = ld16_mem8_kernel_read();
+                esp = (esp + 2) & -1;
             }
-            ;
         }
-        xa[4] = (xa[4] & ~Pa) | ((Te + cf) & Pa);
-        wa.segs[1].selector = Ke;
-        wa.segs[1].base = (Ke << 4);
-        Jb = Le, Kb = Mb = 0;
-        if (bf) {
-            if (wa.eflags & 0x00020000)
+        regs[4] = (regs[4] & ~SS_mask) | ((esp + imm16) & SS_mask);
+        cpu.segs[1].selector = selector;
+        cpu.segs[1].base = (selector << 4);
+        eip = stack_eip, physmem8_ptr = initial_mem_ptr = 0;
+        if (is_iret) {
+            if (cpu.eflags & 0x00020000)
                 ef = 0x00000100 | 0x00040000 | 0x00200000 | 0x00000200 | 0x00010000 | 0x00004000;
             else
                 ef = 0x00000100 | 0x00040000 | 0x00200000 | 0x00000200 | 0x00003000 | 0x00010000 | 0x00004000;
-            if (je == 0)
+            if (is_32_bit == 0)
                 ef &= 0xffff;
-            kd(df, ef);
+            set_FLAGS(stack_eflags, ef);
         }
-        ce();
+        init_segment_local_vars();
     }
-    function ff(je, bf, cf) {
-        var Ke, df, gf;
+    function do_return_protected_mode(is_32_bit, is_iret, imm16) {
+        var selector, stack_eflags, gf;
         var hf, jf, kf, lf;
-        var e, Yd, Wd, we, xe;
-        var se, he, He, ef, Sa;
-        var qe, Te, Le, wd, Pa;
-        Pa = Vd(wa.segs[2].flags);
-        Te = xa[4];
-        qe = wa.segs[2].base;
-        df = 0;
-        if (je == 1) {
+        var e, descriptor_low4bytes, descriptor_high4bytes, we, xe;
+        var cpl_var, dpl, rpl, ef, iopl;
+        var qe, esp, stack_eip, wd, SS_mask;
+        SS_mask = SS_mask_from_flags(cpu.segs[2].flags);
+        esp = regs[4];
+        qe = cpu.segs[2].base;
+        stack_eflags = 0;
+        if (is_32_bit == 1) {
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Le = Cb();
-                Te = (Te + 4) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eip = ld32_mem8_kernel_read();
+                esp = (esp + 4) & -1;
             }
-            ;
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Ke = Cb();
-                Te = (Te + 4) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                selector = ld32_mem8_kernel_read();                //CS selector
+                esp = (esp + 4) & -1;
             }
-            ;
-            Ke &= 0xffff;
-            if (bf) {
+            selector &= 0xffff;
+            if (is_iret) {
                 {
-                    fa = (qe + (Te & Pa)) & -1;
-                    df = Cb();
-                    Te = (Te + 4) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    stack_eflags = ld32_mem8_kernel_read();
+                    esp = (esp + 4) & -1;
                 }
-                ;
-                if (df & 0x00020000) {
+                if (stack_eflags & 0x00020000) {     //eflags.VM (return to v86 mode)
                     {
-                        fa = (qe + (Te & Pa)) & -1;
-                        wd = Cb();
-                        Te = (Te + 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        wd = ld32_mem8_kernel_read();
+                        esp = (esp + 4) & -1;
                     }
-                    ;
+                    //pop segment selectors from stack
                     {
-                        fa = (qe + (Te & Pa)) & -1;
-                        gf = Cb();
-                        Te = (Te + 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        gf = ld32_mem8_kernel_read();
+                        esp = (esp + 4) & -1;
                     }
-                    ;
                     {
-                        fa = (qe + (Te & Pa)) & -1;
-                        hf = Cb();
-                        Te = (Te + 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        hf = ld32_mem8_kernel_read();
+                        esp = (esp + 4) & -1;
                     }
-                    ;
                     {
-                        fa = (qe + (Te & Pa)) & -1;
-                        jf = Cb();
-                        Te = (Te + 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        jf = ld32_mem8_kernel_read();
+                        esp = (esp + 4) & -1;
                     }
-                    ;
                     {
-                        fa = (qe + (Te & Pa)) & -1;
-                        kf = Cb();
-                        Te = (Te + 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        kf = ld32_mem8_kernel_read();
+                        esp = (esp + 4) & -1;
                     }
-                    ;
                     {
-                        fa = (qe + (Te & Pa)) & -1;
-                        lf = Cb();
-                        Te = (Te + 4) & -1;
+                        mem8_loc = (qe + (esp & SS_mask)) & -1;
+                        lf = ld32_mem8_kernel_read();
+                        esp = (esp + 4) & -1;
                     }
-                    ;
-                    kd(df, 0x00000100 | 0x00040000 | 0x00200000 | 0x00000200 | 0x00003000 | 0x00020000 | 0x00004000 | 0x00080000 | 0x00100000);
-                    fe(1, Ke & 0xffff);
-                    rd(3);
-                    fe(2, gf & 0xffff);
-                    fe(0, hf & 0xffff);
-                    fe(3, jf & 0xffff);
-                    fe(4, kf & 0xffff);
-                    fe(5, lf & 0xffff);
-                    Jb = Le & 0xffff, Kb = Mb = 0;
-                    xa[4] = (xa[4] & ~Pa) | ((wd) & Pa);
+                    set_FLAGS(stack_eflags, 0x00000100 | 0x00040000 | 0x00200000 | 0x00000200 | 0x00003000 | 0x00020000 | 0x00004000 | 0x00080000 | 0x00100000);
+                    init_segment_vars_with_selector(1, selector & 0xffff);
+                    change_permission_level(3);
+                    init_segment_vars_with_selector(2, gf & 0xffff);
+                    init_segment_vars_with_selector(0, hf & 0xffff);
+                    init_segment_vars_with_selector(3, jf & 0xffff);
+                    init_segment_vars_with_selector(4, kf & 0xffff);
+                    init_segment_vars_with_selector(5, lf & 0xffff);
+                    eip = stack_eip & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                    regs[4] = (regs[4] & ~SS_mask) | ((wd) & SS_mask);
                     return;
                 }
             }
         } else {
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Le = Ab();
-                Te = (Te + 2) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eip= ld16_mem8_kernel_read();
+                esp = (esp + 2) & -1;
             }
-            ;
             {
-                fa = (qe + (Te & Pa)) & -1;
-                Ke = Ab();
-                Te = (Te + 2) & -1;
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                selector = ld16_mem8_kernel_read();
+                esp = (esp + 2) & -1;
             }
-            ;
-            if (bf) {
-                fa = (qe + (Te & Pa)) & -1;
-                df = Ab();
-                Te = (Te + 2) & -1;
+            if (is_iret) {
+                mem8_loc = (qe + (esp & SS_mask)) & -1;
+                stack_eflags = ld16_mem8_kernel_read();
+                esp = (esp + 2) & -1;
             }
-            ;
         }
-        if ((Ke & 0xfffc) == 0)
-            qd(13, Ke & 0xfffc);
-        e = Xd(Ke);
+        if ((selector & 0xfffc) == 0)
+            abort_with_error_code(13, selector & 0xfffc);
+        e = load_from_descriptor_table(selector);
         if (!e)
-            qd(13, Ke & 0xfffc);
-        Yd = e[0];
-        Wd = e[1];
-        if (!(Wd & (1 << 12)) || !(Wd & (1 << 11)))
-            qd(13, Ke & 0xfffc);
-        se = wa.cpl;
-        He = Ke & 3;
-        if (He < se)
-            qd(13, Ke & 0xfffc);
-        he = (Wd >> 13) & 3;
-        if (Wd & (1 << 10)) {
-            if (he > He)
-                qd(13, Ke & 0xfffc);
+            abort_with_error_code(13, selector & 0xfffc);
+        descriptor_low4bytes = e[0];
+        descriptor_high4bytes = e[1];
+        if (!(descriptor_high4bytes & (1 << 12)) || !(descriptor_high4bytes & (1 << 11)))
+            abort_with_error_code(13, selector & 0xfffc);
+        cpl_var = cpu.cpl;
+        rpl = selector & 3;
+        if (rpl < cpl_var)
+            abort_with_error_code(13, selector & 0xfffc);
+        dpl = (descriptor_high4bytes >> 13) & 3;
+        if (descriptor_high4bytes & (1 << 10)) {
+            if (dpl > rpl)
+                abort_with_error_code(13, selector & 0xfffc);
         } else {
-            if (he != He)
-                qd(13, Ke & 0xfffc);
+            if (dpl != rpl)
+                abort_with_error_code(13, selector & 0xfffc);
         }
-        if (!(Wd & (1 << 15)))
-            qd(11, Ke & 0xfffc);
-        Te = (Te + cf) & -1;
-        if (He == se) {
-            de(1, Ke, ae(Yd, Wd), Zd(Yd, Wd), Wd);
+        if (!(descriptor_high4bytes & (1 << 15)))
+            abort_with_error_code(11, selector & 0xfffc);
+        esp = (esp + imm16) & -1;
+        if (rpl == cpl_var) {
+            set_segment_vars(1, selector, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes), descriptor_high4bytes);
         } else {
-            if (je == 1) {
+            if (is_32_bit == 1) {
                 {
-                    fa = (qe + (Te & Pa)) & -1;
-                    wd = Cb();
-                    Te = (Te + 4) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    wd = ld32_mem8_kernel_read();
+                    esp = (esp + 4) & -1;
                 }
-                ;
                 {
-                    fa = (qe + (Te & Pa)) & -1;
-                    gf = Cb();
-                    Te = (Te + 4) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    gf = ld32_mem8_kernel_read();
+                    esp = (esp + 4) & -1;
                 }
-                ;
                 gf &= 0xffff;
             } else {
                 {
-                    fa = (qe + (Te & Pa)) & -1;
-                    wd = Ab();
-                    Te = (Te + 2) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    wd = ld16_mem8_kernel_read();
+                    esp = (esp + 2) & -1;
                 }
-                ;
                 {
-                    fa = (qe + (Te & Pa)) & -1;
-                    gf = Ab();
-                    Te = (Te + 2) & -1;
+                    mem8_loc = (qe + (esp & SS_mask)) & -1;
+                    gf = ld16_mem8_kernel_read();
+                    esp = (esp + 2) & -1;
                 }
-                ;
             }
             if ((gf & 0xfffc) == 0) {
-                qd(13, 0);
+                abort_with_error_code(13, 0);
             } else {
-                if ((gf & 3) != He)
-                    qd(13, gf & 0xfffc);
-                e = Xd(gf);
+                if ((gf & 3) != rpl)
+                    abort_with_error_code(13, gf & 0xfffc);
+                e = load_from_descriptor_table(gf);
                 if (!e)
-                    qd(13, gf & 0xfffc);
+                    abort_with_error_code(13, gf & 0xfffc);
                 we = e[0];
                 xe = e[1];
                 if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9)))
-                    qd(13, gf & 0xfffc);
-                he = (xe >> 13) & 3;
-                if (he != He)
-                    qd(13, gf & 0xfffc);
+                    abort_with_error_code(13, gf & 0xfffc);
+                dpl = (xe >> 13) & 3;
+                if (dpl != rpl)
+                    abort_with_error_code(13, gf & 0xfffc);
                 if (!(xe & (1 << 15)))
-                    qd(11, gf & 0xfffc);
-                de(2, gf, ae(we, xe), Zd(we, xe), xe);
+                    abort_with_error_code(11, gf & 0xfffc);
+                set_segment_vars(2, gf, calculate_descriptor_base(we, xe), calculate_descriptor_limit(we, xe), xe);
             }
-            de(1, Ke, ae(Yd, Wd), Zd(Yd, Wd), Wd);
-            rd(He);
-            Te = wd;
-            Pa = Vd(xe);
-            Pe(0, He);
-            Pe(3, He);
-            Pe(4, He);
-            Pe(5, He);
-            Te = (Te + cf) & -1;
+            set_segment_vars(1, selector, calculate_descriptor_base(descriptor_low4bytes, descriptor_high4bytes), calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes), descriptor_high4bytes);
+            change_permission_level(rpl);
+            esp = wd;
+            SS_mask = SS_mask_from_flags(xe);
+            Pe(0, rpl);
+            Pe(3, rpl);
+            Pe(4, rpl);
+            Pe(5, rpl);
+            esp = (esp + imm16) & -1;
         }
-        xa[4] = (xa[4] & ~Pa) | ((Te) & Pa);
-        Jb = Le, Kb = Mb = 0;
-        if (bf) {
+        regs[4] = (regs[4] & ~SS_mask) | ((esp) & SS_mask);
+        eip = stack_eip, physmem8_ptr = initial_mem_ptr = 0;
+        if (is_iret) {
             ef = 0x00000100 | 0x00040000 | 0x00200000 | 0x00010000 | 0x00004000;
-            if (se == 0)
+            if (cpl_var == 0)
                 ef |= 0x00003000;
-            Sa = (wa.eflags >> 12) & 3;
-            if (se <= Sa)
+            iopl = (cpu.eflags >> 12) & 3;
+            if (cpl_var <= iopl)
                 ef |= 0x00000200;
-            if (je == 0)
+            if (is_32_bit == 0)
                 ef &= 0xffff;
-            kd(df, ef);
+            set_FLAGS(stack_eflags, ef);
         }
     }
-    function mf(je) {
-        var Sa;
-        if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000)) {
-            if (wa.eflags & 0x00020000) {
-                Sa = (wa.eflags >> 12) & 3;
-                if (Sa != 3)
-                    Dc(13);
+    function op_IRET(is_32_bit) {
+        var iopl;
+        if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000)) {
+            if (cpu.eflags & 0x00020000) {
+                iopl = (cpu.eflags >> 12) & 3;
+                if (iopl != 3)
+                    abort(13);
             }
-            af(je, 1, 0);
+            do_return_not_protected_mode(is_32_bit, 1, 0);
         } else {
-            if (wa.eflags & 0x00004000) {
+            if (cpu.eflags & 0x00004000) {
                 throw "unsupported task gate";
             } else {
-                ff(je, 1, 0);
+                do_return_protected_mode(is_32_bit, 1, 0);
             }
         }
     }
-    function nf(je, cf) {
-        if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000)) {
-            af(je, 0, cf);
+    function op_RETF(is_32_bit, imm16) {
+        if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000)) {
+            do_return_not_protected_mode(is_32_bit, 0, imm16);
         } else {
-            ff(je, 0, cf);
+            do_return_protected_mode(is_32_bit, 0, imm16);
         }
     }
-    function of(selector, pf) {
-        var e, Yd, Wd, He, he, se, ie;
+
+    //utility function for op_LAR_LSL
+    function of(selector, is_lsl) {
+        var e, descriptor_low4bytes, descriptor_high4bytes, rpl, dpl, cpl_var, descriptor_type;
         if ((selector & 0xfffc) == 0)
             return null;
-        e = Xd(selector);
+        e = load_from_descriptor_table(selector);
         if (!e)
             return null;
-        Yd = e[0];
-        Wd = e[1];
-        He = selector & 3;
-        he = (Wd >> 13) & 3;
-        se = wa.cpl;
-        if (Wd & (1 << 12)) {
-            if ((Wd & (1 << 11)) && (Wd & (1 << 10))) {
+        descriptor_low4bytes = e[0];
+        descriptor_high4bytes = e[1];
+        rpl = selector & 3;
+        dpl = (descriptor_high4bytes >> 13) & 3;
+        cpl_var = cpu.cpl;
+        if (descriptor_high4bytes & (1 << 12)) {
+            if ((descriptor_high4bytes & (1 << 11)) && (descriptor_high4bytes & (1 << 10))) {
             } else {
-                if (he < se || he < He)
+                if (dpl < cpl_var || dpl < rpl)
                     return null;
             }
         } else {
-            ie = (Wd >> 8) & 0xf;
-            switch (ie) {
+            descriptor_type = (descriptor_high4bytes >> 8) & 0xf;
+						//Valid descriptors fall through this switch. Invalid descriptors return null
+            switch (descriptor_type) {
                 case 1:
                 case 2:
                 case 3:
@@ -4355,1361 +4678,1308 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 4:
                 case 5:
                 case 12:
-                    if (pf)
+                    if (is_lsl)
                         return null;
                     break;
                 default:
                     return null;
             }
-            if (he < se || he < He)
+            if (dpl < cpl_var || dpl < rpl)
                 return null;
         }
-        if (pf) {
-            return Zd(Yd, Wd);
+        if (is_lsl) {
+            return calculate_descriptor_limit(descriptor_low4bytes, descriptor_high4bytes);
         } else {
-            return Wd & 0x00f0ff00;
+            return descriptor_high4bytes & 0x00f0ff00;
         }
     }
-    function qf(je, pf) {
-        var ga, Ea, Ga, selector;
-        if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000))
-            Dc(6);
-        Ea = Ta[Kb++];
-        ;
-        Ga = (Ea >> 3) & 7;
-        if ((Ea >> 6) == 3) {
-            selector = xa[Ea & 7] & 0xffff;
+    function op_LAR_LSL(is_32_bit, is_lsl) {
+        var x, mem8, reg_idx1, selector;
+        if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000))
+            abort(6);
+        mem8 = phys_mem8[physmem8_ptr++];
+        reg_idx1 = (mem8 >> 3) & 7;
+        if ((mem8 >> 6) == 3) {
+            selector = regs[mem8 & 7] & 0xffff;
         } else {
-            fa = Pb(Ea);
-            selector = ib();
+            mem8_loc = segment_translation(mem8);
+            selector = ld_16bits_mem8_read();
         }
-        ga = of(selector, pf);
-        ya = hd();
-        if (ga === null) {
-            ya &= ~0x0040;
+        x = of(selector, is_lsl);
+        _src = get_conditional_flags();
+        if (x === null) {
+            _src &= ~0x0040;
         } else {
-            ya |= 0x0040;
-            if (je)
-                xa[Ga] = ga;
+            _src |= 0x0040;
+            if (is_32_bit)
+                regs[reg_idx1] = x;
             else
-                Wb(Ga, ga);
+                set_lower_word_in_register(reg_idx1, x);
         }
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function rf(selector, ud) {
-        var e, Yd, Wd, He, he, se;
+
+    //utility function for op_VERR_VERW
+    function segment_isnt_accessible(selector, is_verw) {
+        var e, descriptor_low4bytes, descriptor_high4bytes, rpl, dpl, cpl_var;
         if ((selector & 0xfffc) == 0)
             return 0;
-        e = Xd(selector);
+        e = load_from_descriptor_table(selector);
         if (!e)
             return 0;
-        Yd = e[0];
-        Wd = e[1];
-        if (!(Wd & (1 << 12)))
+        descriptor_low4bytes = e[0];
+        descriptor_high4bytes = e[1];
+        if (!(descriptor_high4bytes & (1 << 12)))   // s bit (system == 0)
             return 0;
-        He = selector & 3;
-        he = (Wd >> 13) & 3;
-        se = wa.cpl;
-        if (Wd & (1 << 11)) {
-            if (ud) {
+        rpl = selector & 3;
+        dpl = (descriptor_high4bytes >> 13) & 3;
+        cpl_var = cpu.cpl;
+        if (descriptor_high4bytes & (1 << 11)) {   // code == 1, data == 0
+            if (is_verw) {                         // code segments are never writable
                 return 0;
             } else {
-                if (!(Wd & (1 << 9)))
+                if (!(descriptor_high4bytes & (1 << 9)))
                     return 1;
-                if (!(Wd & (1 << 10))) {
-                    if (he < se || he < He)
+                if (!(descriptor_high4bytes & (1 << 10))) {
+                    if (dpl < cpl_var || dpl < rpl)
                         return 0;
                 }
             }
         } else {
-            if (he < se || he < He)
+            if (dpl < cpl_var || dpl < rpl)        // data segments are always readable, if privilege is sufficient
                 return 0;
-            if (ud && !(Wd & (1 << 9)))
+            if (is_verw && !(descriptor_high4bytes & (1 << 9)))  //writable data segment
                 return 0;
         }
         return 1;
     }
-    function sf(selector, ud) {
+    function op_VERR_VERW(selector, is_verw) {
         var z;
-        z = rf(selector, ud);
-        ya = hd();
+        z = segment_isnt_accessible(selector, is_verw);
+        _src = get_conditional_flags();
+
+        // clear eflags.zf if selector is accessible and (readable (for VERR) or writable (for VERW))
         if (z)
-            ya |= 0x0040;
+            _src |= 0x0040;
         else
-            ya &= ~0x0040;
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+            _src &= ~0x0040;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function tf() {
-        var Ea, ga, Ha, Fa;
-        if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000))
-            Dc(6);
-        Ea = Ta[Kb++];
-        ;
-        if ((Ea >> 6) == 3) {
-            Fa = Ea & 7;
-            ga = xa[Fa] & 0xffff;
+    function op_ARPL() {
+        var mem8, x, y, reg_idx0;
+        if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000))
+            abort(6);
+        mem8 = phys_mem8[physmem8_ptr++];
+        if ((mem8 >> 6) == 3) {
+            reg_idx0 = mem8 & 7;
+            x = regs[reg_idx0] & 0xffff;
         } else {
-            fa = Pb(Ea);
-            ga = ob();
+            mem8_loc = segment_translation(mem8);
+            x = ld_16bits_mem8_write();
         }
-        Ha = xa[(Ea >> 3) & 7];
-        ya = hd();
-        if ((ga & 3) < (Ha & 3)) {
-            ga = (ga & ~3) | (Ha & 3);
-            if ((Ea >> 6) == 3) {
-                Wb(Fa, ga);
+        y = regs[(mem8 >> 3) & 7];
+        _src = get_conditional_flags();
+        if ((x & 3) < (y & 3)) {
+            x = (x & ~3) | (y & 3);
+            if ((mem8 >> 6) == 3) {
+                set_lower_word_in_register(reg_idx0, x);
             } else {
-                ub(ga);
+                st16_mem8_write(x);
             }
-            ya |= 0x0040;
+            _src |= 0x0040;
         } else {
-            ya &= ~0x0040;
+            _src &= ~0x0040;
         }
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function uf() {
-        var Rb;
-        Rb = xa[0];
-        switch (Rb) {
-            case 0:
-                xa[0] = 1;
-                xa[3] = 0x756e6547 & -1;
-                xa[2] = 0x49656e69 & -1;
-                xa[1] = 0x6c65746e & -1;
+    function op_CPUID() {
+        var eax;
+        eax = regs[0];
+        switch (eax) {
+            case 0:  // eax == 0: vendor ID
+                regs[0] = 1;
+                regs[3] = 0x756e6547 & -1;
+                regs[2] = 0x49656e69 & -1;
+                regs[1] = 0x6c65746e & -1;
                 break;
-            case 1:
+            case 1:  // eax == 1: processor info and feature flags
             default:
-                xa[0] = (5 << 8) | (4 << 4) | 3;
-                xa[3] = 8 << 8;
-                xa[1] = 0;
-                xa[2] = (1 << 4);
+                regs[0] = (5 << 8) | (4 << 4) | 3; // family | model | stepping
+                regs[3] = 8 << 8;                  // danluu: This is a mystery to me. This bit now indicates clflush line size, but must have meant something else in the past.
+                regs[1] = 0;
+                regs[2] = (1 << 4);                // rdtsc support
                 break;
         }
     }
-    function vf(base) {
+    function op_AAM(base) {
         var wf, xf;
         if (base == 0)
-            Dc(0);
-        wf = xa[0] & 0xff;
+            abort(0);
+        wf = regs[0] & 0xff;
         xf = (wf / base) & -1;
         wf = (wf % base);
-        xa[0] = (xa[0] & ~0xffff) | wf | (xf << 8);
-        za = (((wf) << 24) >> 24);
-        Aa = 12;
+        regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
+        _dst = (((wf) << 24) >> 24);
+        _op = 12;
     }
-    function yf(base) {
+    function op_AAD(base) {
         var wf, xf;
-        wf = xa[0] & 0xff;
-        xf = (xa[0] >> 8) & 0xff;
+        wf = regs[0] & 0xff;
+        xf = (regs[0] >> 8) & 0xff;
         wf = (xf * base + wf) & 0xff;
-        xa[0] = (xa[0] & ~0xffff) | wf;
-        za = (((wf) << 24) >> 24);
-        Aa = 12;
+        regs[0] = (regs[0] & ~0xffff) | wf;
+        _dst = (((wf) << 24) >> 24);
+        _op = 12;
     }
-    function zf() {
-        var Af, wf, xf, Bf, jd;
-        jd = hd();
-        Bf = jd & 0x0010;
-        wf = xa[0] & 0xff;
-        xf = (xa[0] >> 8) & 0xff;
+    function op_AAA() {
+        var Af, wf, xf, Bf, flag_bits;
+        flag_bits = get_conditional_flags();
+        Bf = flag_bits & 0x0010;
+        wf = regs[0] & 0xff;
+        xf = (regs[0] >> 8) & 0xff;
         Af = (wf > 0xf9);
         if (((wf & 0x0f) > 9) || Bf) {
             wf = (wf + 6) & 0x0f;
             xf = (xf + 1 + Af) & 0xff;
-            jd |= 0x0001 | 0x0010;
+            flag_bits |= 0x0001 | 0x0010;
         } else {
-            jd &= ~(0x0001 | 0x0010);
+            flag_bits &= ~(0x0001 | 0x0010);
             wf &= 0x0f;
         }
-        xa[0] = (xa[0] & ~0xffff) | wf | (xf << 8);
-        ya = jd;
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+        regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
+        _src = flag_bits;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function Cf() {
-        var Af, wf, xf, Bf, jd;
-        jd = hd();
-        Bf = jd & 0x0010;
-        wf = xa[0] & 0xff;
-        xf = (xa[0] >> 8) & 0xff;
+    function op_AAS() {
+        var Af, wf, xf, Bf, flag_bits;
+        flag_bits = get_conditional_flags();
+        Bf = flag_bits & 0x0010;
+        wf = regs[0] & 0xff;
+        xf = (regs[0] >> 8) & 0xff;
         Af = (wf < 6);
         if (((wf & 0x0f) > 9) || Bf) {
             wf = (wf - 6) & 0x0f;
             xf = (xf - 1 - Af) & 0xff;
-            jd |= 0x0001 | 0x0010;
+            flag_bits |= 0x0001 | 0x0010;
         } else {
-            jd &= ~(0x0001 | 0x0010);
+            flag_bits &= ~(0x0001 | 0x0010);
             wf &= 0x0f;
         }
-        xa[0] = (xa[0] & ~0xffff) | wf | (xf << 8);
-        ya = jd;
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+        regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
+        _src = flag_bits;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function Df() {
-        var wf, Bf, Ef, jd;
-        jd = hd();
-        Ef = jd & 0x0001;
-        Bf = jd & 0x0010;
-        wf = xa[0] & 0xff;
-        jd = 0;
+    function op_DAA() {
+        var wf, Bf, Ef, flag_bits;
+        flag_bits = get_conditional_flags();
+        Ef = flag_bits & 0x0001;
+        Bf = flag_bits & 0x0010;
+        wf = regs[0] & 0xff;
+        flag_bits = 0;
         if (((wf & 0x0f) > 9) || Bf) {
             wf = (wf + 6) & 0xff;
-            jd |= 0x0010;
+            flag_bits |= 0x0010;
         }
         if ((wf > 0x9f) || Ef) {
             wf = (wf + 0x60) & 0xff;
-            jd |= 0x0001;
+            flag_bits |= 0x0001;
         }
-        xa[0] = (xa[0] & ~0xff) | wf;
-        jd |= (wf == 0) << 6;
-        jd |= aa[wf] << 2;
-        jd |= (wf & 0x80);
-        ya = jd;
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+        regs[0] = (regs[0] & ~0xff) | wf;
+        flag_bits |= (wf == 0) << 6;
+        flag_bits |= parity_LUT[wf] << 2;
+        flag_bits |= (wf & 0x80);
+        _src = flag_bits;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function Ff() {
-        var wf, Gf, Bf, Ef, jd;
-        jd = hd();
-        Ef = jd & 0x0001;
-        Bf = jd & 0x0010;
-        wf = xa[0] & 0xff;
-        jd = 0;
+    function op_DAS() {
+        var wf, Gf, Bf, Ef, flag_bits;
+        flag_bits = get_conditional_flags();
+        Ef = flag_bits & 0x0001;
+        Bf = flag_bits & 0x0010;
+        wf = regs[0] & 0xff;
+        flag_bits = 0;
         Gf = wf;
         if (((wf & 0x0f) > 9) || Bf) {
-            jd |= 0x0010;
+            flag_bits |= 0x0010;
             if (wf < 6 || Ef)
-                jd |= 0x0001;
+                flag_bits |= 0x0001;
             wf = (wf - 6) & 0xff;
         }
         if ((Gf > 0x99) || Ef) {
             wf = (wf - 0x60) & 0xff;
-            jd |= 0x0001;
+            flag_bits |= 0x0001;
         }
-        xa[0] = (xa[0] & ~0xff) | wf;
-        jd |= (wf == 0) << 6;
-        jd |= aa[wf] << 2;
-        jd |= (wf & 0x80);
-        ya = jd;
-        za = ((ya >> 6) & 1) ^ 1;
-        Aa = 24;
+        regs[0] = (regs[0] & ~0xff) | wf;
+        flag_bits |= (wf == 0) << 6;
+        flag_bits |= parity_LUT[wf] << 2;
+        flag_bits |= (wf & 0x80);
+        _src = flag_bits;
+        _dst = ((_src >> 6) & 1) ^ 1;
+        _op = 24;
     }
-    function Hf() {
-        var Ea, ga, Ha, Ia;
-        Ea = Ta[Kb++];
-        ;
-        if ((Ea >> 3) == 3)
-            Dc(6);
-        fa = Pb(Ea);
-        ga = kb();
-        fa = (fa + 4) & -1;
-        Ha = kb();
-        Ga = (Ea >> 3) & 7;
-        Ia = xa[Ga];
-        if (Ia < ga || Ia > Ha)
-            Dc(5);
+    function checkOp_BOUND() {
+        var mem8, x, y, z;
+        mem8 = phys_mem8[physmem8_ptr++];
+        if ((mem8 >> 3) == 3)
+            abort(6);
+        mem8_loc = segment_translation(mem8);
+        x = ld_32bits_mem8_read();
+        mem8_loc = (mem8_loc + 4) & -1;
+        y = ld_32bits_mem8_read();
+        reg_idx1 = (mem8 >> 3) & 7;
+        z = regs[reg_idx1];
+        if (z < x || z > y)
+            abort(5);
     }
-    function If() {
-        var Ea, ga, Ha, Ia;
-        Ea = Ta[Kb++];
-        ;
-        if ((Ea >> 3) == 3)
-            Dc(6);
-        fa = Pb(Ea);
-        ga = (ib() << 16) >> 16;
-        fa = (fa + 2) & -1;
-        Ha = (ib() << 16) >> 16;
-        Ga = (Ea >> 3) & 7;
-        Ia = (xa[Ga] << 16) >> 16;
-        if (Ia < ga || Ia > Ha)
-            Dc(5);
+    function op_16_BOUND() {
+        var mem8, x, y, z;
+        mem8 = phys_mem8[physmem8_ptr++];
+        if ((mem8 >> 3) == 3)
+            abort(6);
+        mem8_loc = segment_translation(mem8);
+        x = (ld_16bits_mem8_read() << 16) >> 16;
+        mem8_loc = (mem8_loc + 2) & -1;
+        y = (ld_16bits_mem8_read() << 16) >> 16;
+        reg_idx1 = (mem8 >> 3) & 7;
+        z = (regs[reg_idx1] << 16) >> 16;
+        if (z < x || z > y)
+            abort(5);
     }
-    function Jf() {
-        var ga, Ha, Ga;
-        Ha = (xa[4] - 16) >> 0;
-        fa = ((Ha & Pa) + Oa) >> 0;
-        for (Ga = 7; Ga >= 0; Ga--) {
-            ga = xa[Ga];
-            ub(ga);
-            fa = (fa + 2) >> 0;
+    function op_16_PUSHA() {
+        var x, y, reg_idx1;
+        y = (regs[4] - 16) >> 0;
+        mem8_loc = ((y & SS_mask) + SS_base) >> 0;
+        for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
+            x = regs[reg_idx1];
+            st16_mem8_write(x);
+            mem8_loc = (mem8_loc + 2) >> 0;
         }
-        xa[4] = (xa[4] & ~Pa) | ((Ha) & Pa);
+        regs[4] = (regs[4] & ~SS_mask) | ((y) & SS_mask);
     }
-    function Kf() {
-        var ga, Ha, Ga;
-        Ha = (xa[4] - 32) >> 0;
-        fa = ((Ha & Pa) + Oa) >> 0;
-        for (Ga = 7; Ga >= 0; Ga--) {
-            ga = xa[Ga];
-            wb(ga);
-            fa = (fa + 4) >> 0;
+    function op_PUSHA() {
+        var x, y, reg_idx1;
+        y = (regs[4] - 32) >> 0;
+        mem8_loc = ((y & SS_mask) + SS_base) >> 0;
+        for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
+            x = regs[reg_idx1];
+            st32_mem8_write(x);
+            mem8_loc = (mem8_loc + 4) >> 0;
         }
-        xa[4] = (xa[4] & ~Pa) | ((Ha) & Pa);
+        regs[4] = (regs[4] & ~SS_mask) | ((y) & SS_mask);
     }
-    function Lf() {
-        var Ga;
-        fa = ((xa[4] & Pa) + Oa) >> 0;
-        for (Ga = 7; Ga >= 0; Ga--) {
-            if (Ga != 4) {
-                Wb(Ga, ib());
+    function op_16_POPA() {
+        var reg_idx1;
+        mem8_loc = ((regs[4] & SS_mask) + SS_base) >> 0;
+        for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
+            if (reg_idx1 != 4) {
+                set_lower_word_in_register(reg_idx1, ld_16bits_mem8_read());
             }
-            fa = (fa + 2) >> 0;
+            mem8_loc = (mem8_loc + 2) >> 0;
         }
-        xa[4] = (xa[4] & ~Pa) | ((xa[4] + 16) & Pa);
+        regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
     }
-    function Mf() {
-        var Ga;
-        fa = ((xa[4] & Pa) + Oa) >> 0;
-        for (Ga = 7; Ga >= 0; Ga--) {
-            if (Ga != 4) {
-                xa[Ga] = kb();
+    function op_POPA() {
+        var reg_idx1;
+        mem8_loc = ((regs[4] & SS_mask) + SS_base) >> 0;
+        for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
+            if (reg_idx1 != 4) {
+                regs[reg_idx1] = ld_32bits_mem8_read();
             }
-            fa = (fa + 4) >> 0;
+            mem8_loc = (mem8_loc + 4) >> 0;
         }
-        xa[4] = (xa[4] & ~Pa) | ((xa[4] + 32) & Pa);
+        regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
     }
-    function Nf() {
-        var ga, Ha;
-        Ha = xa[5];
-        fa = ((Ha & Pa) + Oa) >> 0;
-        ga = ib();
-        Wb(5, ga);
-        xa[4] = (xa[4] & ~Pa) | ((Ha + 2) & Pa);
+    function op_16_LEAVE() {
+        var x, y;
+        y = regs[5];
+        mem8_loc = ((y & SS_mask) + SS_base) >> 0;
+        x = ld_16bits_mem8_read();
+        set_lower_word_in_register(5, x);
+        regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
     }
-    function Of() {
-        var ga, Ha;
-        Ha = xa[5];
-        fa = ((Ha & Pa) + Oa) >> 0;
-        ga = kb();
-        xa[5] = ga;
-        xa[4] = (xa[4] & ~Pa) | ((Ha + 4) & Pa);
+    function op_LEAVE() {
+        var x, y;
+        y = regs[5];
+        mem8_loc = ((y & SS_mask) + SS_base) >> 0;
+        x = ld_32bits_mem8_read();
+        regs[5] = x;
+        regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
     }
-    function Pf() {
-        var cf, Qf, le, Rf, ga, Sf;
-        cf = Ob();
-        Qf = Ta[Kb++];
-        ;
+    function op_16_ENTER() {
+        var cf, Qf, le, Rf, x, Sf;
+        cf = ld16_mem8_direct();
+        Qf = phys_mem8[physmem8_ptr++];
         Qf &= 0x1f;
-        le = xa[4];
-        Rf = xa[5];
+        le = regs[4];
+        Rf = regs[5];
         {
             le = (le - 2) >> 0;
-            fa = ((le & Pa) + Oa) >> 0;
-            ub(Rf);
+            mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+            st16_mem8_write(Rf);
         }
-        ;
         Sf = le;
         if (Qf != 0) {
             while (Qf > 1) {
                 Rf = (Rf - 2) >> 0;
-                fa = ((Rf & Pa) + Oa) >> 0;
-                ga = ib();
+                mem8_loc = ((Rf & SS_mask) + SS_base) >> 0;
+                x = ld_16bits_mem8_read();
                 {
                     le = (le - 2) >> 0;
-                    fa = ((le & Pa) + Oa) >> 0;
-                    ub(ga);
+                    mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                    st16_mem8_write(x);
                 }
-                ;
                 Qf--;
             }
             {
                 le = (le - 2) >> 0;
-                fa = ((le & Pa) + Oa) >> 0;
-                ub(Sf);
+                mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                st16_mem8_write(Sf);
             }
-            ;
         }
         le = (le - cf) >> 0;
-        fa = ((le & Pa) + Oa) >> 0;
-        ob();
-        xa[5] = (xa[5] & ~Pa) | (Sf & Pa);
-        xa[4] = le;
+        mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+        ld_16bits_mem8_write();
+        regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
+        regs[4] = le;
     }
-    function Tf() {
-        var cf, Qf, le, Rf, ga, Sf;
-        cf = Ob();
-        Qf = Ta[Kb++];
-        ;
+    function op_ENTER() {
+        var cf, Qf, le, Rf, x, Sf;
+        cf = ld16_mem8_direct();
+        Qf = phys_mem8[physmem8_ptr++];
         Qf &= 0x1f;
-        le = xa[4];
-        Rf = xa[5];
+        le = regs[4];
+        Rf = regs[5];
         {
             le = (le - 4) >> 0;
-            fa = ((le & Pa) + Oa) >> 0;
-            wb(Rf);
+            mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+            st32_mem8_write(Rf);
         }
-        ;
         Sf = le;
         if (Qf != 0) {
             while (Qf > 1) {
                 Rf = (Rf - 4) >> 0;
-                fa = ((Rf & Pa) + Oa) >> 0;
-                ga = kb();
+                mem8_loc = ((Rf & SS_mask) + SS_base) >> 0;
+                x = ld_32bits_mem8_read();
                 {
                     le = (le - 4) >> 0;
-                    fa = ((le & Pa) + Oa) >> 0;
-                    wb(ga);
+                    mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                    st32_mem8_write(x);
                 }
-                ;
                 Qf--;
             }
             {
                 le = (le - 4) >> 0;
-                fa = ((le & Pa) + Oa) >> 0;
-                wb(Sf);
+                mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+                st32_mem8_write(Sf);
             }
-            ;
         }
         le = (le - cf) >> 0;
-        fa = ((le & Pa) + Oa) >> 0;
-        qb();
-        xa[5] = (xa[5] & ~Pa) | (Sf & Pa);
-        xa[4] = (xa[4] & ~Pa) | ((le) & Pa);
+        mem8_loc = ((le & SS_mask) + SS_base) >> 0;
+        ld_32bits_mem8_write();
+        regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
+        regs[4] = (regs[4] & ~SS_mask) | ((le) & SS_mask);
     }
-    function Uf(Sb) {
-        var ga, Ha, Ea;
-        Ea = Ta[Kb++];
-        ;
-        if ((Ea >> 3) == 3)
-            Dc(6);
-        fa = Pb(Ea);
-        ga = kb();
-        fa += 4;
-        Ha = ib();
-        Ie(Sb, Ha);
-        xa[(Ea >> 3) & 7] = ga;
+    function op_16_load_far_pointer32(Sb) {
+        var x, y, mem8;
+        mem8 = phys_mem8[physmem8_ptr++];
+        if ((mem8 >> 3) == 3)
+            abort(6);
+        mem8_loc = segment_translation(mem8);
+        x = ld_32bits_mem8_read();
+        mem8_loc += 4;
+        y = ld_16bits_mem8_read();
+        set_segment_register(Sb, y);
+        regs[(mem8 >> 3) & 7] = x;
     }
-    function Vf(Sb) {
-        var ga, Ha, Ea;
-        Ea = Ta[Kb++];
-        ;
-        if ((Ea >> 3) == 3)
-            Dc(6);
-        fa = Pb(Ea);
-        ga = ib();
-        fa += 2;
-        Ha = ib();
-        Ie(Sb, Ha);
-        Wb((Ea >> 3) & 7, ga);
+    function op_16_load_far_pointer16(Sb) {
+        var x, y, mem8;
+        mem8 = phys_mem8[physmem8_ptr++];
+        if ((mem8 >> 3) == 3)
+            abort(6);
+        mem8_loc = segment_translation(mem8);
+        x = ld_16bits_mem8_read();
+        mem8_loc += 2;
+        y = ld_16bits_mem8_read();
+        set_segment_register(Sb, y);
+        set_lower_word_in_register((mem8 >> 3) & 7, x);
     }
-    function Wf() {
-        var Xf, Yf, Zf, ag, Sa, ga;
-        Sa = (wa.eflags >> 12) & 3;
-        if (wa.cpl > Sa)
-            Dc(13);
-        if (Da & 0x0080)
+    function stringOp_INSB() {
+        var Xf, Yf, Zf, ag, iopl, x;
+        iopl = (cpu.eflags >> 12) & 3;
+        if (cpu.cpl > iopl)
+            abort(13);
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        Zf = xa[2] & 0xffff;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        Zf = regs[2] & 0xffff;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = wa.ld8_port(Zf);
-            fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-            sb(ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            x = cpu.ld8_port(Zf);
+            mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+            st8_mem8_write(x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = wa.ld8_port(Zf);
-            fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-            sb(ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
+            x = cpu.ld8_port(Zf);
+            mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+            st8_mem8_write(x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
         }
     }
-    function bg() {
-        var Xf, cg, Sb, ag, Zf, Sa, ga;
-        Sa = (wa.eflags >> 12) & 3;
-        if (wa.cpl > Sa)
-            Dc(13);
-        if (Da & 0x0080)
+    function stringOp_OUTSB() {
+        var Xf, cg, Sb, ag, Zf, iopl, x;
+        iopl = (cpu.eflags >> 12) & 3;
+        if (cpu.cpl > iopl)
+            abort(13);
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Zf = xa[2] & 0xffff;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Zf = regs[2] & 0xffff;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-            ga = gb();
-            wa.st8_port(Zf, ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+            x = ld_8bits_mem8_read();
+            cpu.st8_port(Zf, x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-            ga = gb();
-            wa.st8_port(Zf, ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
+            mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+            x = ld_8bits_mem8_read();
+            cpu.st8_port(Zf, x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
         }
     }
-    function dg() {
+    function stringOp_MOVSB() {
         var Xf, Yf, cg, ag, Sb, eg;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Yf = xa[7];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        eg = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Yf = regs[7];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        eg = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
             {
-                ga = gb();
-                fa = eg;
-                sb(ga);
-                xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
-                xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
-                xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+                x = ld_8bits_mem8_read();
+                mem8_loc = eg;
+                st8_mem8_write(x);
+                regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
+                regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
+                regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
                 if (ag & Xf)
-                    Kb = Mb;
-                ;
+                    physmem8_ptr = initial_mem_ptr;
             }
         } else {
-            ga = gb();
-            fa = eg;
-            sb(ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
+            x = ld_8bits_mem8_read();
+            mem8_loc = eg;
+            st8_mem8_write(x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
         }
     }
-    function fg() {
+    function stringOp_STOSB() {
         var Xf, Yf, ag;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
             {
-                sb(xa[0]);
-                xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
-                xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+                st8_mem8_write(regs[0]);
+                regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
+                regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
                 if (ag & Xf)
-                    Kb = Mb;
-                ;
+                    physmem8_ptr = initial_mem_ptr;
             }
         } else {
-            sb(xa[0]);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
+            st8_mem8_write(regs[0]);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
         }
     }
-    function gg() {
+    function stringOp_CMPSB() {
         var Xf, Yf, cg, ag, Sb, eg;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Yf = xa[7];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        eg = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Yf = regs[7];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        eg = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = gb();
-            fa = eg;
-            Ha = gb();
-            gc(7, ga, Ha);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-            if (Da & 0x0010) {
-                if (!(za == 0))
+            x = ld_8bits_mem8_read();
+            mem8_loc = eg;
+            y = ld_8bits_mem8_read();
+            do_8bit_math(7, x, y);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            if (CS_flags & 0x0010) {
+                if (!(_dst == 0))
                     return;
             } else {
-                if ((za == 0))
+                if ((_dst == 0))
                     return;
             }
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = gb();
-            fa = eg;
-            Ha = gb();
-            gc(7, ga, Ha);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
+            x = ld_8bits_mem8_read();
+            mem8_loc = eg;
+            y = ld_8bits_mem8_read();
+            do_8bit_math(7, x, y);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
         }
     }
-    function hg() {
-        var Xf, cg, Sb, ag, ga;
-        if (Da & 0x0080)
+    function stringOp_LODSB() {
+        var Xf, cg, Sb, ag, x;
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = gb();
-            xa[0] = (xa[0] & -256) | ga;
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            x = ld_8bits_mem8_read();
+            regs[0] = (regs[0] & -256) | x;
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = gb();
-            xa[0] = (xa[0] & -256) | ga;
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 0)) & Xf);
+            x = ld_8bits_mem8_read();
+            regs[0] = (regs[0] & -256) | x;
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 0)) & Xf);
         }
     }
-    function ig() {
-        var Xf, Yf, ag, ga;
-        if (Da & 0x0080)
+    function stringOp_SCASB() {
+        var Xf, Yf, ag, x;
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = gb();
-            gc(7, xa[0], ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-            if (Da & 0x0010) {
-                if (!(za == 0))
+            x = ld_8bits_mem8_read();
+            do_8bit_math(7, regs[0], x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            if (CS_flags & 0x0010) {
+                if (!(_dst == 0))
                     return;
             } else {
-                if ((za == 0))
+                if ((_dst == 0))
                     return;
             }
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = gb();
-            gc(7, xa[0], ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 0)) & Xf);
+            x = ld_8bits_mem8_read();
+            do_8bit_math(7, regs[0], x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 0)) & Xf);
         }
     }
-    function jg() {
-        var Xf, Yf, Zf, ag, Sa, ga;
-        Sa = (wa.eflags >> 12) & 3;
-        if (wa.cpl > Sa)
-            Dc(13);
-        if (Da & 0x0080)
+    function op_16_INS() {
+        var Xf, Yf, Zf, ag, iopl, x;
+        iopl = (cpu.eflags >> 12) & 3;
+        if (cpu.cpl > iopl)
+            abort(13);
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        Zf = xa[2] & 0xffff;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        Zf = regs[2] & 0xffff;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = wa.ld16_port(Zf);
-            fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-            ub(ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            x = cpu.ld16_port(Zf);
+            mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+            st16_mem8_write(x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = wa.ld16_port(Zf);
-            fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-            ub(ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
+            x = cpu.ld16_port(Zf);
+            mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+            st16_mem8_write(x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
         }
     }
-    function kg() {
-        var Xf, cg, Sb, ag, Zf, Sa, ga;
-        Sa = (wa.eflags >> 12) & 3;
-        if (wa.cpl > Sa)
-            Dc(13);
-        if (Da & 0x0080)
+    function op_16_OUTS() {
+        var Xf, cg, Sb, ag, Zf, iopl, x;
+        iopl = (cpu.eflags >> 12) & 3;
+        if (cpu.cpl > iopl)
+            abort(13);
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Zf = xa[2] & 0xffff;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Zf = regs[2] & 0xffff;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-            ga = ib();
-            wa.st16_port(Zf, ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+            x = ld_16bits_mem8_read();
+            cpu.st16_port(Zf, x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-            ga = ib();
-            wa.st16_port(Zf, ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
+            mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+            x = ld_16bits_mem8_read();
+            cpu.st16_port(Zf, x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
         }
     }
-    function lg() {
+    function op_16_MOVS() {
         var Xf, Yf, cg, ag, Sb, eg;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Yf = xa[7];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        eg = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Yf = regs[7];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        eg = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
             {
-                ga = ib();
-                fa = eg;
-                ub(ga);
-                xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
-                xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
-                xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+                x = ld_16bits_mem8_read();
+                mem8_loc = eg;
+                st16_mem8_write(x);
+                regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
+                regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
+                regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
                 if (ag & Xf)
-                    Kb = Mb;
-                ;
+                    physmem8_ptr = initial_mem_ptr;
             }
         } else {
-            ga = ib();
-            fa = eg;
-            ub(ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
+            x = ld_16bits_mem8_read();
+            mem8_loc = eg;
+            st16_mem8_write(x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
         }
     }
-    function mg() {
+    function op_16_STOS() {
         var Xf, Yf, ag;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
             {
-                ub(xa[0]);
-                xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
-                xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+                st16_mem8_write(regs[0]);
+                regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
+                regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
                 if (ag & Xf)
-                    Kb = Mb;
-                ;
+                    physmem8_ptr = initial_mem_ptr;
             }
         } else {
-            ub(xa[0]);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
+            st16_mem8_write(regs[0]);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
         }
     }
-    function ng() {
+    function op_16_CMPS() {
         var Xf, Yf, cg, ag, Sb, eg;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Yf = xa[7];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        eg = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Yf = regs[7];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        eg = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = ib();
-            fa = eg;
-            Ha = ib();
-            dc(7, ga, Ha);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-            if (Da & 0x0010) {
-                if (!(za == 0))
+            x = ld_16bits_mem8_read();
+            mem8_loc = eg;
+            y = ld_16bits_mem8_read();
+            do_16bit_math(7, x, y);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            if (CS_flags & 0x0010) {
+                if (!(_dst == 0))
                     return;
             } else {
-                if ((za == 0))
+                if ((_dst == 0))
                     return;
             }
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = ib();
-            fa = eg;
-            Ha = ib();
-            dc(7, ga, Ha);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
+            x = ld_16bits_mem8_read();
+            mem8_loc = eg;
+            y = ld_16bits_mem8_read();
+            do_16bit_math(7, x, y);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
         }
     }
-    function og() {
-        var Xf, cg, Sb, ag, ga;
-        if (Da & 0x0080)
+    function op_16_LODS() {
+        var Xf, cg, Sb, ag, x;
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = ib();
-            xa[0] = (xa[0] & -65536) | ga;
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            x = ld_16bits_mem8_read();
+            regs[0] = (regs[0] & -65536) | x;
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = ib();
-            xa[0] = (xa[0] & -65536) | ga;
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 1)) & Xf);
+            x = ld_16bits_mem8_read();
+            regs[0] = (regs[0] & -65536) | x;
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 1)) & Xf);
         }
     }
-    function pg() {
-        var Xf, Yf, ag, ga;
-        if (Da & 0x0080)
+    function op_16_SCAS() {
+        var Xf, Yf, ag, x;
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = ib();
-            dc(7, xa[0], ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-            if (Da & 0x0010) {
-                if (!(za == 0))
+            x = ld_16bits_mem8_read();
+            do_16bit_math(7, regs[0], x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            if (CS_flags & 0x0010) {
+                if (!(_dst == 0))
                     return;
             } else {
-                if ((za == 0))
+                if ((_dst == 0))
                     return;
             }
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = ib();
-            dc(7, xa[0], ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 1)) & Xf);
+            x = ld_16bits_mem8_read();
+            do_16bit_math(7, regs[0], x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 1)) & Xf);
         }
     }
-    function qg() {
-        var Xf, Yf, Zf, ag, Sa, ga;
-        Sa = (wa.eflags >> 12) & 3;
-        if (wa.cpl > Sa)
-            Dc(13);
-        if (Da & 0x0080)
+    function stringOp_INSD() {
+        var Xf, Yf, Zf, ag, iopl, x;
+        iopl = (cpu.eflags >> 12) & 3;
+        if (cpu.cpl > iopl)
+            abort(13);
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        Zf = xa[2] & 0xffff;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        Zf = regs[2] & 0xffff;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = wa.ld32_port(Zf);
-            fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-            wb(ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            x = cpu.ld32_port(Zf);
+            mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+            st32_mem8_write(x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = wa.ld32_port(Zf);
-            fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-            wb(ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
+            x = cpu.ld32_port(Zf);
+            mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+            st32_mem8_write(x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
         }
     }
-    function rg() {
-        var Xf, cg, Sb, ag, Zf, Sa, ga;
-        Sa = (wa.eflags >> 12) & 3;
-        if (wa.cpl > Sa)
-            Dc(13);
-        if (Da & 0x0080)
+    function stringOp_OUTSD() {
+        var Xf, cg, Sb, ag, Zf, iopl, x;
+        iopl = (cpu.eflags >> 12) & 3;
+        if (cpu.cpl > iopl)
+            abort(13);
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Zf = xa[2] & 0xffff;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Zf = regs[2] & 0xffff;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-            ga = kb();
-            wa.st32_port(Zf, ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+            x = ld_32bits_mem8_read();
+            cpu.st32_port(Zf, x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-            ga = kb();
-            wa.st32_port(Zf, ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
+            mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+            x = ld_32bits_mem8_read();
+            cpu.st32_port(Zf, x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
         }
     }
-    function sg() {
+    function stringOp_MOVSD() {
         var Xf, Yf, cg, ag, Sb, eg;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Yf = xa[7];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        eg = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Yf = regs[7];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        eg = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            if (Xf == -1 && wa.df == 1 && ((fa | eg) & 3) == 0) {
-                var tg, l, ug, vg, i, wg;
-                tg = ag >>> 0;
-                l = (4096 - (fa & 0xfff)) >> 2;
-                if (tg > l)
-                    tg = l;
+            if (Xf == -1 && cpu.df == 1 && ((mem8_loc | eg) & 3) == 0) {
+                var len, l, ug, vg, i, wg;
+                len = ag >>> 0;
+                l = (4096 - (mem8_loc & 0xfff)) >> 2;
+                if (len > l)
+                    len = l;
                 l = (4096 - (eg & 0xfff)) >> 2;
-                if (tg > l)
-                    tg = l;
-                ug = td(fa, 0);
-                vg = td(eg, 1);
-                wg = tg << 2;
+                if (len > l)
+                    len = l;
+                ug = do_tlb_lookup(mem8_loc, 0);
+                vg = do_tlb_lookup(eg, 1);
+                wg = len << 2;
                 vg >>= 2;
                 ug >>= 2;
-                for (i = 0; i < tg; i++)
-                    Wa[vg + i] = Wa[ug + i];
-                xa[6] = (cg + wg) >> 0;
-                xa[7] = (Yf + wg) >> 0;
-                xa[1] = ag = (ag - tg) >> 0;
+                for (i = 0; i < len; i++)
+                    phys_mem32[vg + i] = phys_mem32[ug + i];
+                regs[6] = (cg + wg) >> 0;
+                regs[7] = (Yf + wg) >> 0;
+                regs[1] = ag = (ag - len) >> 0;
                 if (ag)
-                    Kb = Mb;
+                    physmem8_ptr = initial_mem_ptr;
             } else {
-                ga = kb();
-                fa = eg;
-                wb(ga);
-                xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
-                xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
-                xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+                x = ld_32bits_mem8_read();
+                mem8_loc = eg;
+                st32_mem8_write(x);
+                regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
+                regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
+                regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
                 if (ag & Xf)
-                    Kb = Mb;
-                ;
+                    physmem8_ptr = initial_mem_ptr;
             }
         } else {
-            ga = kb();
-            fa = eg;
-            wb(ga);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
+            x = ld_32bits_mem8_read();
+            mem8_loc = eg;
+            st32_mem8_write(x);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
         }
     }
-    function xg() {
+    function stringOp_STOSD() {
         var Xf, Yf, ag;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            if (Xf == -1 && wa.df == 1 && (fa & 3) == 0) {
-                var tg, l, vg, i, wg, ga;
-                tg = ag >>> 0;
-                l = (4096 - (fa & 0xfff)) >> 2;
-                if (tg > l)
-                    tg = l;
-                vg = td(xa[7], 1);
-                ga = xa[0];
+            if (Xf == -1 && cpu.df == 1 && (mem8_loc & 3) == 0) {
+                var len, l, vg, i, wg, x;
+                len = ag >>> 0;
+                l = (4096 - (mem8_loc & 0xfff)) >> 2;
+                if (len > l)
+                    len = l;
+                vg = do_tlb_lookup(regs[7], 1);
+                x = regs[0];
                 vg >>= 2;
-                for (i = 0; i < tg; i++)
-                    Wa[vg + i] = ga;
-                wg = tg << 2;
-                xa[7] = (Yf + wg) >> 0;
-                xa[1] = ag = (ag - tg) >> 0;
+                for (i = 0; i < len; i++)
+                    phys_mem32[vg + i] = x;
+                wg = len << 2;
+                regs[7] = (Yf + wg) >> 0;
+                regs[1] = ag = (ag - len) >> 0;
                 if (ag)
-                    Kb = Mb;
+                    physmem8_ptr = initial_mem_ptr;
             } else {
-                wb(xa[0]);
-                xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
-                xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+                st32_mem8_write(regs[0]);
+                regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
+                regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
                 if (ag & Xf)
-                    Kb = Mb;
-                ;
+                    physmem8_ptr = initial_mem_ptr;
             }
         } else {
-            wb(xa[0]);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
+            st32_mem8_write(regs[0]);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
         }
     }
-    function yg() {
+    function stringOp_CMPSD() {
         var Xf, Yf, cg, ag, Sb, eg;
-        if (Da & 0x0080)
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        Yf = xa[7];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        eg = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        Yf = regs[7];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        eg = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = kb();
-            fa = eg;
-            Ha = kb();
-            Xb(7, ga, Ha);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-            if (Da & 0x0010) {
-                if (!(za == 0))
+            x = ld_32bits_mem8_read();
+            mem8_loc = eg;
+            y = ld_32bits_mem8_read();
+            do_32bit_math(7, x, y);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            if (CS_flags & 0x0010) {
+                if (!(_dst == 0))
                     return;
             } else {
-                if ((za == 0))
+                if ((_dst == 0))
                     return;
             }
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = kb();
-            fa = eg;
-            Ha = kb();
-            Xb(7, ga, Ha);
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
+            x = ld_32bits_mem8_read();
+            mem8_loc = eg;
+            y = ld_32bits_mem8_read();
+            do_32bit_math(7, x, y);
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
         }
     }
-    function zg() {
-        var Xf, cg, Sb, ag, ga;
-        if (Da & 0x0080)
+    function stringOp_LODSD() {
+        var Xf, cg, Sb, ag, x;
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Sb = Da & 0x000f;
+        Sb = CS_flags & 0x000f;
         if (Sb == 0)
             Sb = 3;
         else
             Sb--;
-        cg = xa[6];
-        fa = ((cg & Xf) + wa.segs[Sb].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        cg = regs[6];
+        mem8_loc = ((cg & Xf) + cpu.segs[Sb].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = kb();
-            xa[0] = ga;
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            x = ld_32bits_mem8_read();
+            regs[0] = x;
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = kb();
-            xa[0] = ga;
-            xa[6] = (cg & ~Xf) | ((cg + (wa.df << 2)) & Xf);
+            x = ld_32bits_mem8_read();
+            regs[0] = x;
+            regs[6] = (cg & ~Xf) | ((cg + (cpu.df << 2)) & Xf);
         }
     }
-    function Ag() {
-        var Xf, Yf, ag, ga;
-        if (Da & 0x0080)
+    function stringOp_SCASD() {
+        var Xf, Yf, ag, x;
+        if (CS_flags & 0x0080)
             Xf = 0xffff;
         else
             Xf = -1;
-        Yf = xa[7];
-        fa = ((Yf & Xf) + wa.segs[0].base) >> 0;
-        if (Da & (0x0010 | 0x0020)) {
-            ag = xa[1];
+        Yf = regs[7];
+        mem8_loc = ((Yf & Xf) + cpu.segs[0].base) >> 0;
+        if (CS_flags & (0x0010 | 0x0020)) {
+            ag = regs[1];
             if ((ag & Xf) == 0)
                 return;
-            ;
-            ga = kb();
-            Xb(7, xa[0], ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
-            xa[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-            if (Da & 0x0010) {
-                if (!(za == 0))
+            x = ld_32bits_mem8_read();
+            do_32bit_math(7, regs[0], x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
+            regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+            if (CS_flags & 0x0010) {
+                if (!(_dst == 0))
                     return;
             } else {
-                if ((za == 0))
+                if ((_dst == 0))
                     return;
             }
             if (ag & Xf)
-                Kb = Mb;
-            ;
+                physmem8_ptr = initial_mem_ptr;
         } else {
-            ga = kb();
-            Xb(7, xa[0], ga);
-            xa[7] = (Yf & ~Xf) | ((Yf + (wa.df << 2)) & Xf);
+            x = ld_32bits_mem8_read();
+            do_32bit_math(7, regs[0], x);
+            regs[7] = (Yf & ~Xf) | ((Yf + (cpu.df << 2)) & Xf);
         }
     }
-    wa = this;
-    Ta = this.phys_mem8;
-    Va = this.phys_mem16;
-    Wa = this.phys_mem32;
-    Za = this.tlb_read_user;
-    ab = this.tlb_write_user;
-    Xa = this.tlb_read_kernel;
-    Ya = this.tlb_write_kernel;
-    if (wa.cpl == 3) {
-        bb = Za;
-        cb = ab;
+
+    cpu = this;
+    phys_mem8        = this.phys_mem8;
+    phys_mem16       = this.phys_mem16;
+    phys_mem32       = this.phys_mem32;
+    tlb_read_user    = this.tlb_read_user;
+    tlb_write_user   = this.tlb_write_user;
+    tlb_read_kernel  = this.tlb_read_kernel;
+    tlb_write_kernel = this.tlb_write_kernel;
+
+    if (cpu.cpl == 3) {  //current privilege level
+        _tlb_read_ = tlb_read_user;
+        _tlb_write_ = tlb_write_user;
     } else {
-        bb = Xa;
-        cb = Ya;
+        _tlb_read_ = tlb_read_kernel;
+        _tlb_write_ = tlb_write_kernel;
     }
-    if (wa.halted) {
-        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200)) {
-            wa.halted = 0;
+
+    if (cpu.halted) {
+        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200)) {
+            cpu.halted = 0;
         } else {
             return 257;
         }
     }
-    xa = this.regs;
-    ya = this.cc_src;
-    za = this.cc_dst;
-    Aa = this.cc_op;
-    Ba = this.cc_op2;
-    Ca = this.cc_dst2;
-    Jb = this.eip;
-    ce();
-    La = 256;
-    Ka = ua;
-    if (va) {
-        ;
-        Ae(va.intno, 0, va.error_code, 0, 0);
+
+    regs = this.regs;
+    _src = this.cc_src;
+    _dst = this.cc_dst;
+    _op = this.cc_op;
+    _op2 = this.cc_op2;
+    _dst2 = this.cc_dst2;
+
+    eip = this.eip;
+    init_segment_local_vars();
+    exit_code = 256;
+    cycles_left = N_cycles;
+
+    if (interrupt) {
+        do_interrupt(interrupt.intno, 0, interrupt.error_code, 0, 0);
     }
-    if (wa.hard_intno >= 0) {
-        ;
-        Ae(wa.hard_intno, 0, 0, 0, 1);
-        wa.hard_intno = -1;
+    if (cpu.hard_intno >= 0) {
+        do_interrupt(cpu.hard_intno, 0, 0, 0, 1);
+        cpu.hard_intno = -1;
     }
-    if (wa.hard_irq != 0 && (wa.eflags & 0x00000200)) {
-        wa.hard_intno = wa.get_hard_intno();
-        ;
-        Ae(wa.hard_intno, 0, 0, 0, 1);
-        wa.hard_intno = -1;
+    if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200)) {
+        cpu.hard_intno = cpu.get_hard_intno();
+        do_interrupt(cpu.hard_intno, 0, 0, 0, 1);
+        cpu.hard_intno = -1;
     }
-    Kb = 0;
-    Mb = 0;
-    Bg: do {
-        ;
-        Jb = (Jb + Kb - Mb) >> 0;
-        Nb = (Jb + Na) >> 0;
-        Lb = bb[Nb >>> 12];
-        if (((Lb | Nb) & 0xfff) >= (4096 - 15 + 1)) {
+
+    physmem8_ptr = 0;
+    initial_mem_ptr = 0;
+
+    OUTER_LOOP: do {
+        /*
+           All the below is solely to determine what the next instruction is before re-entering the main EXEC_LOOP
+           ------------------------------------------------------------------------------------------------------
+         */
+        eip = (eip + physmem8_ptr - initial_mem_ptr) >> 0;
+        eip_offset = (eip + CS_base) >> 0;
+        eip_tlb_val = _tlb_read_[eip_offset >>> 12];
+        if (((eip_tlb_val | eip_offset) & 0xfff) >= (4096 - 15 + 1)) { //what does this condition mean? operation straddling page boundary?
             var Cg;
-            if (Lb == -1)
-                fb(Nb, 0, wa.cpl == 3);
-            Lb = bb[Nb >>> 12];
-            Mb = Kb = Nb ^ Lb;
-            b = Ta[Kb++];
-            ;
-            Cg = Nb & 0xfff;
-            if (Cg >= (4096 - 15 + 1)) {
-                ga = Cd(Nb, b);
-                if ((Cg + ga) > 4096) {
-                    Mb = Kb = this.mem_size;
-                    for (Ha = 0; Ha < ga; Ha++) {
-                        fa = (Nb + Ha) >> 0;
-                        Ta[Kb + Ha] = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+            if (eip_tlb_val == -1)
+                do_tlb_set_page(eip_offset, 0, cpu.cpl == 3);
+            eip_tlb_val = _tlb_read_[eip_offset >>> 12];
+            initial_mem_ptr = physmem8_ptr = eip_offset ^ eip_tlb_val;
+            OPbyte = phys_mem8[physmem8_ptr++];
+            Cg = eip_offset & 0xfff;
+            if (Cg >= (4096 - 15 + 1)) { //again, WTF does this do?
+                x = operation_size_function(eip_offset, OPbyte);
+                if ((Cg + x) > 4096) {
+                    initial_mem_ptr = physmem8_ptr = this.mem_size;
+                    for (y = 0; y < x; y++) {
+                        mem8_loc = (eip_offset + y) >> 0;
+                        phys_mem8[physmem8_ptr + y] = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                     }
-                    Kb++;
+                    physmem8_ptr++;
                 }
             }
         } else {
-            Mb = Kb = Nb ^ Lb;
-            b = Ta[Kb++];
-            ;
+            initial_mem_ptr = physmem8_ptr = eip_offset ^ eip_tlb_val;
+            OPbyte = phys_mem8[physmem8_ptr++];
         }
-        b |= (Da = Ra) & 0x0100;
-        Fd: for (; ; ) {
-            switch (b) {
-                case 0x66:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    if (Ra & 0x0100)
-                        Da &= ~0x0100;
+
+        OPbyte |= (CS_flags = init_CS_flags) & 0x0100; //Are we running in 16bit compatibility mode? if so, ops look like 0x1XX instead of 0xXX
+
+        EXEC_LOOP: for (; ; ) {
+            switch (OPbyte) {
+                case 0x66://   Operand-size override prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    if (init_CS_flags & 0x0100)
+                        CS_flags &= ~0x0100;
                     else
-                        Da |= 0x0100;
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
+                        CS_flags |= 0x0100;
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0x67:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    if (Ra & 0x0080)
-                        Da &= ~0x0080;
+                case 0x67://   Address-size override prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    if (init_CS_flags & 0x0080)
+                        CS_flags &= ~0x0080;
                     else
-                        Da |= 0x0080;
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
+                        CS_flags |= 0x0080;
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0xf0:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    Da |= 0x0040;
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
+                case 0xf0://LOCK   Assert LOCK# Signal Prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    CS_flags |= 0x0040;
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0xf2:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    Da |= 0x0020;
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
+                case 0xf2://REPNZ  eCX Repeat String Operation Prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    CS_flags |= 0x0020;
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0xf3:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    Da |= 0x0010;
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
+                case 0xf3://REPZ  eCX Repeat String Operation Prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    CS_flags |= 0x0010;
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0x26:
-                case 0x2e:
-                case 0x36:
-                case 0x3e:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    Da = (Da & ~0x000f) | (((b >> 3) & 3) + 1);
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
-                    ;
+                case 0x26://ES ES  ES segment override prefix
+                case 0x2e://CS CS  CS segment override prefix
+                case 0x36://SS SS  SS segment override prefix
+                case 0x3e://DS DS  DS segment override prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    CS_flags = (CS_flags & ~0x000f) | (((OPbyte >> 3) & 3) + 1);
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0x64:
-                case 0x65:
-                    if (Da == Ra)
-                        Cd(Nb, b);
-                    Da = (Da & ~0x000f) | ((b & 7) + 1);
-                    b = Ta[Kb++];
-                    ;
-                    b |= (Da & 0x0100);
-                    ;
+                case 0x64://FS FS  FS segment override prefix
+                case 0x65://GS GS  GS segment override prefix
+                    if (CS_flags == init_CS_flags)
+                        operation_size_function(eip_offset, OPbyte);
+                    CS_flags = (CS_flags & ~0x000f) | ((OPbyte & 7) + 1);
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    OPbyte |= (CS_flags & 0x0100);
                     break;
-                case 0xb0:
+                case 0xb0://MOV Ib Zb Move
                 case 0xb1:
                 case 0xb2:
                 case 0xb3:
@@ -5717,13 +5987,12 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0xb5:
                 case 0xb6:
                 case 0xb7:
-                    ga = Ta[Kb++];
-                    ;
-                    b &= 7;
-                    Ua = (b & 4) << 1;
-                    xa[b & 3] = (xa[b & 3] & ~(0xff << Ua)) | (((ga) & 0xff) << Ua);
-                    break Fd;
-                case 0xb8:
+                    x = phys_mem8[physmem8_ptr++]; //r8
+                    OPbyte &= 7; //last bits
+                    last_tlb_val = (OPbyte & 4) << 1;
+                    regs[OPbyte & 3] = (regs[OPbyte & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
+                    break EXEC_LOOP;
+                case 0xb8://MOV Ivqp Zvqp Move
                 case 0xb9:
                 case 0xba:
                 case 0xbb:
@@ -5732,961 +6001,880 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0xbe:
                 case 0xbf:
                     {
-                        ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    xa[b & 7] = ga;
-                    break Fd;
-                case 0x88:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    ga = (xa[Ga & 3] >> ((Ga & 4) << 1));
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        Ua = (Fa & 4) << 1;
-                        xa[Fa & 3] = (xa[Fa & 3] & ~(0xff << Ua)) | (((ga) & 0xff) << Ua);
+                    regs[OPbyte & 7] = x;
+                    break EXEC_LOOP;
+                case 0x88://MOV Gb Eb Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    x = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        last_tlb_val = (reg_idx0 & 4) << 1;
+                        regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
                     } else {
-                        fa = Pb(Ea);
+                        mem8_loc = segment_translation(mem8);
                         {
-                            Ua = cb[fa >>> 12];
-                            if (Ua == -1) {
-                                rb(ga);
+                            last_tlb_val = _tlb_write_[mem8_loc >>> 12];
+                            if (last_tlb_val == -1) {
+                                __st8_mem8_write(x);
                             } else {
-                                Ta[fa ^ Ua] = ga;
+                                phys_mem8[mem8_loc ^ last_tlb_val] = x;
                             }
                         }
-                        ;
                     }
-                    break Fd;
-                case 0x89:
-                    Ea = Ta[Kb++];
-                    ;
-                    ga = xa[(Ea >> 3) & 7];
-                    if ((Ea >> 6) == 3) {
-                        xa[Ea & 7] = ga;
+                    break EXEC_LOOP;
+                case 0x89://MOV Gvqp Evqp Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    x = regs[(mem8 >> 3) & 7];
+                    if ((mem8 >> 6) == 3) {
+                        regs[mem8 & 7] = x;
                     } else {
-                        fa = Pb(Ea);
+                        mem8_loc = segment_translation(mem8);
                         {
-                            Ua = cb[fa >>> 12];
-                            if ((Ua | fa) & 3) {
-                                vb(ga);
+                            last_tlb_val = _tlb_write_[mem8_loc >>> 12];
+                            if ((last_tlb_val | mem8_loc) & 3) {
+                                __st32_mem8_write(x);
                             } else {
-                                Wa[(fa ^ Ua) >> 2] = ga;
+                                phys_mem32[(mem8_loc ^ last_tlb_val) >> 2] = x;
                             }
                         }
-                        ;
                     }
-                    break Fd;
-                case 0x8a:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                    break EXEC_LOOP;
+                case 0x8a://MOV Eb Gb Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                     } else {
-                        fa = Pb(Ea);
-                        ga = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                        mem8_loc = segment_translation(mem8);
+                        x = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                     }
-                    Ga = (Ea >> 3) & 7;
-                    Ua = (Ga & 4) << 1;
-                    xa[Ga & 3] = (xa[Ga & 3] & ~(0xff << Ua)) | (((ga) & 0xff) << Ua);
-                    break Fd;
-                case 0x8b:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
-                        ga = xa[Ea & 7];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    last_tlb_val = (reg_idx1 & 4) << 1;
+                    regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
+                    break EXEC_LOOP;
+                case 0x8b://MOV Evqp Gvqp Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
+                        x = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        ga = (((Ua = bb[fa >>> 12]) | fa) & 3 ? jb() : Wa[(fa ^ Ua) >> 2]);
+                        mem8_loc = segment_translation(mem8);
+                        x = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) | mem8_loc) & 3 ? __ld_32bits_mem8_read() : phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
                     }
-                    xa[(Ea >> 3) & 7] = ga;
-                    break Fd;
-                case 0xa0:
-                    fa = Ub();
-                    ga = gb();
-                    xa[0] = (xa[0] & -256) | ga;
-                    break Fd;
-                case 0xa1:
-                    fa = Ub();
-                    ga = kb();
-                    xa[0] = ga;
-                    break Fd;
-                case 0xa2:
-                    fa = Ub();
-                    sb(xa[0]);
-                    break Fd;
-                case 0xa3:
-                    fa = Ub();
-                    wb(xa[0]);
-                    break Fd;
-                case 0xd7:
-                    fa = (xa[3] + (xa[0] & 0xff)) >> 0;
-                    if (Da & 0x0080)
-                        fa &= 0xffff;
-                    Ga = Da & 0x000f;
-                    if (Ga == 0)
-                        Ga = 3;
+                    regs[(mem8 >> 3) & 7] = x;
+                    break EXEC_LOOP;
+                case 0xa0://MOV Ob AL Move byte at (seg:offset) to AL
+                    mem8_loc = segmented_mem8_loc_for_MOV();
+                    x = ld_8bits_mem8_read();
+                    regs[0] = (regs[0] & -256) | x;
+                    break EXEC_LOOP;
+                case 0xa1://MOV Ovqp rAX Move dword at (seg:offset) to EAX
+                    mem8_loc = segmented_mem8_loc_for_MOV();
+                    x = ld_32bits_mem8_read();
+                    regs[0] = x;
+                    break EXEC_LOOP;
+                case 0xa2://MOV AL Ob Move AL to (seg:offset)
+                    mem8_loc = segmented_mem8_loc_for_MOV();
+                    st8_mem8_write(regs[0]);
+                    break EXEC_LOOP;
+                case 0xa3://MOV rAX Ovqp Move EAX to (seg:offset)
+                    mem8_loc = segmented_mem8_loc_for_MOV();
+                    st32_mem8_write(regs[0]);
+                    break EXEC_LOOP;
+                case 0xd7://XLAT (DS:)[rBX+AL] AL Table Look-up Translation
+                    mem8_loc = (regs[3] + (regs[0] & 0xff)) >> 0;
+                    if (CS_flags & 0x0080)
+                        mem8_loc &= 0xffff;
+                    reg_idx1 = CS_flags & 0x000f;
+                    if (reg_idx1 == 0)
+                        reg_idx1 = 3;
                     else
-                        Ga--;
-                    fa = (fa + wa.segs[Ga].base) >> 0;
-                    ga = gb();
-                    Vb(0, ga);
-                    break Fd;
-                case 0xc6:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
-                        ga = Ta[Kb++];
-                        ;
-                        Vb(Ea & 7, ga);
+                        reg_idx1--;
+                    mem8_loc = (mem8_loc + cpu.segs[reg_idx1].base) >> 0;
+                    x = ld_8bits_mem8_read();
+                    set_word_in_register(0, x);
+                    break EXEC_LOOP;
+                case 0xc6://MOV Ib Eb Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
+                        x = phys_mem8[physmem8_ptr++];
+                        set_word_in_register(mem8 & 7, x);
                     } else {
-                        fa = Pb(Ea);
-                        ga = Ta[Kb++];
-                        ;
-                        sb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        x = phys_mem8[physmem8_ptr++];
+                        st8_mem8_write(x);
                     }
-                    break Fd;
-                case 0xc7:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
+                    break EXEC_LOOP;
+                case 0xc7://MOV Ivds Evqp Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
                         {
-                            ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
-                        xa[Ea & 7] = ga;
+                        regs[mem8 & 7] = x;
                     } else {
-                        fa = Pb(Ea);
+                        mem8_loc = segment_translation(mem8);
                         {
-                            ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
-                        wb(ga);
+                        st32_mem8_write(x);
                     }
-                    break Fd;
-                case 0x91:
+                    break EXEC_LOOP;
+                case 0x91://(90+r)  XCHG  r16/32  eAX     Exchange Register/Memory with Register
                 case 0x92:
                 case 0x93:
                 case 0x94:
                 case 0x95:
                 case 0x96:
                 case 0x97:
-                    Ga = b & 7;
-                    ga = xa[0];
-                    xa[0] = xa[Ga];
-                    xa[Ga] = ga;
-                    break Fd;
-                case 0x86:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
-                        Vb(Fa, (xa[Ga & 3] >> ((Ga & 4) << 1)));
+                    reg_idx1 = OPbyte & 7;
+                    x = regs[0];
+                    regs[0] = regs[reg_idx1];
+                    regs[reg_idx1] = x;
+                    break EXEC_LOOP;
+                case 0x86://XCHG  Gb Exchange Register/Memory with Register
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        set_word_in_register(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                     } else {
-                        fa = Pb(Ea);
-                        ga = mb();
-                        sb((xa[Ga & 3] >> ((Ga & 4) << 1)));
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_8bits_mem8_write();
+                        st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                     }
-                    Vb(Ga, ga);
-                    break Fd;
-                case 0x87:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        ga = xa[Fa];
-                        xa[Fa] = xa[Ga];
+                    set_word_in_register(reg_idx1, x);
+                    break EXEC_LOOP;
+                case 0x87://XCHG  Gvqp Exchange Register/Memory with Register
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        x = regs[reg_idx0];
+                        regs[reg_idx0] = regs[reg_idx1];
                     } else {
-                        fa = Pb(Ea);
-                        ga = qb();
-                        wb(xa[Ga]);
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_write();
+                        st32_mem8_write(regs[reg_idx1]);
                     }
-                    xa[Ga] = ga;
-                    break Fd;
-                case 0x8e:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if (Ga >= 6 || Ga == 1)
-                        Dc(6);
-                    if ((Ea >> 6) == 3) {
-                        ga = xa[Ea & 7] & 0xffff;
+                    regs[reg_idx1] = x;
+                    break EXEC_LOOP;
+                case 0x8e://MOV Ew Sw Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if (reg_idx1 >= 6 || reg_idx1 == 1)
+                        abort(6);
+                    if ((mem8 >> 6) == 3) {
+                        x = regs[mem8 & 7] & 0xffff;
                     } else {
-                        fa = Pb(Ea);
-                        ga = ib();
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_16bits_mem8_read();
                     }
-                    Ie(Ga, ga);
-                    break Fd;
-                case 0x8c:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if (Ga >= 6)
-                        Dc(6);
-                    ga = wa.segs[Ga].selector;
-                    if ((Ea >> 6) == 3) {
-                        if ((((Da >> 8) & 1) ^ 1)) {
-                            xa[Ea & 7] = ga;
+                    set_segment_register(reg_idx1, x);
+                    break EXEC_LOOP;
+                case 0x8c://MOV Sw Mw Move
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if (reg_idx1 >= 6)
+                        abort(6);
+                    x = cpu.segs[reg_idx1].selector;
+                    if ((mem8 >> 6) == 3) {
+                        if ((((CS_flags >> 8) & 1) ^ 1)) {
+                            regs[mem8 & 7] = x;
                         } else {
-                            Wb(Ea & 7, ga);
+                            set_lower_word_in_register(mem8 & 7, x);
                         }
                     } else {
-                        fa = Pb(Ea);
-                        ub(ga);
+                        mem8_loc = segment_translation(mem8);
+                        st16_mem8_write(x);
                     }
-                    break Fd;
-                case 0xc4:
-                    Uf(0);
-                    break Fd;
-                case 0xc5:
-                    Uf(3);
-                    break Fd;
-                case 0x00:
-                case 0x08:
-                case 0x10:
-                case 0x18:
-                case 0x20:
-                case 0x28:
-                case 0x30:
-                case 0x38:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Ga = (Ea >> 3) & 7;
-                    Ha = (xa[Ga & 3] >> ((Ga & 4) << 1));
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        Vb(Fa, gc(Ja, (xa[Fa & 3] >> ((Fa & 4) << 1)), Ha));
+                    break EXEC_LOOP;
+                case 0xc4://LES Mp ES Load Far Pointer
+                    op_16_load_far_pointer32(0);
+                    break EXEC_LOOP;
+                case 0xc5://LDS Mp DS Load Far Pointer
+                    op_16_load_far_pointer32(3);
+                    break EXEC_LOOP;
+                case 0x00://ADD Gb Eb Add
+                case 0x08://OR Gb Eb Logical Inclusive OR
+                case 0x10://ADC Gb Eb Add with Carry
+                case 0x18://SBB Gb Eb Integer Subtraction with Borrow
+                case 0x20://AND Gb Eb Logical AND
+                case 0x28://SUB Gb Eb Subtract
+                case 0x30://XOR Gb Eb Logical Exclusive OR
+                case 0x38://CMP Eb  Compare Two Operands
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        set_word_in_register(reg_idx0, do_8bit_math(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                     } else {
-                        fa = Pb(Ea);
-                        if (Ja != 7) {
-                            ga = mb();
-                            ga = gc(Ja, ga, Ha);
-                            sb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        if (conditional_var != 7) {
+                            x = ld_8bits_mem8_write();
+                            x = do_8bit_math(conditional_var, x, y);
+                            st8_mem8_write(x);
                         } else {
-                            ga = gb();
-                            gc(7, ga, Ha);
+                            x = ld_8bits_mem8_read();
+                            do_8bit_math(7, x, y);
                         }
                     }
-                    break Fd;
-                case 0x01:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ha = xa[(Ea >> 3) & 7];
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
+                    break EXEC_LOOP;
+                case 0x01://ADD Gvqp Evqp Add
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    y = regs[(mem8 >> 3) & 7];
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
                         {
-                            ya = Ha;
-                            za = xa[Fa] = (xa[Fa] + ya) >> 0;
-                            Aa = 2;
+                            _src = y;
+                            _dst = regs[reg_idx0] = (regs[reg_idx0] + _src) >> 0;
+                            _op = 2;
                         }
-                        ;
                     } else {
-                        fa = Pb(Ea);
-                        ga = qb();
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_write();
                         {
-                            ya = Ha;
-                            za = ga = (ga + ya) >> 0;
-                            Aa = 2;
+                            _src = y;
+                            _dst = x = (x + _src) >> 0;
+                            _op = 2;
                         }
-                        ;
-                        wb(ga);
+                        st32_mem8_write(x);
                     }
-                    break Fd;
-                case 0x09:
-                case 0x11:
-                case 0x19:
-                case 0x21:
-                case 0x29:
-                case 0x31:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Ha = xa[(Ea >> 3) & 7];
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        xa[Fa] = Xb(Ja, xa[Fa], Ha);
+                    break EXEC_LOOP;
+                case 0x09://OR Gvqp Evqp Logical Inclusive OR
+                case 0x11://ADC Gvqp Evqp Add with Carry
+                case 0x19://SBB Gvqp Evqp Integer Subtraction with Borrow
+                case 0x21://AND Gvqp Evqp Logical AND
+                case 0x29://SUB Gvqp Evqp Subtract
+                case 0x31://XOR Gvqp Evqp Logical Exclusive OR
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    y = regs[(mem8 >> 3) & 7];
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                     } else {
-                        fa = Pb(Ea);
-                        ga = qb();
-                        ga = Xb(Ja, ga, Ha);
-                        wb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_write();
+                        x = do_32bit_math(conditional_var, x, y);
+                        st32_mem8_write(x);
                     }
-                    break Fd;
-                case 0x39:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Ha = xa[(Ea >> 3) & 7];
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
+                    break EXEC_LOOP;
+                case 0x39://CMP Evqp  Compare Two Operands
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    y = regs[(mem8 >> 3) & 7];
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
                         {
-                            ya = Ha;
-                            za = (xa[Fa] - ya) >> 0;
-                            Aa = 8;
+                            _src = y;
+                            _dst = (regs[reg_idx0] - _src) >> 0;
+                            _op = 8;
                         }
-                        ;
                     } else {
-                        fa = Pb(Ea);
-                        ga = kb();
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_read();
                         {
-                            ya = Ha;
-                            za = (ga - ya) >> 0;
-                            Aa = 8;
+                            _src = y;
+                            _dst = (x - _src) >> 0;
+                            _op = 8;
                         }
-                        ;
                     }
-                    break Fd;
-                case 0x02:
-                case 0x0a:
-                case 0x12:
-                case 0x1a:
-                case 0x22:
-                case 0x2a:
-                case 0x32:
-                case 0x3a:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        Ha = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                    break EXEC_LOOP;
+                case 0x02://ADD Eb Gb Add
+                case 0x0a://OR Eb Gb Logical Inclusive OR
+                case 0x12://ADC Eb Gb Add with Carry
+                case 0x1a://SBB Eb Gb Integer Subtraction with Borrow
+                case 0x22://AND Eb Gb Logical AND
+                case 0x2a://SUB Eb Gb Subtract
+                case 0x32://XOR Eb Gb Logical Exclusive OR
+                case 0x3a://CMP Gb  Compare Two Operands
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        y = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                     } else {
-                        fa = Pb(Ea);
-                        Ha = gb();
+                        mem8_loc = segment_translation(mem8);
+                        y = ld_8bits_mem8_read();
                     }
-                    Vb(Ga, gc(Ja, (xa[Ga & 3] >> ((Ga & 4) << 1)), Ha));
-                    break Fd;
-                case 0x03:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = xa[Ea & 7];
+                    set_word_in_register(reg_idx1, do_8bit_math(conditional_var, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
+                    break EXEC_LOOP;
+                case 0x03://ADD Evqp Gvqp Add
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        Ha = kb();
+                        mem8_loc = segment_translation(mem8);
+                        y = ld_32bits_mem8_read();
                     }
                     {
-                        ya = Ha;
-                        za = xa[Ga] = (xa[Ga] + ya) >> 0;
-                        Aa = 2;
+                        _src = y;
+                        _dst = regs[reg_idx1] = (regs[reg_idx1] + _src) >> 0;
+                        _op = 2;
                     }
-                    ;
-                    break Fd;
-                case 0x0b:
-                case 0x13:
-                case 0x1b:
-                case 0x23:
-                case 0x2b:
-                case 0x33:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = xa[Ea & 7];
+                    break EXEC_LOOP;
+                case 0x0b://OR Evqp Gvqp Logical Inclusive OR
+                case 0x13://ADC Evqp Gvqp Add with Carry
+                case 0x1b://SBB Evqp Gvqp Integer Subtraction with Borrow
+                case 0x23://AND Evqp Gvqp Logical AND
+                case 0x2b://SUB Evqp Gvqp Subtract
+                case 0x33://XOR Evqp Gvqp Logical Exclusive OR
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        Ha = kb();
+                        mem8_loc = segment_translation(mem8);
+                        y = ld_32bits_mem8_read();
                     }
-                    xa[Ga] = Xb(Ja, xa[Ga], Ha);
-                    break Fd;
-                case 0x3b:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = xa[Ea & 7];
+                    regs[reg_idx1] = do_32bit_math(conditional_var, regs[reg_idx1], y);
+                    break EXEC_LOOP;
+                case 0x3b://CMP Gvqp  Compare Two Operands
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        Ha = kb();
+                        mem8_loc = segment_translation(mem8);
+                        y = ld_32bits_mem8_read();
                     }
                     {
-                        ya = Ha;
-                        za = (xa[Ga] - ya) >> 0;
-                        Aa = 8;
+                        _src = y;
+                        _dst = (regs[reg_idx1] - _src) >> 0;
+                        _op = 8;
                     }
-                    ;
-                    break Fd;
-                case 0x04:
-                case 0x0c:
-                case 0x14:
-                case 0x1c:
-                case 0x24:
-                case 0x2c:
-                case 0x34:
-                case 0x3c:
-                    Ha = Ta[Kb++];
-                    ;
-                    Ja = b >> 3;
-                    Vb(0, gc(Ja, xa[0] & 0xff, Ha));
-                    break Fd;
-                case 0x05:
+                    break EXEC_LOOP;
+                case 0x04://ADD Ib AL Add
+                case 0x0c://OR Ib AL Logical Inclusive OR
+                case 0x14://ADC Ib AL Add with Carry
+                case 0x1c://SBB Ib AL Integer Subtraction with Borrow
+                case 0x24://AND Ib AL Logical AND
+                case 0x2c://SUB Ib AL Subtract
+                case 0x34://XOR Ib AL Logical Exclusive OR
+                case 0x3c://CMP AL  Compare Two Operands
+                    y = phys_mem8[physmem8_ptr++];
+                    conditional_var = OPbyte >> 3;
+                    set_word_in_register(0, do_8bit_math(conditional_var, regs[0] & 0xff, y));
+                    break EXEC_LOOP;
+                case 0x05://ADD Ivds rAX Add
                     {
-                        Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     {
-                        ya = Ha;
-                        za = xa[0] = (xa[0] + ya) >> 0;
-                        Aa = 2;
+                        _src = y;
+                        _dst = regs[0] = (regs[0] + _src) >> 0;
+                        _op = 2;
                     }
-                    ;
-                    break Fd;
-                case 0x0d:
-                case 0x15:
-                case 0x1d:
-                case 0x25:
-                case 0x2d:
+                    break EXEC_LOOP;
+                case 0x0d://OR Ivds rAX Logical Inclusive OR
+                case 0x15://ADC Ivds rAX Add with Carry
+                case 0x1d://SBB Ivds rAX Integer Subtraction with Borrow
+                case 0x25://AND Ivds rAX Logical AND
+                case 0x2d://SUB Ivds rAX Subtract
                     {
-                        Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    Ja = b >> 3;
-                    xa[0] = Xb(Ja, xa[0], Ha);
-                    break Fd;
-                case 0x35:
+                    conditional_var = OPbyte >> 3;
+                    regs[0] = do_32bit_math(conditional_var, regs[0], y);
+                    break EXEC_LOOP;
+                case 0x35://XOR Ivds rAX Logical Exclusive OR
                     {
-                        Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     {
-                        za = xa[0] = xa[0] ^ Ha;
-                        Aa = 14;
+                        _dst = regs[0] = regs[0] ^ y;
+                        _op = 14;
                     }
-                    ;
-                    break Fd;
-                case 0x3d:
+                    break EXEC_LOOP;
+                case 0x3d://CMP rAX  Compare Two Operands
                     {
-                        Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     {
-                        ya = Ha;
-                        za = (xa[0] - ya) >> 0;
-                        Aa = 8;
+                        _src = y;
+                        _dst = (regs[0] - _src) >> 0;
+                        _op = 8;
                     }
-                    ;
-                    break Fd;
-                case 0x80:
-                case 0x82:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        Ha = Ta[Kb++];
-                        ;
-                        Vb(Fa, gc(Ja, (xa[Fa & 3] >> ((Fa & 4) << 1)), Ha));
+                    break EXEC_LOOP;
+                case 0x80://ADD Ib Eb Add
+                case 0x82://ADD Ib Eb Add
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        y = phys_mem8[physmem8_ptr++];
+                        set_word_in_register(reg_idx0, do_8bit_math(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                     } else {
-                        fa = Pb(Ea);
-                        Ha = Ta[Kb++];
-                        ;
-                        if (Ja != 7) {
-                            ga = mb();
-                            ga = gc(Ja, ga, Ha);
-                            sb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        y = phys_mem8[physmem8_ptr++];
+                        if (conditional_var != 7) {
+                            x = ld_8bits_mem8_write();
+                            x = do_8bit_math(conditional_var, x, y);
+                            st8_mem8_write(x);
                         } else {
-                            ga = gb();
-                            gc(7, ga, Ha);
+                            x = ld_8bits_mem8_read();
+                            do_8bit_math(7, x, y);
                         }
                     }
-                    break Fd;
-                case 0x81:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if (Ja == 7) {
-                        if ((Ea >> 6) == 3) {
-                            ga = xa[Ea & 7];
+                    break EXEC_LOOP;
+                case 0x81://ADD Ivds Evqp Add
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if (conditional_var == 7) {
+                        if ((mem8 >> 6) == 3) {
+                            x = regs[mem8 & 7];
                         } else {
-                            fa = Pb(Ea);
-                            ga = kb();
+                            mem8_loc = segment_translation(mem8);
+                            x = ld_32bits_mem8_read();
                         }
                         {
-                            Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
                         {
-                            ya = Ha;
-                            za = (ga - ya) >> 0;
-                            Aa = 8;
+                            _src = y;
+                            _dst = (x - _src) >> 0;
+                            _op = 8;
                         }
-                        ;
                     } else {
-                        if ((Ea >> 6) == 3) {
-                            Fa = Ea & 7;
+                        if ((mem8 >> 6) == 3) {
+                            reg_idx0 = mem8 & 7;
                             {
-                                Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                                Kb += 4;
+                                y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                                physmem8_ptr += 4;
                             }
-                            ;
-                            xa[Fa] = Xb(Ja, xa[Fa], Ha);
+                            regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                         } else {
-                            fa = Pb(Ea);
+                            mem8_loc = segment_translation(mem8);
                             {
-                                Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                                Kb += 4;
+                                y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                                physmem8_ptr += 4;
                             }
-                            ;
-                            ga = qb();
-                            ga = Xb(Ja, ga, Ha);
-                            wb(ga);
+                            x = ld_32bits_mem8_write();
+                            x = do_32bit_math(conditional_var, x, y);
+                            st32_mem8_write(x);
                         }
                     }
-                    break Fd;
-                case 0x83:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if (Ja == 7) {
-                        if ((Ea >> 6) == 3) {
-                            ga = xa[Ea & 7];
+                    break EXEC_LOOP;
+                case 0x83://ADD Ibs Evqp Add
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if (conditional_var == 7) {
+                        if ((mem8 >> 6) == 3) {
+                            x = regs[mem8 & 7];
                         } else {
-                            fa = Pb(Ea);
-                            ga = kb();
+                            mem8_loc = segment_translation(mem8);
+                            x = ld_32bits_mem8_read();
                         }
-                        Ha = ((Ta[Kb++] << 24) >> 24);
-                        ;
+                        y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                         {
-                            ya = Ha;
-                            za = (ga - ya) >> 0;
-                            Aa = 8;
+                            _src = y;
+                            _dst = (x - _src) >> 0;
+                            _op = 8;
                         }
-                        ;
                     } else {
-                        if ((Ea >> 6) == 3) {
-                            Fa = Ea & 7;
-                            Ha = ((Ta[Kb++] << 24) >> 24);
-                            ;
-                            xa[Fa] = Xb(Ja, xa[Fa], Ha);
+                        if ((mem8 >> 6) == 3) {
+                            reg_idx0 = mem8 & 7;
+                            y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                            regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                         } else {
-                            fa = Pb(Ea);
-                            Ha = ((Ta[Kb++] << 24) >> 24);
-                            ;
-                            ga = qb();
-                            ga = Xb(Ja, ga, Ha);
-                            wb(ga);
+                            mem8_loc = segment_translation(mem8);
+                            y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                            x = ld_32bits_mem8_write();
+                            x = do_32bit_math(conditional_var, x, y);
+                            st32_mem8_write(x);
                         }
                     }
-                    break Fd;
-                case 0x40:
-                case 0x41:
-                case 0x42:
-                case 0x43:
-                case 0x44:
-                case 0x45:
-                case 0x46:
-                case 0x47:
-                    Ga = b & 7;
+                    break EXEC_LOOP;
+                case 0x40://INC  Zv Increment by 1
+                case 0x41://REX.B   Extension of r/m field, base field, or opcode reg field
+                case 0x42://REX.X   Extension of SIB index field
+                case 0x43://REX.XB   REX.X and REX.B combination
+                case 0x44://REX.R   Extension of ModR/M reg field
+                case 0x45://REX.RB   REX.R and REX.B combination
+                case 0x46://REX.RX   REX.R and REX.X combination
+                case 0x47://REX.RXB   REX.R, REX.X and REX.B combination
+                    reg_idx1 = OPbyte & 7;
                     {
-                        if (Aa < 25) {
-                            Ba = Aa;
-                            Ca = za;
+                        if (_op < 25) {
+                            _op2 = _op;
+                            _dst2 = _dst;
                         }
-                        xa[Ga] = za = (xa[Ga] + 1) >> 0;
-                        Aa = 27;
+                        regs[reg_idx1] = _dst = (regs[reg_idx1] + 1) >> 0;
+                        _op = 27;
                     }
-                    ;
-                    break Fd;
-                case 0x48:
-                case 0x49:
-                case 0x4a:
-                case 0x4b:
-                case 0x4c:
-                case 0x4d:
-                case 0x4e:
-                case 0x4f:
-                    Ga = b & 7;
+                    break EXEC_LOOP;
+                case 0x48://DEC  Zv Decrement by 1
+                case 0x49://REX.WB   REX.W and REX.B combination
+                case 0x4a://REX.WX   REX.W and REX.X combination
+                case 0x4b://REX.WXB   REX.W, REX.X and REX.B combination
+                case 0x4c://REX.WR   REX.W and REX.R combination
+                case 0x4d://REX.WRB   REX.W, REX.R and REX.B combination
+                case 0x4e://REX.WRX   REX.W, REX.R and REX.X combination
+                case 0x4f://REX.WRXB   REX.W, REX.R, REX.X and REX.B combination
+                    reg_idx1 = OPbyte & 7;
                     {
-                        if (Aa < 25) {
-                            Ba = Aa;
-                            Ca = za;
+                        if (_op < 25) {
+                            _op2 = _op;
+                            _dst2 = _dst;
                         }
-                        xa[Ga] = za = (xa[Ga] - 1) >> 0;
-                        Aa = 30;
+                        regs[reg_idx1] = _dst = (regs[reg_idx1] - 1) >> 0;
+                        _op = 30;
                     }
-                    ;
-                    break Fd;
-                case 0x6b:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = xa[Ea & 7];
+                    break EXEC_LOOP;
+                case 0x6b://IMUL Evqp Gvqp Signed Multiply
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        Ha = kb();
+                        mem8_loc = segment_translation(mem8);
+                        y = ld_32bits_mem8_read();
                     }
-                    Ia = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    xa[Ga] = Wc(Ha, Ia);
-                    break Fd;
-                case 0x69:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = xa[Ea & 7];
+                    z = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    regs[reg_idx1] = op_IMUL32(y, z);
+                    break EXEC_LOOP;
+                case 0x69://IMUL Evqp Gvqp Signed Multiply
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        Ha = kb();
+                        mem8_loc = segment_translation(mem8);
+                        y = ld_32bits_mem8_read();
                     }
                     {
-                        Ia = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        z = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    xa[Ga] = Wc(Ha, Ia);
-                    break Fd;
-                case 0x84:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                    regs[reg_idx1] = op_IMUL32(y, z);
+                    break EXEC_LOOP;
+                case 0x84://TEST Eb  Logical Compare
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                     } else {
-                        fa = Pb(Ea);
-                        ga = gb();
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_8bits_mem8_read();
                     }
-                    Ga = (Ea >> 3) & 7;
-                    Ha = (xa[Ga & 3] >> ((Ga & 4) << 1));
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
                     {
-                        za = (((ga & Ha) << 24) >> 24);
-                        Aa = 12;
+                        _dst = (((x & y) << 24) >> 24);
+                        _op = 12;
                     }
-                    ;
-                    break Fd;
-                case 0x85:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
-                        ga = xa[Ea & 7];
+                    break EXEC_LOOP;
+                case 0x85://TEST Evqp  Logical Compare
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
+                        x = regs[mem8 & 7];
                     } else {
-                        fa = Pb(Ea);
-                        ga = kb();
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_read();
                     }
-                    Ha = xa[(Ea >> 3) & 7];
+                    y = regs[(mem8 >> 3) & 7];
                     {
-                        za = ga & Ha;
-                        Aa = 14;
+                        _dst = x & y;
+                        _op = 14;
                     }
-                    ;
-                    break Fd;
-                case 0xa8:
-                    Ha = Ta[Kb++];
-                    ;
+                    break EXEC_LOOP;
+                case 0xa8://TEST AL  Logical Compare
+                    y = phys_mem8[physmem8_ptr++];
                     {
-                        za = (((xa[0] & Ha) << 24) >> 24);
-                        Aa = 12;
+                        _dst = (((regs[0] & y) << 24) >> 24);
+                        _op = 12;
                     }
-                    ;
-                    break Fd;
-                case 0xa9:
+                    break EXEC_LOOP;
+                case 0xa9://TEST rAX  Logical Compare
                     {
-                        Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
                     {
-                        za = xa[0] & Ha;
-                        Aa = 14;
+                        _dst = regs[0] & y;
+                        _op = 14;
                     }
-                    ;
-                    break Fd;
-                case 0xf6:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    switch (Ja) {
+                    break EXEC_LOOP;
+                case 0xf6://TEST Eb  Logical Compare
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    switch (conditional_var) {
                         case 0:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = gb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_read();
                             }
-                            Ha = Ta[Kb++];
-                            ;
+                            y = phys_mem8[physmem8_ptr++];
                             {
-                                za = (((ga & Ha) << 24) >> 24);
-                                Aa = 12;
+                                _dst = (((x & y) << 24) >> 24);
+                                _op = 12;
                             }
-                            ;
                             break;
                         case 2:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Vb(Fa, ~(xa[Fa & 3] >> ((Fa & 4) << 1)));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_word_in_register(reg_idx0, ~(regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)));
                             } else {
-                                fa = Pb(Ea);
-                                ga = mb();
-                                ga = ~ga;
-                                sb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_write();
+                                x = ~x;
+                                st8_mem8_write(x);
                             }
                             break;
                         case 3:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Vb(Fa, gc(5, 0, (xa[Fa & 3] >> ((Fa & 4) << 1))));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_word_in_register(reg_idx0, do_8bit_math(5, 0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                             } else {
-                                fa = Pb(Ea);
-                                ga = mb();
-                                ga = gc(5, 0, ga);
-                                sb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_write();
+                                x = do_8bit_math(5, 0, x);
+                                st8_mem8_write(x);
                             }
                             break;
                         case 4:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = gb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_read();
                             }
-                            Wb(0, Oc(xa[0], ga));
+                            set_lower_word_in_register(0, op_MUL(regs[0], x));
                             break;
                         case 5:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = gb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_read();
                             }
-                            Wb(0, Pc(xa[0], ga));
+                            set_lower_word_in_register(0, op_IMUL(regs[0], x));
                             break;
                         case 6:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = gb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_read();
                             }
-                            Cc(ga);
+                            op_DIV(x);
                             break;
                         case 7:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = gb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_read();
                             }
-                            Ec(ga);
+                            op_IDIV(x);
                             break;
                         default:
-                            Dc(6);
+                            abort(6);
                     }
-                    break Fd;
-                case 0xf7:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    switch (Ja) {
+                    break EXEC_LOOP;
+                case 0xf7://TEST Evqp  Logical Compare
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    switch (conditional_var) {
                         case 0:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
                             {
-                                Ha = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                                Kb += 4;
+                                y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                                physmem8_ptr += 4;
                             }
-                            ;
                             {
-                                za = ga & Ha;
-                                Aa = 14;
+                                _dst = x & y;
+                                _op = 14;
                             }
-                            ;
                             break;
                         case 2:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                xa[Fa] = ~xa[Fa];
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = ~regs[reg_idx0];
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
-                                ga = ~ga;
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
+                                x = ~x;
+                                st32_mem8_write(x);
                             }
                             break;
                         case 3:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                xa[Fa] = Xb(5, 0, xa[Fa]);
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = do_32bit_math(5, 0, regs[reg_idx0]);
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
-                                ga = Xb(5, 0, ga);
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
+                                x = do_32bit_math(5, 0, x);
+                                st32_mem8_write(x);
                             }
                             break;
                         case 4:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            xa[0] = Vc(xa[0], ga);
-                            xa[2] = Ma;
+                            regs[0] = op_MUL32(regs[0], x);
+                            regs[2] = v;
                             break;
                         case 5:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            xa[0] = Wc(xa[0], ga);
-                            xa[2] = Ma;
+                            regs[0] = op_IMUL32(regs[0], x);
+                            regs[2] = v;
                             break;
                         case 6:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            xa[0] = Hc(xa[2], xa[0], ga);
-                            xa[2] = Ma;
+                            regs[0] = op_DIV32(regs[2], regs[0], x);
+                            regs[2] = v;
                             break;
                         case 7:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            xa[0] = Lc(xa[2], xa[0], ga);
-                            xa[2] = Ma;
+                            regs[0] = op_IDIV32(regs[2], regs[0], x);
+                            regs[2] = v;
                             break;
                         default:
-                            Dc(6);
+                            abort(6);
                     }
-                    break Fd;
-                case 0xc0:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = Ta[Kb++];
-                        ;
-                        Fa = Ea & 7;
-                        Vb(Fa, jc(Ja, (xa[Fa & 3] >> ((Fa & 4) << 1)), Ha));
+                    break EXEC_LOOP;
+                //Rotate and Shift ops ---------------------------------------------------------------
+                case 0xc0://ROL Ib Eb Rotate
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = phys_mem8[physmem8_ptr++];
+                        reg_idx0 = mem8 & 7;
+                        set_word_in_register(reg_idx0, shift8(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                     } else {
-                        fa = Pb(Ea);
-                        Ha = Ta[Kb++];
-                        ;
-                        ga = mb();
-                        ga = jc(Ja, ga, Ha);
-                        sb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        y = phys_mem8[physmem8_ptr++];
+                        x = ld_8bits_mem8_write();
+                        x = shift8(conditional_var, x, y);
+                        st8_mem8_write(x);
                     }
-                    break Fd;
-                case 0xc1:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Ha = Ta[Kb++];
-                        ;
-                        Fa = Ea & 7;
-                        xa[Fa] = nc(Ja, xa[Fa], Ha);
+                    break EXEC_LOOP;
+                case 0xc1://ROL Ib Evqp Rotate
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        y = phys_mem8[physmem8_ptr++];
+                        reg_idx0 = mem8 & 7;
+                        regs[reg_idx0] = shift32(conditional_var, regs[reg_idx0], y);
                     } else {
-                        fa = Pb(Ea);
-                        Ha = Ta[Kb++];
-                        ;
-                        ga = qb();
-                        ga = nc(Ja, ga, Ha);
-                        wb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        y = phys_mem8[physmem8_ptr++];
+                        x = ld_32bits_mem8_write();
+                        x = shift32(conditional_var, x, y);
+                        st32_mem8_write(x);
                     }
-                    break Fd;
-                case 0xd0:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        Vb(Fa, jc(Ja, (xa[Fa & 3] >> ((Fa & 4) << 1)), 1));
+                    break EXEC_LOOP;
+                case 0xd0://ROL 1 Eb Rotate
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        set_word_in_register(reg_idx0, shift8(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
                     } else {
-                        fa = Pb(Ea);
-                        ga = mb();
-                        ga = jc(Ja, ga, 1);
-                        sb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_8bits_mem8_write();
+                        x = shift8(conditional_var, x, 1);
+                        st8_mem8_write(x);
                     }
-                    break Fd;
-                case 0xd1:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        xa[Fa] = nc(Ja, xa[Fa], 1);
+                    break EXEC_LOOP;
+                case 0xd1://ROL 1 Evqp Rotate
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        regs[reg_idx0] = shift32(conditional_var, regs[reg_idx0], 1);
                     } else {
-                        fa = Pb(Ea);
-                        ga = qb();
-                        ga = nc(Ja, ga, 1);
-                        wb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_write();
+                        x = shift32(conditional_var, x, 1);
+                        st32_mem8_write(x);
                     }
-                    break Fd;
-                case 0xd2:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    Ha = xa[1] & 0xff;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        Vb(Fa, jc(Ja, (xa[Fa & 3] >> ((Fa & 4) << 1)), Ha));
+                    break EXEC_LOOP;
+                case 0xd2://ROL CL Eb Rotate
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    y = regs[1] & 0xff;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        set_word_in_register(reg_idx0, shift8(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                     } else {
-                        fa = Pb(Ea);
-                        ga = mb();
-                        ga = jc(Ja, ga, Ha);
-                        sb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_8bits_mem8_write();
+                        x = shift8(conditional_var, x, y);
+                        st8_mem8_write(x);
                     }
-                    break Fd;
-                case 0xd3:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    Ha = xa[1] & 0xff;
-                    if ((Ea >> 6) == 3) {
-                        Fa = Ea & 7;
-                        xa[Fa] = nc(Ja, xa[Fa], Ha);
+                    break EXEC_LOOP;
+                case 0xd3://ROL CL Evqp Rotate
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    y = regs[1] & 0xff;
+                    if ((mem8 >> 6) == 3) {
+                        reg_idx0 = mem8 & 7;
+                        regs[reg_idx0] = shift32(conditional_var, regs[reg_idx0], y);
                     } else {
-                        fa = Pb(Ea);
-                        ga = qb();
-                        ga = nc(Ja, ga, Ha);
-                        wb(ga);
+                        mem8_loc = segment_translation(mem8);
+                        x = ld_32bits_mem8_write();
+                        x = shift32(conditional_var, x, y);
+                        st32_mem8_write(x);
                     }
-                    break Fd;
-                case 0x98:
-                    xa[0] = (xa[0] << 16) >> 16;
-                    break Fd;
-                case 0x99:
-                    xa[2] = xa[0] >> 31;
-                    break Fd;
-                case 0x50:
+                    break EXEC_LOOP;
+                case 0x98://CBW AL AX Convert Byte to Word
+                    regs[0] = (regs[0] << 16) >> 16;
+                    break EXEC_LOOP;
+                case 0x99://CWD AX DX Convert Word to Doubleword
+                    regs[2] = regs[0] >> 31;
+                    break EXEC_LOOP;
+                case 0x50://PUSH Zv SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                 case 0x51:
                 case 0x52:
                 case 0x53:
@@ -6694,24 +6882,23 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x55:
                 case 0x56:
                 case 0x57:
-                    ga = xa[b & 7];
-                    if (Qa) {
-                        fa = (xa[4] - 4) >> 0;
+                    x = regs[OPbyte & 7];
+                    if (FS_usage_flag) {
+                        mem8_loc = (regs[4] - 4) >> 0;
                         {
-                            Ua = cb[fa >>> 12];
-                            if ((Ua | fa) & 3) {
-                                vb(ga);
+                            last_tlb_val = _tlb_write_[mem8_loc >>> 12];
+                            if ((last_tlb_val | mem8_loc) & 3) {
+                                __st32_mem8_write(x);
                             } else {
-                                Wa[(fa ^ Ua) >> 2] = ga;
+                                phys_mem32[(mem8_loc ^ last_tlb_val) >> 2] = x;
                             }
                         }
-                        ;
-                        xa[4] = fa;
+                        regs[4] = mem8_loc;
                     } else {
-                        xd(ga);
+                        push_dword_to_stack(x);
                     }
-                    break Fd;
-                case 0x58:
+                    break EXEC_LOOP;
+                case 0x58://POP SS:[rSP] Zv Pop a Value from the Stack
                 case 0x59:
                 case 0x5a:
                 case 0x5b:
@@ -6719,1420 +6906,1333 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                 case 0x5d:
                 case 0x5e:
                 case 0x5f:
-                    if (Qa) {
-                        fa = xa[4];
-                        ga = (((Ua = bb[fa >>> 12]) | fa) & 3 ? jb() : Wa[(fa ^ Ua) >> 2]);
-                        xa[4] = (fa + 4) >> 0;
+                    if (FS_usage_flag) {
+                        mem8_loc = regs[4];
+                        x = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) | mem8_loc) & 3 ? __ld_32bits_mem8_read() : phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
+                        regs[4] = (mem8_loc + 4) >> 0;
                     } else {
-                        ga = Ad();
-                        Bd();
+                        x = pop_dword_from_stack_read();
+                        pop_dword_from_stack_incr_ptr();
                     }
-                    xa[b & 7] = ga;
-                    break Fd;
-                case 0x60:
-                    Kf();
-                    break Fd;
-                case 0x61:
-                    Mf();
-                    break Fd;
-                case 0x8f:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3) {
-                        ga = Ad();
-                        Bd();
-                        xa[Ea & 7] = ga;
+                    regs[OPbyte & 7] = x;
+                    break EXEC_LOOP;
+
+                case 0x60://PUSHA AX SS:[rSP] Push All General-Purpose Registers
+                    op_PUSHA();
+                    break EXEC_LOOP;
+                case 0x61://POPA SS:[rSP] DI Pop All General-Purpose Registers
+                    op_POPA();
+                    break EXEC_LOOP;
+                case 0x8f://POP SS:[rSP] Ev Pop a Value from the Stack
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3) {
+                        x = pop_dword_from_stack_read();
+                        pop_dword_from_stack_incr_ptr();
+                        regs[mem8 & 7] = x;
                     } else {
-                        ga = Ad();
-                        Ha = xa[4];
-                        Bd();
-                        Ia = xa[4];
-                        fa = Pb(Ea);
-                        xa[4] = Ha;
-                        wb(ga);
-                        xa[4] = Ia;
+                        x = pop_dword_from_stack_read();
+                        y = regs[4];
+                        pop_dword_from_stack_incr_ptr();
+                        z = regs[4];
+                        mem8_loc = segment_translation(mem8);
+                        regs[4] = y;
+                        st32_mem8_write(x);
+                        regs[4] = z;
                     }
-                    break Fd;
-                case 0x68:
+                    break EXEC_LOOP;
+                case 0x68://PUSH Ivs SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                     {
-                        ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    if (Qa) {
-                        fa = (xa[4] - 4) >> 0;
-                        wb(ga);
-                        xa[4] = fa;
+                    if (FS_usage_flag) {
+                        mem8_loc = (regs[4] - 4) >> 0;
+                        st32_mem8_write(x);
+                        regs[4] = mem8_loc;
                     } else {
-                        xd(ga);
+                        push_dword_to_stack(x);
                     }
-                    break Fd;
-                case 0x6a:
-                    ga = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    if (Qa) {
-                        fa = (xa[4] - 4) >> 0;
-                        wb(ga);
-                        xa[4] = fa;
+                    break EXEC_LOOP;
+                case 0x6a://PUSH Ibss SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                    x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    if (FS_usage_flag) {
+                        mem8_loc = (regs[4] - 4) >> 0;
+                        st32_mem8_write(x);
+                        regs[4] = mem8_loc;
                     } else {
-                        xd(ga);
+                        push_dword_to_stack(x);
                     }
-                    break Fd;
-                case 0xc8:
-                    Tf();
-                    break Fd;
-                case 0xc9:
-                    if (Qa) {
-                        fa = xa[5];
-                        ga = kb();
-                        xa[5] = ga;
-                        xa[4] = (fa + 4) >> 0;
+                    break EXEC_LOOP;
+                case 0xc8://ENTER Iw SS:[rSP] Make Stack Frame for Procedure Parameters
+                    op_ENTER();
+                    break EXEC_LOOP;
+                case 0xc9://LEAVE SS:[rSP] eBP High Level Procedure Exit
+                    if (FS_usage_flag) {
+                        mem8_loc = regs[5];
+                        x = ld_32bits_mem8_read();
+                        regs[5] = x;
+                        regs[4] = (mem8_loc + 4) >> 0;
                     } else {
-                        Of();
+                        op_LEAVE();
                     }
-                    break Fd;
-                case 0x9c:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if ((wa.eflags & 0x00020000) && Sa != 3)
-                        Dc(13);
-                    ga = id() & ~(0x00020000 | 0x00010000);
-                    if ((((Da >> 8) & 1) ^ 1)) {
-                        xd(ga);
+                    break EXEC_LOOP;
+                case 0x9c://PUSHF Flags SS:[rSP] Push FLAGS Register onto the Stack
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if ((cpu.eflags & 0x00020000) && iopl != 3)
+                        abort(13);
+                    x = get_FLAGS() & ~(0x00020000 | 0x00010000);
+                    if ((((CS_flags >> 8) & 1) ^ 1)) {
+                        push_dword_to_stack(x);
                     } else {
-                        vd(ga);
+                        push_word_to_stack(x);
                     }
-                    break Fd;
-                case 0x9d:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if ((wa.eflags & 0x00020000) && Sa != 3)
-                        Dc(13);
-                    if ((((Da >> 8) & 1) ^ 1)) {
-                        ga = Ad();
-                        Bd();
-                        Ha = -1;
+                    break EXEC_LOOP;
+                case 0x9d://POPF SS:[rSP] Flags Pop Stack into FLAGS Register
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if ((cpu.eflags & 0x00020000) && iopl != 3)
+                        abort(13);
+                    if ((((CS_flags >> 8) & 1) ^ 1)) {
+                        x = pop_dword_from_stack_read();
+                        pop_dword_from_stack_incr_ptr();
+                        y = -1;
                     } else {
-                        ga = yd();
-                        zd();
-                        Ha = 0xffff;
+                        x = pop_word_from_stack_read();
+                        pop_word_from_stack_incr_ptr();
+                        y = 0xffff;
                     }
-                    Ia = (0x00000100 | 0x00040000 | 0x00200000 | 0x00004000);
-                    if (wa.cpl == 0) {
-                        Ia |= 0x00000200 | 0x00003000;
+                    z = (0x00000100 | 0x00040000 | 0x00200000 | 0x00004000);
+                    if (cpu.cpl == 0) {
+                        z |= 0x00000200 | 0x00003000;
                     } else {
-                        if (wa.cpl <= Sa)
-                            Ia |= 0x00000200;
+                        if (cpu.cpl <= iopl)
+                            z |= 0x00000200;
                     }
-                    kd(ga, Ia & Ha);
+                    set_FLAGS(x, z & y);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x06:
-                case 0x0e:
-                case 0x16:
-                case 0x1e:
-                    xd(wa.segs[b >> 3].selector);
-                    break Fd;
-                case 0x07:
-                case 0x17:
-                case 0x1f:
-                    Ie(b >> 3, Ad() & 0xffff);
-                    Bd();
-                    break Fd;
-                case 0x8d:
-                    Ea = Ta[Kb++];
-                    ;
-                    if ((Ea >> 6) == 3)
-                        Dc(6);
-                    Da = (Da & ~0x000f) | (6 + 1);
-                    xa[(Ea >> 3) & 7] = Pb(Ea);
-                    break Fd;
-                case 0xfe:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    switch (Ja) {
+                    break EXEC_LOOP;
+                case 0x06://PUSH ES SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x0e://PUSH CS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x16://PUSH SS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                case 0x1e://PUSH DS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                    push_dword_to_stack(cpu.segs[OPbyte >> 3].selector);
+                    break EXEC_LOOP;
+                case 0x07://POP SS:[rSP] ES Pop a Value from the Stack
+                case 0x17://POP SS:[rSP] SS Pop a Value from the Stack
+                case 0x1f://POP SS:[rSP] DS Pop a Value from the Stack
+                    set_segment_register(OPbyte >> 3, pop_dword_from_stack_read() & 0xffff);
+                    pop_dword_from_stack_incr_ptr();
+                    break EXEC_LOOP;
+                case 0x8d://LEA M Gvqp Load Effective Address
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    if ((mem8 >> 6) == 3)
+                        abort(6);
+                    CS_flags = (CS_flags & ~0x000f) | (6 + 1);
+                    regs[(mem8 >> 3) & 7] = segment_translation(mem8);
+                    break EXEC_LOOP;
+                case 0xfe://INC  Eb Increment by 1
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    switch (conditional_var) {
                         case 0:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Vb(Fa, hc((xa[Fa & 3] >> ((Fa & 4) << 1))));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_word_in_register(reg_idx0, increment_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                             } else {
-                                fa = Pb(Ea);
-                                ga = mb();
-                                ga = hc(ga);
-                                sb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_write();
+                                x = increment_8bit(x);
+                                st8_mem8_write(x);
                             }
                             break;
                         case 1:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Vb(Fa, ic((xa[Fa & 3] >> ((Fa & 4) << 1))));
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_word_in_register(reg_idx0, decrement_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                             } else {
-                                fa = Pb(Ea);
-                                ga = mb();
-                                ga = ic(ga);
-                                sb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_write();
+                                x = decrement_8bit(x);
+                                st8_mem8_write(x);
                             }
                             break;
                         default:
-                            Dc(6);
+                            abort(6);
                     }
-                    break Fd;
-                case 0xff:
-                    Ea = Ta[Kb++];
-                    ;
-                    Ja = (Ea >> 3) & 7;
-                    switch (Ja) {
-                        case 0:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
+                    break EXEC_LOOP;
+                case 0xff://INC DEC CALL CALLF JMP JMPF PUSH
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    conditional_var = (mem8 >> 3) & 7;
+                    switch (conditional_var) {
+                        case 0://INC  Evqp Increment by 1
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
                                 {
-                                    if (Aa < 25) {
-                                        Ba = Aa;
-                                        Ca = za;
+                                    if (_op < 25) {
+                                        _op2 = _op;
+                                        _dst2 = _dst;
                                     }
-                                    xa[Fa] = za = (xa[Fa] + 1) >> 0;
-                                    Aa = 27;
+                                    regs[reg_idx0] = _dst = (regs[reg_idx0] + 1) >> 0;
+                                    _op = 27;
                                 }
-                                ;
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
                                 {
-                                    if (Aa < 25) {
-                                        Ba = Aa;
-                                        Ca = za;
+                                    if (_op < 25) {
+                                        _op2 = _op;
+                                        _dst2 = _dst;
                                     }
-                                    ga = za = (ga + 1) >> 0;
-                                    Aa = 27;
+                                    x = _dst = (x + 1) >> 0;
+                                    _op = 27;
                                 }
-                                ;
-                                wb(ga);
+                                st32_mem8_write(x);
                             }
                             break;
-                        case 1:
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
+                        case 1://DEC
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
                                 {
-                                    if (Aa < 25) {
-                                        Ba = Aa;
-                                        Ca = za;
+                                    if (_op < 25) {
+                                        _op2 = _op;
+                                        _dst2 = _dst;
                                     }
-                                    xa[Fa] = za = (xa[Fa] - 1) >> 0;
-                                    Aa = 30;
+                                    regs[reg_idx0] = _dst = (regs[reg_idx0] - 1) >> 0;
+                                    _op = 30;
                                 }
-                                ;
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
                                 {
-                                    if (Aa < 25) {
-                                        Ba = Aa;
-                                        Ca = za;
+                                    if (_op < 25) {
+                                        _op2 = _op;
+                                        _dst2 = _dst;
                                     }
-                                    ga = za = (ga - 1) >> 0;
-                                    Aa = 30;
+                                    x = _dst = (x - 1) >> 0;
+                                    _op = 30;
                                 }
-                                ;
-                                wb(ga);
+                                st32_mem8_write(x);
                             }
                             break;
-                        case 2:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                        case 2://CALL
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            Ha = (Jb + Kb - Mb);
-                            if (Qa) {
-                                fa = (xa[4] - 4) >> 0;
-                                wb(Ha);
-                                xa[4] = fa;
+                            y = (eip + physmem8_ptr - initial_mem_ptr);
+                            if (FS_usage_flag) {
+                                mem8_loc = (regs[4] - 4) >> 0;
+                                st32_mem8_write(y);
+                                regs[4] = mem8_loc;
                             } else {
-                                xd(Ha);
+                                push_dword_to_stack(y);
                             }
-                            Jb = ga, Kb = Mb = 0;
+                            eip = x, physmem8_ptr = initial_mem_ptr = 0;
                             break;
-                        case 4:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                        case 4://JMP
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            Jb = ga, Kb = Mb = 0;
+                            eip = x, physmem8_ptr = initial_mem_ptr = 0;
                             break;
-                        case 6:
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                        case 6://PUSH
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            if (Qa) {
-                                fa = (xa[4] - 4) >> 0;
-                                wb(ga);
-                                xa[4] = fa;
+                            if (FS_usage_flag) {
+                                mem8_loc = (regs[4] - 4) >> 0;
+                                st32_mem8_write(x);
+                                regs[4] = mem8_loc;
                             } else {
-                                xd(ga);
+                                push_dword_to_stack(x);
                             }
                             break;
-                        case 3:
-                        case 5:
-                            if ((Ea >> 6) == 3)
-                                Dc(6);
-                            fa = Pb(Ea);
-                            ga = kb();
-                            fa = (fa + 4) >> 0;
-                            Ha = ib();
-                            if (Ja == 3)
-                                Ze(1, Ha, ga, (Jb + Kb - Mb));
+                        case 3://CALLF
+                        case 5://JMPF
+                            if ((mem8 >> 6) == 3)
+                                abort(6);
+                            mem8_loc = segment_translation(mem8);
+                            x = ld_32bits_mem8_read();
+                            mem8_loc = (mem8_loc + 4) >> 0;
+                            y = ld_16bits_mem8_read();
+                            if (conditional_var == 3)
+                                op_CALLF(1, y, x, (eip + physmem8_ptr - initial_mem_ptr));
                             else
-                                Oe(Ha, ga);
+                                op_JMPF(y, x);
                             break;
                         default:
-                            Dc(6);
+                            abort(6);
                     }
-                    break Fd;
-                case 0xeb:
-                    ga = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    Kb = (Kb + ga) >> 0;
-                    break Fd;
-                case 0xe9:
+                    break EXEC_LOOP;
+                case 0xeb://JMP Jbs  Jump
+                    x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    physmem8_ptr = (physmem8_ptr + x) >> 0;
+                    break EXEC_LOOP;
+                case 0xe9://JMP Jvds  Jump
                     {
-                        ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    Kb = (Kb + ga) >> 0;
-                    break Fd;
-                case 0xea:
-                    if ((((Da >> 8) & 1) ^ 1)) {
+                    physmem8_ptr = (physmem8_ptr + x) >> 0;
+                    break EXEC_LOOP;
+                case 0xea://JMPF Ap  Jump
+                    if ((((CS_flags >> 8) & 1) ^ 1)) {
                         {
-                            ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
                     } else {
-                        ga = Ob();
+                        x = ld16_mem8_direct();
                     }
-                    Ha = Ob();
-                    Oe(Ha, ga);
-                    break Fd;
-                case 0x70:
-                    if (Zc()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    y = ld16_mem8_direct();
+                    op_JMPF(y, x);
+                    break EXEC_LOOP;
+                case 0x70://JO Jbs  Jump short if overflow (OF=1)
+                    if (check_overflow()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x71:
-                    if (!Zc()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x71://JNO Jbs  Jump short if not overflow (OF=0)
+                    if (!check_overflow()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x72:
-                    if (bc()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x72://JB Jbs  Jump short if below/not above or equal/carry (CF=1)
+                    if (check_carry()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x73:
-                    if (!bc()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x73://JNB Jbs  Jump short if not below/above or equal/not carry (CF=0)
+                    if (!check_carry()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x74:
-                    if ((za == 0)) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x74://JZ Jbs  Jump short if zero/equal (ZF=0)
+                    if ((_dst == 0)) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x75:
-                    if (!(za == 0)) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x75://JNZ Jbs  Jump short if not zero/not equal (ZF=1)
+                    if (!(_dst == 0)) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x76:
-                    if (ad()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x76://JBE Jbs  Jump short if below or equal/not above (CF=1 AND ZF=1)
+                    if (check_below_or_equal()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x77:
-                    if (!ad()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x77://JNBE Jbs  Jump short if not below or equal/above (CF=0 AND ZF=0)
+                    if (!check_below_or_equal()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x78:
-                    if ((Aa == 24 ? ((ya >> 7) & 1) : (za < 0))) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x78://JS Jbs  Jump short if sign (SF=1)
+                    if ((_op == 24 ? ((_src >> 7) & 1) : (_dst < 0))) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x79:
-                    if (!(Aa == 24 ? ((ya >> 7) & 1) : (za < 0))) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x79://JNS Jbs  Jump short if not sign (SF=0)
+                    if (!(_op == 24 ? ((_src >> 7) & 1) : (_dst < 0))) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x7a:
-                    if (bd()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x7a://JP Jbs  Jump short if parity/parity even (PF=1)
+                    if (check_parity()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x7b:
-                    if (!bd()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x7b://JNP Jbs  Jump short if not parity/parity odd
+                    if (!check_parity()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x7c:
-                    if (cd()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x7c://JL Jbs  Jump short if less/not greater (SF!=OF)
+                    if (check_less_than()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x7d:
-                    if (!cd()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x7d://JNL Jbs  Jump short if not less/greater or equal (SF=OF)
+                    if (!check_less_than()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x7e:
-                    if (dd()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x7e://JLE Jbs  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
+                    if (check_less_or_equal()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0x7f:
-                    if (!dd()) {
-                        ga = ((Ta[Kb++] << 24) >> 24);
-                        ;
-                        Kb = (Kb + ga) >> 0;
+                    break EXEC_LOOP;
+                case 0x7f://JNLE Jbs  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
+                    if (!check_less_or_equal()) {
+                        x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                        physmem8_ptr = (physmem8_ptr + x) >> 0;
                     } else {
-                        Kb = (Kb + 1) >> 0;
+                        physmem8_ptr = (physmem8_ptr + 1) >> 0;
                     }
-                    break Fd;
-                case 0xe0:
-                case 0xe1:
-                case 0xe2:
-                    ga = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    if (Da & 0x0080)
-                        Ja = 0xffff;
+                    break EXEC_LOOP;
+                case 0xe0://LOOPNZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=0
+                case 0xe1://LOOPZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=1
+                case 0xe2://LOOP Jbs eCX Decrement count; Jump short if count!=0
+                    x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    if (CS_flags & 0x0080)
+                        conditional_var = 0xffff;
                     else
-                        Ja = -1;
-                    Ha = (xa[1] - 1) & Ja;
-                    xa[1] = (xa[1] & ~Ja) | Ha;
-                    b &= 3;
-                    if (b == 0)
-                        Ia = !(za == 0);
-                    else if (b == 1)
-                        Ia = (za == 0);
+                        conditional_var = -1;
+                    y = (regs[1] - 1) & conditional_var;
+                    regs[1] = (regs[1] & ~conditional_var) | y;
+                    OPbyte &= 3;
+                    if (OPbyte == 0)
+                        z = !(_dst == 0);
+                    else if (OPbyte == 1)
+                        z = (_dst == 0);
                     else
-                        Ia = 1;
-                    if (Ha && Ia) {
-                        if (Da & 0x0100) {
-                            Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
+                        z = 1;
+                    if (y && z) {
+                        if (CS_flags & 0x0100) {
+                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                         } else {
-                            Kb = (Kb + ga) >> 0;
+                            physmem8_ptr = (physmem8_ptr + x) >> 0;
                         }
                     }
-                    break Fd;
-                case 0xe3:
-                    ga = ((Ta[Kb++] << 24) >> 24);
-                    ;
-                    if (Da & 0x0080)
-                        Ja = 0xffff;
+                    break EXEC_LOOP;
+                case 0xe3://JCXZ Jbs  Jump short if eCX register is 0
+                    x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                    if (CS_flags & 0x0080)
+                        conditional_var = 0xffff;
                     else
-                        Ja = -1;
-                    if ((xa[1] & Ja) == 0) {
-                        if (Da & 0x0100) {
-                            Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
+                        conditional_var = -1;
+                    if ((regs[1] & conditional_var) == 0) {
+                        if (CS_flags & 0x0100) {
+                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                         } else {
-                            Kb = (Kb + ga) >> 0;
+                            physmem8_ptr = (physmem8_ptr + x) >> 0;
                         }
                     }
-                    break Fd;
-                case 0xc2:
-                    Ha = (Ob() << 16) >> 16;
-                    ga = Ad();
-                    xa[4] = (xa[4] & ~Pa) | ((xa[4] + 4 + Ha) & Pa);
-                    Jb = ga, Kb = Mb = 0;
-                    break Fd;
-                case 0xc3:
-                    if (Qa) {
-                        fa = xa[4];
-                        ga = kb();
-                        xa[4] = (xa[4] + 4) >> 0;
+                    break EXEC_LOOP;
+                case 0xc2://RETN SS:[rSP]  Return from procedure
+                    y = (ld16_mem8_direct() << 16) >> 16;
+                    x = pop_dword_from_stack_read();
+                    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + y) & SS_mask);
+                    eip = x, physmem8_ptr = initial_mem_ptr = 0;
+                    break EXEC_LOOP;
+                case 0xc3://RETN SS:[rSP]  Return from procedure
+                    if (FS_usage_flag) {
+                        mem8_loc = regs[4];
+                        x = ld_32bits_mem8_read();
+                        regs[4] = (regs[4] + 4) >> 0;
                     } else {
-                        ga = Ad();
-                        Bd();
+                        x = pop_dword_from_stack_read();
+                        pop_dword_from_stack_incr_ptr();
                     }
-                    Jb = ga, Kb = Mb = 0;
-                    break Fd;
-                case 0xe8:
+                    eip = x, physmem8_ptr = initial_mem_ptr = 0;
+                    break EXEC_LOOP;
+                case 0xe8://CALL Jvds SS:[rSP] Call Procedure
                     {
-                        ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                        Kb += 4;
+                        x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                        physmem8_ptr += 4;
                     }
-                    ;
-                    Ha = (Jb + Kb - Mb);
-                    if (Qa) {
-                        fa = (xa[4] - 4) >> 0;
-                        wb(Ha);
-                        xa[4] = fa;
+                    y = (eip + physmem8_ptr - initial_mem_ptr);
+                    if (FS_usage_flag) {
+                        mem8_loc = (regs[4] - 4) >> 0;
+                        st32_mem8_write(y);
+                        regs[4] = mem8_loc;
                     } else {
-                        xd(Ha);
+                        push_dword_to_stack(y);
                     }
-                    Kb = (Kb + ga) >> 0;
-                    break Fd;
-                case 0x9a:
-                    Ia = (((Da >> 8) & 1) ^ 1);
-                    if (Ia) {
+                    physmem8_ptr = (physmem8_ptr + x) >> 0;
+                    break EXEC_LOOP;
+                case 0x9a://CALLF Ap SS:[rSP] Call Procedure
+                    z = (((CS_flags >> 8) & 1) ^ 1);
+                    if (z) {
                         {
-                            ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                            Kb += 4;
+                            x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                            physmem8_ptr += 4;
                         }
-                        ;
                     } else {
-                        ga = Ob();
+                        x = ld16_mem8_direct();
                     }
-                    Ha = Ob();
-                    Ze(Ia, Ha, ga, (Jb + Kb - Mb));
+                    y = ld16_mem8_direct();
+                    op_CALLF(z, y, x, (eip + physmem8_ptr - initial_mem_ptr));
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xca:
-                    Ha = (Ob() << 16) >> 16;
-                    nf((((Da >> 8) & 1) ^ 1), Ha);
+                    break EXEC_LOOP;
+                case 0xca://RETF Iw  Return from procedure
+                    y = (ld16_mem8_direct() << 16) >> 16;     //16 bit immediate field
+                    op_RETF((((CS_flags >> 8) & 1) ^ 1), y);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xcb:
-                    nf((((Da >> 8) & 1) ^ 1), 0);
+                    break EXEC_LOOP;
+                case 0xcb://RETF SS:[rSP]  Return from procedure
+                    op_RETF((((CS_flags >> 8) & 1) ^ 1), 0);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xcf:
-                    mf((((Da >> 8) & 1) ^ 1));
+                    break EXEC_LOOP;
+                case 0xcf://IRET SS:[rSP] Flags Interrupt Return
+                    op_IRET((((CS_flags >> 8) & 1) ^ 1));
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x90:
-                    break Fd;
-                case 0xcc:
-                    Ha = (Jb + Kb - Mb);
-                    Ae(3, 1, 0, Ha, 0);
-                    break Fd;
-                case 0xcd:
-                    ga = Ta[Kb++];
-                    ;
-                    if ((wa.eflags & 0x00020000) && ((wa.eflags >> 12) & 3) != 3)
-                        Dc(13);
-                    Ha = (Jb + Kb - Mb);
-                    Ae(ga, 1, 0, Ha, 0);
-                    break Fd;
-                case 0xce:
-                    if (Zc()) {
-                        Ha = (Jb + Kb - Mb);
-                        Ae(4, 1, 0, Ha, 0);
+                    break EXEC_LOOP;
+                case 0x90://XCHG  Zvqp Exchange Register/Memory with Register
+                    break EXEC_LOOP;
+                case 0xcc://INT 3 SS:[rSP] Call to Interrupt Procedure
+                    y = (eip + physmem8_ptr - initial_mem_ptr);
+                    do_interrupt(3, 1, 0, y, 0);
+                    break EXEC_LOOP;
+                case 0xcd://INT Ib SS:[rSP] Call to Interrupt Procedure
+                    x = phys_mem8[physmem8_ptr++];
+                    if ((cpu.eflags & 0x00020000) && ((cpu.eflags >> 12) & 3) != 3)
+                        abort(13);
+                    y = (eip + physmem8_ptr - initial_mem_ptr);
+                    do_interrupt(x, 1, 0, y, 0);
+                    break EXEC_LOOP;
+                case 0xce://INTO eFlags SS:[rSP] Call to Interrupt Procedure
+                    if (check_overflow()) {
+                        y = (eip + physmem8_ptr - initial_mem_ptr);
+                        do_interrupt(4, 1, 0, y, 0);
                     }
-                    break Fd;
-                case 0x62:
-                    Hf();
-                    break Fd;
-                case 0xf5:
-                    ya = hd() ^ 0x0001;
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
-                    break Fd;
-                case 0xf8:
-                    ya = hd() & ~0x0001;
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
-                    break Fd;
-                case 0xf9:
-                    ya = hd() | 0x0001;
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
-                    break Fd;
-                case 0xfc:
-                    wa.df = 1;
-                    break Fd;
-                case 0xfd:
-                    wa.df = -1;
-                    break Fd;
-                case 0xfa:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    wa.eflags &= ~0x00000200;
-                    break Fd;
-                case 0xfb:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    wa.eflags |= 0x00000200;
+                    break EXEC_LOOP;
+                case 0x62://BOUND Gv SS:[rSP] Check Array Index Against Bounds
+                    checkOp_BOUND();
+                    break EXEC_LOOP;
+                case 0xf5://CMC   Complement Carry Flag
+                    _src = get_conditional_flags() ^ 0x0001;
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
+                    break EXEC_LOOP;
+                case 0xf8://CLC   Clear Carry Flag
+                    _src = get_conditional_flags() & ~0x0001;
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
+                    break EXEC_LOOP;
+                case 0xf9://STC   Set Carry Flag
+                    _src = get_conditional_flags() | 0x0001;
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
+                    break EXEC_LOOP;
+                case 0xfc://CLD   Clear Direction Flag
+                    cpu.df = 1;
+                    break EXEC_LOOP;
+                case 0xfd://STD   Set Direction Flag
+                    cpu.df = -1;
+                    break EXEC_LOOP;
+                case 0xfa://CLI   Clear Interrupt Flag
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    cpu.eflags &= ~0x00000200;
+                    break EXEC_LOOP;
+                case 0xfb://STI   Set Interrupt Flag
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    cpu.eflags |= 0x00000200;
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x9e:
-                    ya = ((xa[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (Zc() << 11);
-                    za = ((ya >> 6) & 1) ^ 1;
-                    Aa = 24;
-                    break Fd;
-                case 0x9f:
-                    ga = id();
-                    Vb(4, ga);
-                    break Fd;
-                case 0xf4:
-                    if (wa.cpl != 0)
-                        Dc(13);
-                    wa.halted = 1;
-                    La = 257;
-                    break Bg;
-                case 0xa4:
-                    dg();
-                    break Fd;
-                case 0xa5:
-                    sg();
-                    break Fd;
-                case 0xaa:
-                    fg();
-                    break Fd;
-                case 0xab:
-                    xg();
-                    break Fd;
-                case 0xa6:
-                    gg();
-                    break Fd;
-                case 0xa7:
-                    yg();
-                    break Fd;
-                case 0xac:
-                    hg();
-                    break Fd;
-                case 0xad:
-                    zg();
-                    break Fd;
-                case 0xae:
-                    ig();
-                    break Fd;
-                case 0xaf:
-                    Ag();
-                    break Fd;
-                case 0x6c:
-                    Wf();
+                    break EXEC_LOOP;
+                case 0x9e://SAHF AH  Store AH into Flags
+                    _src = ((regs[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (check_overflow() << 11);
+                    _dst = ((_src >> 6) & 1) ^ 1;
+                    _op = 24;
+                    break EXEC_LOOP;
+                case 0x9f://LAHF  AH Load Status Flags into AH Register
+                    x = get_FLAGS();
+                    set_word_in_register(4, x);
+                    break EXEC_LOOP;
+                case 0xf4://HLT   Halt
+                    if (cpu.cpl != 0)
+                        abort(13);
+                    cpu.halted = 1;
+                    exit_code = 257;
+                    break OUTER_LOOP;
+                case 0xa4://MOVS (DS:)[rSI] (ES:)[rDI] Move Data from String to String
+                    stringOp_MOVSB();
+                    break EXEC_LOOP;
+                case 0xa5://MOVS DS:[SI] ES:[DI] Move Data from String to String
+                    stringOp_MOVSD();
+                    break EXEC_LOOP;
+                case 0xaa://STOS AL (ES:)[rDI] Store String
+                    stringOp_STOSB();
+                    break EXEC_LOOP;
+                case 0xab://STOS AX ES:[DI] Store String
+                    stringOp_STOSD();
+                    break EXEC_LOOP;
+                case 0xa6://CMPS (ES:)[rDI]  Compare String Operands
+                    stringOp_CMPSB();
+                    break EXEC_LOOP;
+                case 0xa7://CMPS ES:[DI]  Compare String Operands
+                    stringOp_CMPSD();
+                    break EXEC_LOOP;
+                case 0xac://LODS (DS:)[rSI] AL Load String
+                    stringOp_LODSB();
+                    break EXEC_LOOP;
+                case 0xad://LODS DS:[SI] AX Load String
+                    stringOp_LODSD();
+                    break EXEC_LOOP;
+                case 0xae://SCAS (ES:)[rDI]  Scan String
+                    stringOp_SCASB();
+                    break EXEC_LOOP;
+                case 0xaf://SCAS ES:[DI]  Scan String
+                    stringOp_SCASD();
+                    break EXEC_LOOP;
+                case 0x6c://INS DX (ES:)[rDI] Input from Port to String
+                    stringOp_INSB();
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x6d:
-                    qg();
+                    break EXEC_LOOP;
+                case 0x6d://INS DX ES:[DI] Input from Port to String
+                    stringOp_INSD();
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x6e:
-                    bg();
+                    break EXEC_LOOP;
+                case 0x6e://OUTS (DS):[rSI] DX Output String to Port
+                    stringOp_OUTSB();
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x6f:
-                    rg();
+                    break EXEC_LOOP;
+                case 0x6f://OUTS DS:[SI] DX Output String to Port
+                    stringOp_OUTSD();
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xd8:
-                case 0xd9:
-                case 0xda:
-                case 0xdb:
-                case 0xdc:
-                case 0xdd:
-                case 0xde:
-                case 0xdf:
-                    if (wa.cr0 & ((1 << 2) | (1 << 3))) {
-                        Dc(7);
+                    break EXEC_LOOP;
+                case 0xd8://FADD Msr ST Add
+                case 0xd9://FLD ESsr ST Load Floating Point Value
+                case 0xda://FIADD Mdi ST Add
+                case 0xdb://FILD Mdi ST Load Integer
+                case 0xdc://FADD Mdr ST Add
+                case 0xdd://FLD Mdr ST Load Floating Point Value
+                case 0xde://FIADD Mwi ST Add
+                case 0xdf://FILD Mwi ST Load Integer
+                    if (cpu.cr0 & ((1 << 2) | (1 << 3))) {
+                        abort(7);
                     }
-                    Ea = Ta[Kb++];
-                    ;
-                    Ga = (Ea >> 3) & 7;
-                    Fa = Ea & 7;
-                    Ja = ((b & 7) << 3) | ((Ea >> 3) & 7);
-                    Wb(0, 0xffff);
-                    if ((Ea >> 6) == 3) {
+                    mem8 = phys_mem8[physmem8_ptr++];
+                    reg_idx1 = (mem8 >> 3) & 7;
+                    reg_idx0 = mem8 & 7;
+                    conditional_var = ((OPbyte & 7) << 3) | ((mem8 >> 3) & 7);
+                    set_lower_word_in_register(0, 0xffff);
+                    if ((mem8 >> 6) == 3) {
                     } else {
-                        fa = Pb(Ea);
+                        mem8_loc = segment_translation(mem8);
                     }
-                    break Fd;
-                case 0x9b:
-                    break Fd;
-                case 0xe4:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    ga = Ta[Kb++];
-                    ;
-                    Vb(0, wa.ld8_port(ga));
+                    break EXEC_LOOP;
+                case 0x9b://FWAIT   Check pending unmasked floating-point exceptions
+                    break EXEC_LOOP;
+                case 0xe4://IN Ib AL Input from Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    x = phys_mem8[physmem8_ptr++];
+                    set_word_in_register(0, cpu.ld8_port(x));
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xe5:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    ga = Ta[Kb++];
-                    ;
-                    xa[0] = wa.ld32_port(ga);
+                    break EXEC_LOOP;
+                case 0xe5://IN Ib eAX Input from Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    x = phys_mem8[physmem8_ptr++];
+                    regs[0] = cpu.ld32_port(x);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xe6:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    ga = Ta[Kb++];
-                    ;
-                    wa.st8_port(ga, xa[0] & 0xff);
+                    break EXEC_LOOP;
+                case 0xe6://OUT AL Ib Output to Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    x = phys_mem8[physmem8_ptr++];
+                    cpu.st8_port(x, regs[0] & 0xff);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xe7:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    ga = Ta[Kb++];
-                    ;
-                    wa.st32_port(ga, xa[0]);
+                    break EXEC_LOOP;
+                case 0xe7://OUT eAX Ib Output to Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    x = phys_mem8[physmem8_ptr++];
+                    cpu.st32_port(x, regs[0]);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xec:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    Vb(0, wa.ld8_port(xa[2] & 0xffff));
+                    break EXEC_LOOP;
+                case 0xec://IN DX AL Input from Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    set_word_in_register(0, cpu.ld8_port(regs[2] & 0xffff));
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xed:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    xa[0] = wa.ld32_port(xa[2] & 0xffff);
+                    break EXEC_LOOP;
+                case 0xed://IN DX eAX Input from Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    regs[0] = cpu.ld32_port(regs[2] & 0xffff);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xee:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    wa.st8_port(xa[2] & 0xffff, xa[0] & 0xff);
+                    break EXEC_LOOP;
+                case 0xee://OUT AL DX Output to Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    cpu.st8_port(regs[2] & 0xffff, regs[0] & 0xff);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0xef:
-                    Sa = (wa.eflags >> 12) & 3;
-                    if (wa.cpl > Sa)
-                        Dc(13);
-                    wa.st32_port(xa[2] & 0xffff, xa[0]);
+                    break EXEC_LOOP;
+                case 0xef://OUT eAX DX Output to Port
+                    iopl = (cpu.eflags >> 12) & 3;
+                    if (cpu.cpl > iopl)
+                        abort(13);
+                    cpu.st32_port(regs[2] & 0xffff, regs[0]);
                     {
-                        if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                            break Bg;
+                        if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                            break OUTER_LOOP;
                     }
-                    ;
-                    break Fd;
-                case 0x27:
-                    Df();
-                    break Fd;
-                case 0x2f:
-                    Ff();
-                    break Fd;
-                case 0x37:
-                    zf();
-                    break Fd;
-                case 0x3f:
-                    Cf();
-                    break Fd;
-                case 0xd4:
-                    ga = Ta[Kb++];
-                    ;
-                    vf(ga);
-                    break Fd;
-                case 0xd5:
-                    ga = Ta[Kb++];
-                    ;
-                    yf(ga);
-                    break Fd;
-                case 0x63:
-                    tf();
-                    break Fd;
-                case 0xd6:
-                case 0xf1:
-                    Dc(6);
+                    break EXEC_LOOP;
+                case 0x27://DAA  AL Decimal Adjust AL after Addition
+                    op_DAA();
+                    break EXEC_LOOP;
+                case 0x2f://DAS  AL Decimal Adjust AL after Subtraction
+                    op_DAS();
+                    break EXEC_LOOP;
+                case 0x37://AAA  AL ASCII Adjust After Addition
+                    op_AAA();
+                    break EXEC_LOOP;
+                case 0x3f://AAS  AL ASCII Adjust AL After Subtraction
+                    op_AAS();
+                    break EXEC_LOOP;
+                case 0xd4://AAM  AL ASCII Adjust AX After Multiply
+                    x = phys_mem8[physmem8_ptr++];
+                    op_AAM(x);
+                    break EXEC_LOOP;
+                case 0xd5://AAD  AL ASCII Adjust AX Before Division
+                    x = phys_mem8[physmem8_ptr++];
+                    op_AAD(x);
+                    break EXEC_LOOP;
+                case 0x63://ARPL Ew  Adjust RPL Field of Segment Selector
+                    op_ARPL();
+                    break EXEC_LOOP;
+                case 0xd6://SALC   Undefined and Reserved; Does not Generate #UD
+                case 0xf1://INT1   Undefined and Reserved; Does not Generate #UD
+                    abort(6);
                     break;
+
+                /*
+                   TWO BYTE CODE INSTRUCTIONS BEGIN WITH 0F :  0F xx
+                   =====================================================================================================
+                */
                 case 0x0f:
-                    b = Ta[Kb++];
-                    ;
-                    switch (b) {
-                        case 0x80:
-                        case 0x81:
-                        case 0x82:
-                        case 0x83:
-                        case 0x84:
-                        case 0x85:
-                        case 0x86:
-                        case 0x87:
-                        case 0x88:
-                        case 0x89:
-                        case 0x8a:
-                        case 0x8b:
-                        case 0x8c:
-                        case 0x8d:
-                        case 0x8e:
-                        case 0x8f:
+                    OPbyte = phys_mem8[physmem8_ptr++];
+                    switch (OPbyte) {
+                        case 0x80://JO Jvds  Jump short if overflow (OF=1)
+                        case 0x81://JNO Jvds  Jump short if not overflow (OF=0)
+                        case 0x82://JB Jvds  Jump short if below/not above or equal/carry (CF=1)
+                        case 0x83://JNB Jvds  Jump short if not below/above or equal/not carry (CF=0)
+                        case 0x84://JZ Jvds  Jump short if zero/equal (ZF=0)
+                        case 0x85://JNZ Jvds  Jump short if not zero/not equal (ZF=1)
+                        case 0x86://JBE Jvds  Jump short if below or equal/not above (CF=1 AND ZF=1)
+                        case 0x87://JNBE Jvds  Jump short if not below or equal/above (CF=0 AND ZF=0)
+                        case 0x88://JS Jvds  Jump short if sign (SF=1)
+                        case 0x89://JNS Jvds  Jump short if not sign (SF=0)
+                        case 0x8a://JP Jvds  Jump short if parity/parity even (PF=1)
+                        case 0x8b://JNP Jvds  Jump short if not parity/parity odd
+                        case 0x8c://JL Jvds  Jump short if less/not greater (SF!=OF)
+                        case 0x8d://JNL Jvds  Jump short if not less/greater or equal (SF=OF)
+                        case 0x8e://JLE Jvds  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x8f://JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
                             {
-                                ga = Ta[Kb] | (Ta[Kb + 1] << 8) | (Ta[Kb + 2] << 16) | (Ta[Kb + 3] << 24);
-                                Kb += 4;
+                                x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
+                                physmem8_ptr += 4;
                             }
-                            ;
-                            if (fd(b & 0xf))
-                                Kb = (Kb + ga) >> 0;
-                            break Fd;
-                        case 0x90:
-                        case 0x91:
-                        case 0x92:
-                        case 0x93:
-                        case 0x94:
-                        case 0x95:
-                        case 0x96:
-                        case 0x97:
-                        case 0x98:
-                        case 0x99:
-                        case 0x9a:
-                        case 0x9b:
-                        case 0x9c:
-                        case 0x9d:
-                        case 0x9e:
-                        case 0x9f:
-                            Ea = Ta[Kb++];
-                            ;
-                            ga = fd(b & 0xf);
-                            if ((Ea >> 6) == 3) {
-                                Vb(Ea & 7, ga);
+                            if (check_status_bits_for_jump(OPbyte & 0xf))
+                                physmem8_ptr = (physmem8_ptr + x) >> 0;
+                            break EXEC_LOOP;
+                        case 0x90://SETO  Eb Set Byte on Condition - overflow (OF=1)
+                        case 0x91://SETNO  Eb Set Byte on Condition - not overflow (OF=0)
+                        case 0x92://SETB  Eb Set Byte on Condition - below/not above or equal/carry (CF=1)
+                        case 0x93://SETNB  Eb Set Byte on Condition - not below/above or equal/not carry (CF=0)
+                        case 0x94://SETZ  Eb Set Byte on Condition - zero/equal (ZF=0)
+                        case 0x95://SETNZ  Eb Set Byte on Condition - not zero/not equal (ZF=1)
+                        case 0x96://SETBE  Eb Set Byte on Condition - below or equal/not above (CF=1 AND ZF=1)
+                        case 0x97://SETNBE  Eb Set Byte on Condition - not below or equal/above (CF=0 AND ZF=0)
+                        case 0x98://SETS  Eb Set Byte on Condition - sign (SF=1)
+                        case 0x99://SETNS  Eb Set Byte on Condition - not sign (SF=0)
+                        case 0x9a://SETP  Eb Set Byte on Condition - parity/parity even (PF=1)
+                        case 0x9b://SETNP  Eb Set Byte on Condition - not parity/parity odd
+                        case 0x9c://SETL  Eb Set Byte on Condition - less/not greater (SF!=OF)
+                        case 0x9d://SETNL  Eb Set Byte on Condition - not less/greater or equal (SF=OF)
+                        case 0x9e://SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x9f://SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND (SF=OF))
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            x = check_status_bits_for_jump(OPbyte & 0xf);
+                            if ((mem8 >> 6) == 3) {
+                                set_word_in_register(mem8 & 7, x);
                             } else {
-                                fa = Pb(Ea);
-                                sb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                st8_mem8_write(x);
                             }
-                            break Fd;
-                        case 0x40:
-                        case 0x41:
-                        case 0x42:
-                        case 0x43:
-                        case 0x44:
-                        case 0x45:
-                        case 0x46:
-                        case 0x47:
-                        case 0x48:
-                        case 0x49:
-                        case 0x4a:
-                        case 0x4b:
-                        case 0x4c:
-                        case 0x4d:
-                        case 0x4e:
-                        case 0x4f:
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            break EXEC_LOOP;
+                        case 0x40://CMOVO Evqp Gvqp Conditional Move - overflow (OF=1)
+                        case 0x41://CMOVNO Evqp Gvqp Conditional Move - not overflow (OF=0)
+                        case 0x42://CMOVB Evqp Gvqp Conditional Move - below/not above or equal/carry (CF=1)
+                        case 0x43://CMOVNB Evqp Gvqp Conditional Move - not below/above or equal/not carry (CF=0)
+                        case 0x44://CMOVZ Evqp Gvqp Conditional Move - zero/equal (ZF=0)
+                        case 0x45://CMOVNZ Evqp Gvqp Conditional Move - not zero/not equal (ZF=1)
+                        case 0x46://CMOVBE Evqp Gvqp Conditional Move - below or equal/not above (CF=1 AND ZF=1)
+                        case 0x47://CMOVNBE Evqp Gvqp Conditional Move - not below or equal/above (CF=0 AND ZF=0)
+                        case 0x48://CMOVS Evqp Gvqp Conditional Move - sign (SF=1)
+                        case 0x49://CMOVNS Evqp Gvqp Conditional Move - not sign (SF=0)
+                        case 0x4a://CMOVP Evqp Gvqp Conditional Move - parity/parity even (PF=1)
+                        case 0x4b://CMOVNP Evqp Gvqp Conditional Move - not parity/parity odd
+                        case 0x4c://CMOVL Evqp Gvqp Conditional Move - less/not greater (SF!=OF)
+                        case 0x4d://CMOVNL Evqp Gvqp Conditional Move - not less/greater or equal (SF=OF)
+                        case 0x4e://CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x4f://CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND (SF=OF))
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_read();
                             }
-                            if (fd(b & 0xf))
-                                xa[(Ea >> 3) & 7] = ga;
-                            break Fd;
-                        case 0xb6:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1)) & 0xff;
+                            if (check_status_bits_for_jump(OPbyte & 0xf))
+                                regs[(mem8 >> 3) & 7] = x;
+                            break EXEC_LOOP;
+                        case 0xb6://MOVZX Eb Gvqp Move with Zero-Extend
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                             } else {
-                                fa = Pb(Ea);
-                                ga = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                mem8_loc = segment_translation(mem8);
+                                x = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                             }
-                            xa[Ga] = ga;
-                            break Fd;
-                        case 0xb7:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7] & 0xffff;
+                            regs[reg_idx1] = x;
+                            break EXEC_LOOP;
+                        case 0xb7://MOVZX Ew Gvqp Move with Zero-Extend
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7] & 0xffff;
                             } else {
-                                fa = Pb(Ea);
-                                ga = ib();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_read();
                             }
-                            xa[Ga] = ga;
-                            break Fd;
-                        case 0xbe:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                            regs[reg_idx1] = x;
+                            break EXEC_LOOP;
+                        case 0xbe://MOVSX Eb Gvqp Move with Sign-Extension
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = (((Ua = bb[fa >>> 12]) == -1) ? db() : Ta[fa ^ Ua]);
+                                mem8_loc = segment_translation(mem8);
+                                x = (((last_tlb_val = _tlb_read_[mem8_loc >>> 12]) == -1) ? __ld_8bits_mem8_read() : phys_mem8[mem8_loc ^ last_tlb_val]);
                             }
-                            xa[Ga] = (((ga) << 24) >> 24);
-                            break Fd;
-                        case 0xbf:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            regs[reg_idx1] = (((x) << 24) >> 24);
+                            break EXEC_LOOP;
+                        case 0xbf://MOVSX Ew Gvqp Move with Sign-Extension
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = ib();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_read();
                             }
-                            xa[Ga] = (((ga) << 16) >> 16);
-                            break Fd;
-                        case 0x00:
-                            if (!(wa.cr0 & (1 << 0)) || (wa.eflags & 0x00020000))
-                                Dc(6);
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            switch (Ja) {
-                                case 0:
-                                case 1:
-                                    if (Ja == 0)
-                                        ga = wa.ldt.selector;
+                            regs[reg_idx1] = (((x) << 16) >> 16);
+                            break EXEC_LOOP;
+                        case 0x00://SLDT
+                            if (!(cpu.cr0 & (1 << 0)) || (cpu.eflags & 0x00020000))
+                                abort(6);
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            switch (conditional_var) {
+                                case 0://SLDT Store Local Descriptor Table Register
+                                case 1://STR Store Task Register
+                                    if (conditional_var == 0)
+                                        x = cpu.ldt.selector;
                                     else
-                                        ga = wa.tr.selector;
-                                    if ((Ea >> 6) == 3) {
-                                        Wb(Ea & 7, ga);
+                                        x = cpu.tr.selector;
+                                    if ((mem8 >> 6) == 3) {
+                                        set_lower_word_in_register(mem8 & 7, x);
                                     } else {
-                                        fa = Pb(Ea);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        st16_mem8_write(x);
                                     }
                                     break;
-                                case 2:
-                                case 3:
-                                    if (wa.cpl != 0)
-                                        Dc(13);
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7] & 0xffff;
+                                case 2://LDTR Load Local Descriptor Table Register
+                                case 3://LTR Load Task Register
+                                    if (cpu.cpl != 0)
+                                        abort(13);
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7] & 0xffff;
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    if (Ja == 2)
-                                        Ce(ga);
+                                    if (conditional_var == 2)
+                                        op_LDTR(x);
                                     else
-                                        Ee(ga);
+                                        op_LTR(x);
                                     break;
-                                case 4:
-                                case 5:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7] & 0xffff;
+                                case 4://VERR Verify a Segment for Reading
+                                case 5://VERW Verify a Segment for Writing
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7] & 0xffff;
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    sf(ga, Ja & 1);
+                                    op_VERR_VERW(x, conditional_var & 1);
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            break Fd;
-                        case 0x01:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            switch (Ja) {
+                            break EXEC_LOOP;
+                        case 0x01://SGDT GDTR Ms Store Global Descriptor Table Register
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            switch (conditional_var) {
                                 case 2:
                                 case 3:
-                                    if ((Ea >> 6) == 3)
-                                        Dc(6);
+                                    if ((mem8 >> 6) == 3)
+                                        abort(6);
                                     if (this.cpl != 0)
-                                        Dc(13);
-                                    fa = Pb(Ea);
-                                    ga = ib();
-                                    fa += 2;
-                                    Ha = kb();
-                                    if (Ja == 2) {
-                                        this.gdt.base = Ha;
-                                        this.gdt.limit = ga;
+                                        abort(13);
+                                    mem8_loc = segment_translation(mem8);
+                                    x = ld_16bits_mem8_read();
+                                    mem8_loc += 2;
+                                    y = ld_32bits_mem8_read();
+                                    if (conditional_var == 2) {
+                                        this.gdt.base = y;
+                                        this.gdt.limit = x;
                                     } else {
-                                        this.idt.base = Ha;
-                                        this.idt.limit = ga;
+                                        this.idt.base = y;
+                                        this.idt.limit = x;
                                     }
                                     break;
                                 case 7:
                                     if (this.cpl != 0)
-                                        Dc(13);
-                                    if ((Ea >> 6) == 3)
-                                        Dc(6);
-                                    fa = Pb(Ea);
-                                    wa.tlb_flush_page(fa & -4096);
+                                        abort(13);
+                                    if ((mem8 >> 6) == 3)
+                                        abort(6);
+                                    mem8_loc = segment_translation(mem8);
+                                    cpu.tlb_flush_page(mem8_loc & -4096);
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            break Fd;
-                        case 0x02:
-                        case 0x03:
-                            qf((((Da >> 8) & 1) ^ 1), b & 1);
-                            break Fd;
-                        case 0x20:
-                            if (wa.cpl != 0)
-                                Dc(13);
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) != 3)
-                                Dc(6);
-                            Ga = (Ea >> 3) & 7;
-                            switch (Ga) {
+                            break EXEC_LOOP;
+                        case 0x02://LAR Mw Gvqp Load Access Rights Byte
+                        case 0x03://LSL Mw Gvqp Load Segment Limit
+                            op_LAR_LSL((((CS_flags >> 8) & 1) ^ 1), OPbyte & 1);
+                            break EXEC_LOOP;
+                        case 0x20://MOV Cd Rd Move to/from Control Registers
+                            if (cpu.cpl != 0)
+                                abort(13);
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) != 3)
+                                abort(6);
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            switch (reg_idx1) {
                                 case 0:
-                                    ga = wa.cr0;
+                                    x = cpu.cr0;
                                     break;
                                 case 2:
-                                    ga = wa.cr2;
+                                    x = cpu.cr2;
                                     break;
                                 case 3:
-                                    ga = wa.cr3;
+                                    x = cpu.cr3;
                                     break;
                                 case 4:
-                                    ga = wa.cr4;
+                                    x = cpu.cr4;
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            xa[Ea & 7] = ga;
-                            break Fd;
-                        case 0x22:
-                            if (wa.cpl != 0)
-                                Dc(13);
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) != 3)
-                                Dc(6);
-                            Ga = (Ea >> 3) & 7;
-                            ga = xa[Ea & 7];
-                            switch (Ga) {
+                            regs[mem8 & 7] = x;
+                            break EXEC_LOOP;
+                        case 0x22://MOV Rd Cd Move to/from Control Registers
+                            if (cpu.cpl != 0)
+                                abort(13);
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) != 3)
+                                abort(6);
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            x = regs[mem8 & 7];
+                            switch (reg_idx1) {
                                 case 0:
-                                    Pd(ga);
+                                    set_CR0(x);
                                     break;
                                 case 2:
-                                    wa.cr2 = ga;
+                                    cpu.cr2 = x;
                                     break;
                                 case 3:
-                                    Rd(ga);
+                                    set_CR3(x);
                                     break;
                                 case 4:
-                                    Td(ga);
+                                    set_CR4(x);
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            break Fd;
-                        case 0x06:
-                            if (wa.cpl != 0)
-                                Dc(13);
-                            Pd(wa.cr0 & ~(1 << 3));
-                            break Fd;
-                        case 0x23:
-                            if (wa.cpl != 0)
-                                Dc(13);
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) != 3)
-                                Dc(6);
-                            Ga = (Ea >> 3) & 7;
-                            ga = xa[Ea & 7];
-                            if (Ga == 4 || Ga == 5)
-                                Dc(6);
-                            break Fd;
-                        case 0xb2:
-                        case 0xb4:
-                        case 0xb5:
-                            Uf(b & 7);
-                            break Fd;
-                        case 0xa2:
-                            uf();
-                            break Fd;
-                        case 0xa4:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ha = xa[(Ea >> 3) & 7];
-                            if ((Ea >> 6) == 3) {
-                                Ia = Ta[Kb++];
-                                ;
-                                Fa = Ea & 7;
-                                xa[Fa] = rc(xa[Fa], Ha, Ia);
+                            break EXEC_LOOP;
+                        case 0x06://CLTS  CR0 Clear Task-Switched Flag in CR0
+                            if (cpu.cpl != 0)
+                                abort(13);
+                            set_CR0(cpu.cr0 & ~(1 << 3)); //Clear Task-Switched Flag in CR0
+                            break EXEC_LOOP;
+                        case 0x23://MOV Rd Dd Move to/from Debug Registers
+                            if (cpu.cpl != 0)
+                                abort(13);
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) != 3)
+                                abort(6);
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            x = regs[mem8 & 7];
+                            if (reg_idx1 == 4 || reg_idx1 == 5)
+                                abort(6);
+                            break EXEC_LOOP;
+                        case 0xb2://LSS Mptp SS Load Far Pointer
+                        case 0xb4://LFS Mptp FS Load Far Pointer
+                        case 0xb5://LGS Mptp GS Load Far Pointer
+                            op_16_load_far_pointer32(OPbyte & 7);
+                            break EXEC_LOOP;
+                        case 0xa2://CPUID  IA32_BIOS_SIGN_ID CPU Identification
+                            op_CPUID();
+                            break EXEC_LOOP;
+                        case 0xa4://SHLD Gvqp Evqp Double Precision Shift Left
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            y = regs[(mem8 >> 3) & 7];
+                            if ((mem8 >> 6) == 3) {
+                                z = phys_mem8[physmem8_ptr++];
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = op_SHLD(regs[reg_idx0], y, z);
                             } else {
-                                fa = Pb(Ea);
-                                Ia = Ta[Kb++];
-                                ;
-                                ga = qb();
-                                ga = rc(ga, Ha, Ia);
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                z = phys_mem8[physmem8_ptr++];
+                                x = ld_32bits_mem8_write();
+                                x = op_SHLD(x, y, z);
+                                st32_mem8_write(x);
                             }
-                            break Fd;
-                        case 0xa5:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ha = xa[(Ea >> 3) & 7];
-                            Ia = xa[1];
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                xa[Fa] = rc(xa[Fa], Ha, Ia);
+                            break EXEC_LOOP;
+                        case 0xa5://SHLD Gvqp Evqp Double Precision Shift Left
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            y = regs[(mem8 >> 3) & 7];
+                            z = regs[1];
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = op_SHLD(regs[reg_idx0], y, z);
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
-                                ga = rc(ga, Ha, Ia);
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
+                                x = op_SHLD(x, y, z);
+                                st32_mem8_write(x);
                             }
-                            break Fd;
-                        case 0xac:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ha = xa[(Ea >> 3) & 7];
-                            if ((Ea >> 6) == 3) {
-                                Ia = Ta[Kb++];
-                                ;
-                                Fa = Ea & 7;
-                                xa[Fa] = sc(xa[Fa], Ha, Ia);
+                            break EXEC_LOOP;
+                        case 0xac://SHRD Gvqp Evqp Double Precision Shift Right
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            y = regs[(mem8 >> 3) & 7];
+                            if ((mem8 >> 6) == 3) {
+                                z = phys_mem8[physmem8_ptr++];
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = op_SHRD(regs[reg_idx0], y, z);
                             } else {
-                                fa = Pb(Ea);
-                                Ia = Ta[Kb++];
-                                ;
-                                ga = qb();
-                                ga = sc(ga, Ha, Ia);
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                z = phys_mem8[physmem8_ptr++];
+                                x = ld_32bits_mem8_write();
+                                x = op_SHRD(x, y, z);
+                                st32_mem8_write(x);
                             }
-                            break Fd;
-                        case 0xad:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ha = xa[(Ea >> 3) & 7];
-                            Ia = xa[1];
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                xa[Fa] = sc(xa[Fa], Ha, Ia);
+                            break EXEC_LOOP;
+                        case 0xad://SHRD Gvqp Evqp Double Precision Shift Right
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            y = regs[(mem8 >> 3) & 7];
+                            z = regs[1];
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = op_SHRD(regs[reg_idx0], y, z);
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
-                                ga = sc(ga, Ha, Ia);
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
+                                x = op_SHRD(x, y, z);
+                                st32_mem8_write(x);
                             }
-                            break Fd;
-                        case 0xba:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            switch (Ja) {
-                                case 4:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
-                                        Ha = Ta[Kb++];
-                                        ;
+                            break EXEC_LOOP;
+                        case 0xba://BT Evqp  Bit Test
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            switch (conditional_var) {
+                                case 4://BT Evqp  Bit Test
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
+                                        y = phys_mem8[physmem8_ptr++];
                                     } else {
-                                        fa = Pb(Ea);
-                                        Ha = Ta[Kb++];
-                                        ;
-                                        ga = kb();
+                                        mem8_loc = segment_translation(mem8);
+                                        y = phys_mem8[physmem8_ptr++];
+                                        x = ld_32bits_mem8_read();
                                     }
-                                    uc(ga, Ha);
+                                    op_BT(x, y);
                                     break;
-                                case 5:
-                                case 6:
-                                case 7:
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Ha = Ta[Kb++];
-                                        ;
-                                        xa[Fa] = xc(Ja & 3, xa[Fa], Ha);
+                                case 5://BTS  Bit Test and Set
+                                case 6://BTR  Bit Test and Reset
+                                case 7://BTC  Bit Test and Complement
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        y = phys_mem8[physmem8_ptr++];
+                                        regs[reg_idx0] = op_BTS_BTR_BTC(conditional_var & 3, regs[reg_idx0], y);
                                     } else {
-                                        fa = Pb(Ea);
-                                        Ha = Ta[Kb++];
-                                        ;
-                                        ga = qb();
-                                        ga = xc(Ja & 3, ga, Ha);
-                                        wb(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        y = phys_mem8[physmem8_ptr++];
+                                        x = ld_32bits_mem8_write();
+                                        x = op_BTS_BTR_BTC(conditional_var & 3, x, y);
+                                        st32_mem8_write(x);
                                     }
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            break Fd;
-                        case 0xa3:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ha = xa[(Ea >> 3) & 7];
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            break EXEC_LOOP;
+                        case 0xa3://BT Evqp  Bit Test
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            y = regs[(mem8 >> 3) & 7];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                fa = (fa + ((Ha >> 5) << 2)) >> 0;
-                                ga = kb();
+                                mem8_loc = segment_translation(mem8);
+                                mem8_loc = (mem8_loc + ((y >> 5) << 2)) >> 0;
+                                x = ld_32bits_mem8_read();
                             }
-                            uc(ga, Ha);
-                            break Fd;
-                        case 0xab:
-                        case 0xb3:
-                        case 0xbb:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ha = xa[(Ea >> 3) & 7];
-                            Ja = (b >> 3) & 3;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                xa[Fa] = xc(Ja, xa[Fa], Ha);
+                            op_BT(x, y);
+                            break EXEC_LOOP;
+                        case 0xab://BTS Gvqp Evqp Bit Test and Set
+                        case 0xb3://BTR Gvqp Evqp Bit Test and Reset
+                        case 0xbb://BTC Gvqp Evqp Bit Test and Complement
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            y = regs[(mem8 >> 3) & 7];
+                            conditional_var = (OPbyte >> 3) & 3;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                regs[reg_idx0] = op_BTS_BTR_BTC(conditional_var, regs[reg_idx0], y);
                             } else {
-                                fa = Pb(Ea);
-                                fa = (fa + ((Ha >> 5) << 2)) >> 0;
-                                ga = qb();
-                                ga = xc(Ja, ga, Ha);
-                                wb(ga);
+                                mem8_loc = segment_translation(mem8);
+                                mem8_loc = (mem8_loc + ((y >> 5) << 2)) >> 0;
+                                x = ld_32bits_mem8_write();
+                                x = op_BTS_BTR_BTC(conditional_var, x, y);
+                                st32_mem8_write(x);
                             }
-                            break Fd;
-                        case 0xbc:
-                        case 0xbd:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Ha = xa[Ea & 7];
+                            break EXEC_LOOP;
+                        case 0xbc://BSF Evqp Gvqp Bit Scan Forward
+                        case 0xbd://BSR Evqp Gvqp Bit Scan Reverse
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                y = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                Ha = kb();
+                                mem8_loc = segment_translation(mem8);
+                                y = ld_32bits_mem8_read();
                             }
-                            if (b & 1)
-                                xa[Ga] = Bc(xa[Ga], Ha);
+                            if (OPbyte & 1)
+                                regs[reg_idx1] = op_BSR(regs[reg_idx1], y);
                             else
-                                xa[Ga] = zc(xa[Ga], Ha);
-                            break Fd;
-                        case 0xaf:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Ha = xa[Ea & 7];
+                                regs[reg_idx1] = op_BSF(regs[reg_idx1], y);
+                            break EXEC_LOOP;
+                        case 0xaf://IMUL Evqp Gvqp Signed Multiply
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                y = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                Ha = kb();
+                                mem8_loc = segment_translation(mem8);
+                                y = ld_32bits_mem8_read();
                             }
-                            xa[Ga] = Wc(xa[Ga], Ha);
-                            break Fd;
-                        case 0x31:
-                            if ((wa.cr4 & (1 << 2)) && wa.cpl != 0)
-                                Dc(13);
-                            ga = md();
-                            xa[0] = ga >>> 0;
-                            xa[2] = (ga / 0x100000000) >>> 0;
-                            break Fd;
-                        case 0xc0:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
-                                Ha = gc(0, ga, (xa[Ga & 3] >> ((Ga & 4) << 1)));
-                                Vb(Ga, ga);
-                                Vb(Fa, Ha);
+                            regs[reg_idx1] = op_IMUL32(regs[reg_idx1], y);
+                            break EXEC_LOOP;
+                        case 0x31://RDTSC IA32_TIME_STAMP_COUNTER EAX Read Time-Stamp Counter
+                            if ((cpu.cr4 & (1 << 2)) && cpu.cpl != 0)
+                                abort(13);
+                            x = current_cycle_count();
+                            regs[0] = x >>> 0;
+                            regs[2] = (x / 0x100000000) >>> 0;
+                            break EXEC_LOOP;
+                        case 0xc0://XADD  Eb Exchange and Add
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                                y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                                set_word_in_register(reg_idx1, x);
+                                set_word_in_register(reg_idx0, y);
                             } else {
-                                fa = Pb(Ea);
-                                ga = mb();
-                                Ha = gc(0, ga, (xa[Ga & 3] >> ((Ga & 4) << 1)));
-                                sb(Ha);
-                                Vb(Ga, ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_write();
+                                y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                                st8_mem8_write(y);
+                                set_word_in_register(reg_idx1, x);
                             }
-                            break Fd;
-                        case 0xc1:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = xa[Fa];
-                                Ha = Xb(0, ga, xa[Ga]);
-                                xa[Ga] = ga;
-                                xa[Fa] = Ha;
+                            break EXEC_LOOP;
+                        case 0xc1://XADD  Evqp Exchange and Add
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = regs[reg_idx0];
+                                y = do_32bit_math(0, x, regs[reg_idx1]);
+                                regs[reg_idx1] = x;
+                                regs[reg_idx0] = y;
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
-                                Ha = Xb(0, ga, xa[Ga]);
-                                wb(Ha);
-                                xa[Ga] = ga;
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
+                                y = do_32bit_math(0, x, regs[reg_idx1]);
+                                st32_mem8_write(y);
+                                regs[reg_idx1] = x;
                             }
-                            break Fd;
-                        case 0xb0:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
-                                Ha = gc(5, xa[0], ga);
-                                if (Ha == 0) {
-                                    Vb(Fa, (xa[Ga & 3] >> ((Ga & 4) << 1)));
+                            break EXEC_LOOP;
+                        case 0xb0://CMPXCHG Gb Eb Compare and Exchange
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                                y = do_8bit_math(5, regs[0], x);
+                                if (y == 0) {
+                                    set_word_in_register(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                                 } else {
-                                    Vb(0, ga);
+                                    set_word_in_register(0, x);
                                 }
                             } else {
-                                fa = Pb(Ea);
-                                ga = mb();
-                                Ha = gc(5, xa[0], ga);
-                                if (Ha == 0) {
-                                    sb((xa[Ga & 3] >> ((Ga & 4) << 1)));
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_8bits_mem8_write();
+                                y = do_8bit_math(5, regs[0], x);
+                                if (y == 0) {
+                                    st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                                 } else {
-                                    Vb(0, ga);
+                                    set_word_in_register(0, x);
                                 }
                             }
-                            break Fd;
-                        case 0xb1:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = xa[Fa];
-                                Ha = Xb(5, xa[0], ga);
-                                if (Ha == 0) {
-                                    xa[Fa] = xa[Ga];
+                            break EXEC_LOOP;
+                        case 0xb1://CMPXCHG Gvqp Evqp Compare and Exchange
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = regs[reg_idx0];
+                                y = do_32bit_math(5, regs[0], x);
+                                if (y == 0) {
+                                    regs[reg_idx0] = regs[reg_idx1];
                                 } else {
-                                    xa[0] = ga;
+                                    regs[0] = x;
                                 }
                             } else {
-                                fa = Pb(Ea);
-                                ga = qb();
-                                Ha = Xb(5, xa[0], ga);
-                                if (Ha == 0) {
-                                    wb(xa[Ga]);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_32bits_mem8_write();
+                                y = do_32bit_math(5, regs[0], x);
+                                if (y == 0) {
+                                    st32_mem8_write(regs[reg_idx1]);
                                 } else {
-                                    xa[0] = ga;
+                                    regs[0] = x;
                                 }
                             }
-                            break Fd;
-                        case 0xa0:
-                        case 0xa8:
-                            xd(wa.segs[(b >> 3) & 7].selector);
-                            break Fd;
-                        case 0xa1:
-                        case 0xa9:
-                            Ie((b >> 3) & 7, Ad() & 0xffff);
-                            Bd();
-                            break Fd;
-                        case 0xc8:
+                            break EXEC_LOOP;
+                        case 0xa0://PUSH FS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                        case 0xa8://PUSH GS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                            push_dword_to_stack(cpu.segs[(OPbyte >> 3) & 7].selector);
+                            break EXEC_LOOP;
+                        case 0xa1://POP SS:[rSP] FS Pop a Value from the Stack
+                        case 0xa9://POP SS:[rSP] GS Pop a Value from the Stack
+                            set_segment_register((OPbyte >> 3) & 7, pop_dword_from_stack_read() & 0xffff);
+                            pop_dword_from_stack_incr_ptr();
+                            break EXEC_LOOP;
+                        case 0xc8://BSWAP  Zvqp Byte Swap
                         case 0xc9:
                         case 0xca:
                         case 0xcb:
@@ -8140,203 +8240,207 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0xcd:
                         case 0xce:
                         case 0xcf:
-                            Ga = b & 7;
-                            ga = xa[Ga];
-                            ga = (ga >>> 24) | ((ga >> 8) & 0x0000ff00) | ((ga << 8) & 0x00ff0000) | (ga << 24);
-                            xa[Ga] = ga;
-                            break Fd;
+                            reg_idx1 = OPbyte & 7;
+                            x = regs[reg_idx1];
+                            x = (x >>> 24) | ((x >> 8) & 0x0000ff00) | ((x << 8) & 0x00ff0000) | (x << 24);
+                            regs[reg_idx1] = x;
+                            break EXEC_LOOP;
                         case 0x04:
-                        case 0x05:
-                        case 0x07:
-                        case 0x08:
-                        case 0x09:
+                        case 0x05://LOADALL  AX Load All of the CPU Registers
+                        case 0x07://LOADALL  EAX Load All of the CPU Registers
+                        case 0x08://INVD   Invalidate Internal Caches
+                        case 0x09://WBINVD   Write Back and Invalidate Cache
                         case 0x0a:
-                        case 0x0b:
+                        case 0x0b://UD2   Undefined Instruction
                         case 0x0c:
-                        case 0x0d:
+                        case 0x0d://NOP Ev  No Operation
                         case 0x0e:
                         case 0x0f:
-                        case 0x10:
-                        case 0x11:
-                        case 0x12:
-                        case 0x13:
-                        case 0x14:
-                        case 0x15:
-                        case 0x16:
-                        case 0x17:
-                        case 0x18:
-                        case 0x19:
-                        case 0x1a:
-                        case 0x1b:
-                        case 0x1c:
-                        case 0x1d:
-                        case 0x1e:
-                        case 0x1f:
-                        case 0x21:
-                        case 0x24:
+                        case 0x10://MOVUPS Wps Vps Move Unaligned Packed Single-FP Values
+                        case 0x11://MOVUPS Vps Wps Move Unaligned Packed Single-FP Values
+                        case 0x12://MOVHLPS Uq Vq Move Packed Single-FP Values High to Low
+                        case 0x13://MOVLPS Vq Mq Move Low Packed Single-FP Values
+                        case 0x14://UNPCKLPS Wq Vps Unpack and Interleave Low Packed Single-FP Values
+                        case 0x15://UNPCKHPS Wq Vps Unpack and Interleave High Packed Single-FP Values
+                        case 0x16://MOVLHPS Uq Vq Move Packed Single-FP Values Low to High
+                        case 0x17://MOVHPS Vq Mq Move High Packed Single-FP Values
+                        case 0x18://HINT_NOP Ev  Hintable NOP
+                        case 0x19://HINT_NOP Ev  Hintable NOP
+                        case 0x1a://HINT_NOP Ev  Hintable NOP
+                        case 0x1b://HINT_NOP Ev  Hintable NOP
+                        case 0x1c://HINT_NOP Ev  Hintable NOP
+                        case 0x1d://HINT_NOP Ev  Hintable NOP
+                        case 0x1e://HINT_NOP Ev  Hintable NOP
+                        case 0x1f://HINT_NOP Ev  Hintable NOP
+                        case 0x21://MOV Dd Rd Move to/from Debug Registers
+                        case 0x24://MOV Td Rd Move to/from Test Registers
                         case 0x25:
-                        case 0x26:
+                        case 0x26://MOV Rd Td Move to/from Test Registers
                         case 0x27:
-                        case 0x28:
-                        case 0x29:
-                        case 0x2a:
-                        case 0x2b:
-                        case 0x2c:
-                        case 0x2d:
-                        case 0x2e:
-                        case 0x2f:
-                        case 0x30:
-                        case 0x32:
-                        case 0x33:
-                        case 0x34:
-                        case 0x35:
+                        case 0x28://MOVAPS Wps Vps Move Aligned Packed Single-FP Values
+                        case 0x29://MOVAPS Vps Wps Move Aligned Packed Single-FP Values
+                        case 0x2a://CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
+                        case 0x2b://MOVNTPS Vps Mps Store Packed Single-FP Values Using Non-Temporal Hint
+                        case 0x2c://CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW Integers
+                        case 0x2d://CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW Integers
+                        case 0x2e://UCOMISS Vss  Unordered Compare Scalar Single-FP Values and Set EFLAGS
+                        case 0x2f://COMISS Vss  Compare Scalar Ordered Single-FP Values and Set EFLAGS
+                        case 0x30://WRMSR rCX MSR Write to Model Specific Register
+                        case 0x32://RDMSR rCX rAX Read from Model Specific Register
+                        case 0x33://RDPMC PMC EAX Read Performance-Monitoring Counters
+                        case 0x34://SYSENTER IA32_SYSENTER_CS SS Fast System Call
+                        case 0x35://SYSEXIT IA32_SYSENTER_CS SS Fast Return from Fast System Call
                         case 0x36:
-                        case 0x37:
-                        case 0x38:
+                        case 0x37://GETSEC EAX  GETSEC Leaf Functions
+                        case 0x38://PSHUFB Qq Pq Packed Shuffle Bytes
                         case 0x39:
-                        case 0x3a:
+                        case 0x3a://ROUNDPS Wps Vps Round Packed Single-FP Values
                         case 0x3b:
                         case 0x3c:
                         case 0x3d:
                         case 0x3e:
                         case 0x3f:
-                        case 0x50:
-                        case 0x51:
-                        case 0x52:
-                        case 0x53:
-                        case 0x54:
-                        case 0x55:
-                        case 0x56:
-                        case 0x57:
-                        case 0x58:
-                        case 0x59:
-                        case 0x5a:
-                        case 0x5b:
-                        case 0x5c:
-                        case 0x5d:
-                        case 0x5e:
-                        case 0x5f:
-                        case 0x60:
-                        case 0x61:
-                        case 0x62:
-                        case 0x63:
-                        case 0x64:
-                        case 0x65:
-                        case 0x66:
-                        case 0x67:
-                        case 0x68:
-                        case 0x69:
-                        case 0x6a:
-                        case 0x6b:
-                        case 0x6c:
-                        case 0x6d:
-                        case 0x6e:
-                        case 0x6f:
-                        case 0x70:
-                        case 0x71:
-                        case 0x72:
-                        case 0x73:
-                        case 0x74:
-                        case 0x75:
-                        case 0x76:
-                        case 0x77:
-                        case 0x78:
-                        case 0x79:
+                        case 0x50://MOVMSKPS Ups Gdqp Extract Packed Single-FP Sign Mask
+                        case 0x51://SQRTPS Wps Vps Compute Square Roots of Packed Single-FP Values
+                        case 0x52://RSQRTPS Wps Vps Compute Recipr. of Square Roots of Packed Single-FP Values
+                        case 0x53://RCPPS Wps Vps Compute Reciprocals of Packed Single-FP Values
+                        case 0x54://ANDPS Wps Vps Bitwise Logical AND of Packed Single-FP Values
+                        case 0x55://ANDNPS Wps Vps Bitwise Logical AND NOT of Packed Single-FP Values
+                        case 0x56://ORPS Wps Vps Bitwise Logical OR of Single-FP Values
+                        case 0x57://XORPS Wps Vps Bitwise Logical XOR for Single-FP Values
+                        case 0x58://ADDPS Wps Vps Add Packed Single-FP Values
+                        case 0x59://MULPS Wps Vps Multiply Packed Single-FP Values
+                        case 0x5a://CVTPS2PD Wps Vpd Convert Packed Single-FP Values to1.11 PackedDouble-FP Values
+                        case 0x5b://CVTDQ2PS Wdq Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
+                        case 0x5c://SUBPS Wps Vps Subtract Packed Single-FP Values
+                        case 0x5d://MINPS Wps Vps Return Minimum Packed Single-FP Values
+                        case 0x5e://DIVPS Wps Vps Divide Packed Single-FP Values
+                        case 0x5f://MAXPS Wps Vps Return Maximum Packed Single-FP Values
+                        case 0x60://PUNPCKLBW Qd Pq Unpack Low Data
+                        case 0x61://PUNPCKLWD Qd Pq Unpack Low Data
+                        case 0x62://PUNPCKLDQ Qd Pq Unpack Low Data
+                        case 0x63://PACKSSWB Qd Pq Pack with Signed Saturation
+                        case 0x64://PCMPGTB Qd Pq Compare Packed Signed Integers for Greater Than
+                        case 0x65://PCMPGTW Qd Pq Compare Packed Signed Integers for Greater Than
+                        case 0x66://PCMPGTD Qd Pq Compare Packed Signed Integers for Greater Than
+                        case 0x67://PACKUSWB Qq Pq Pack with Unsigned Saturation
+                        case 0x68://PUNPCKHBW Qq Pq Unpack High Data
+                        case 0x69://PUNPCKHWD Qq Pq Unpack High Data
+                        case 0x6a://PUNPCKHDQ Qq Pq Unpack High Data
+                        case 0x6b://PACKSSDW Qq Pq Pack with Signed Saturation
+                        case 0x6c://PUNPCKLQDQ Wdq Vdq Unpack Low Data
+                        case 0x6d://PUNPCKHQDQ Wdq Vdq Unpack High Data
+                        case 0x6e://MOVD Ed Pq Move Doubleword
+                        case 0x6f://MOVQ Qq Pq Move Quadword
+                        case 0x70://PSHUFW Qq Pq Shuffle Packed Words
+                        case 0x71://PSRLW Ib Nq Shift Packed Data Right Logical
+                        case 0x72://PSRLD Ib Nq Shift Double Quadword Right Logical
+                        case 0x73://PSRLQ Ib Nq Shift Packed Data Right Logical
+                        case 0x74://PCMPEQB Qq Pq Compare Packed Data for Equal
+                        case 0x75://PCMPEQW Qq Pq Compare Packed Data for Equal
+                        case 0x76://PCMPEQD Qq Pq Compare Packed Data for Equal
+                        case 0x77://EMMS   Empty MMX Technology State
+                        case 0x78://VMREAD Gd Ed Read Field from Virtual-Machine Control Structure
+                        case 0x79://VMWRITE Gd  Write Field to Virtual-Machine Control Structure
                         case 0x7a:
                         case 0x7b:
-                        case 0x7c:
-                        case 0x7d:
-                        case 0x7e:
-                        case 0x7f:
+                        case 0x7c://HADDPD Wpd Vpd Packed Double-FP Horizontal Add
+                        case 0x7d://HSUBPD Wpd Vpd Packed Double-FP Horizontal Subtract
+                        case 0x7e://MOVD Pq Ed Move Doubleword
+                        case 0x7f://MOVQ Pq Qq Move Quadword
                         case 0xa6:
                         case 0xa7:
-                        case 0xaa:
-                        case 0xae:
-                        case 0xb8:
-                        case 0xb9:
-                        case 0xc2:
-                        case 0xc3:
-                        case 0xc4:
-                        case 0xc5:
-                        case 0xc6:
-                        case 0xc7:
-                        case 0xd0:
-                        case 0xd1:
-                        case 0xd2:
-                        case 0xd3:
-                        case 0xd4:
-                        case 0xd5:
-                        case 0xd6:
-                        case 0xd7:
-                        case 0xd8:
-                        case 0xd9:
-                        case 0xda:
-                        case 0xdb:
-                        case 0xdc:
-                        case 0xdd:
-                        case 0xde:
-                        case 0xdf:
-                        case 0xe0:
-                        case 0xe1:
-                        case 0xe2:
-                        case 0xe3:
-                        case 0xe4:
-                        case 0xe5:
-                        case 0xe6:
-                        case 0xe7:
-                        case 0xe8:
-                        case 0xe9:
-                        case 0xea:
-                        case 0xeb:
-                        case 0xec:
-                        case 0xed:
-                        case 0xee:
-                        case 0xef:
-                        case 0xf0:
-                        case 0xf1:
-                        case 0xf2:
-                        case 0xf3:
-                        case 0xf4:
-                        case 0xf5:
-                        case 0xf6:
-                        case 0xf7:
-                        case 0xf8:
-                        case 0xf9:
-                        case 0xfa:
-                        case 0xfb:
-                        case 0xfc:
-                        case 0xfd:
-                        case 0xfe:
+                        case 0xaa://RSM  Flags Resume from System Management Mode
+                        case 0xae://FXSAVE ST Mstx Save x87 FPU, MMX, XMM, and MXCSR State
+                        case 0xb8://JMPE   Jump to IA-64 Instruction Set
+                        case 0xb9://UD G  Undefined Instruction
+                        case 0xc2://CMPPS Wps Vps Compare Packed Single-FP Values
+                        case 0xc3://MOVNTI Gdqp Mdqp Store Doubleword Using Non-Temporal Hint
+                        case 0xc4://PINSRW Rdqp Pq Insert Word
+                        case 0xc5://PEXTRW Nq Gdqp Extract Word
+                        case 0xc6://SHUFPS Wps Vps Shuffle Packed Single-FP Values
+                        case 0xc7://CMPXCHG8B EBX Mq Compare and Exchange Bytes
+                        case 0xd0://ADDSUBPD Wpd Vpd Packed Double-FP Add/Subtract
+                        case 0xd1://PSRLW Qq Pq Shift Packed Data Right Logical
+                        case 0xd2://PSRLD Qq Pq Shift Packed Data Right Logical
+                        case 0xd3://PSRLQ Qq Pq Shift Packed Data Right Logical
+                        case 0xd4://PADDQ Qq Pq Add Packed Quadword Integers
+                        case 0xd5://PMULLW Qq Pq Multiply Packed Signed Integers and Store Low Result
+                        case 0xd6://MOVQ Vq Wq Move Quadword
+                        case 0xd7://PMOVMSKB Nq Gdqp Move Byte Mask
+                        case 0xd8://PSUBUSB Qq Pq Subtract Packed Unsigned Integers with Unsigned Saturation
+                        case 0xd9://PSUBUSW Qq Pq Subtract Packed Unsigned Integers with Unsigned Saturation
+                        case 0xda://PMINUB Qq Pq Minimum of Packed Unsigned Byte Integers
+                        case 0xdb://PAND Qd Pq Logical AND
+                        case 0xdc://PADDUSB Qq Pq Add Packed Unsigned Integers with Unsigned Saturation
+                        case 0xdd://PADDUSW Qq Pq Add Packed Unsigned Integers with Unsigned Saturation
+                        case 0xde://PMAXUB Qq Pq Maximum of Packed Unsigned Byte Integers
+                        case 0xdf://PANDN Qq Pq Logical AND NOT
+                        case 0xe0://PAVGB Qq Pq Average Packed Integers
+                        case 0xe1://PSRAW Qq Pq Shift Packed Data Right Arithmetic
+                        case 0xe2://PSRAD Qq Pq Shift Packed Data Right Arithmetic
+                        case 0xe3://PAVGW Qq Pq Average Packed Integers
+                        case 0xe4://PMULHUW Qq Pq Multiply Packed Unsigned Integers and Store High Result
+                        case 0xe5://PMULHW Qq Pq Multiply Packed Signed Integers and Store High Result
+                        case 0xe6://CVTPD2DQ Wpd Vdq Convert Packed Double-FP Values to1.11 PackedDW Integers
+                        case 0xe7://MOVNTQ Pq Mq Store of Quadword Using Non-Temporal Hint
+                        case 0xe8://PSUBSB Qq Pq Subtract Packed Signed Integers with Signed Saturation
+                        case 0xe9://PSUBSW Qq Pq Subtract Packed Signed Integers with Signed Saturation
+                        case 0xea://PMINSW Qq Pq Minimum of Packed Signed Word Integers
+                        case 0xeb://POR Qq Pq Bitwise Logical OR
+                        case 0xec://PADDSB Qq Pq Add Packed Signed Integers with Signed Saturation
+                        case 0xed://PADDSW Qq Pq Add Packed Signed Integers with Signed Saturation
+                        case 0xee://PMAXSW Qq Pq Maximum of Packed Signed Word Integers
+                        case 0xef://PXOR Qq Pq Logical Exclusive OR
+                        case 0xf0://LDDQU Mdq Vdq Load Unaligned Integer 128 Bits
+                        case 0xf1://PSLLW Qq Pq Shift Packed Data Left Logical
+                        case 0xf2://PSLLD Qq Pq Shift Packed Data Left Logical
+                        case 0xf3://PSLLQ Qq Pq Shift Packed Data Left Logical
+                        case 0xf4://PMULUDQ Qq Pq Multiply Packed Unsigned DW Integers
+                        case 0xf5://PMADDWD Qd Pq Multiply and Add Packed Integers
+                        case 0xf6://PSADBW Qq Pq Compute Sum of Absolute Differences
+                        case 0xf7://MASKMOVQ Nq (DS:)[rDI] Store Selected Bytes of Quadword
+                        case 0xf8://PSUBB Qq Pq Subtract Packed Integers
+                        case 0xf9://PSUBW Qq Pq Subtract Packed Integers
+                        case 0xfa://PSUBD Qq Pq Subtract Packed Integers
+                        case 0xfb://PSUBQ Qq Pq Subtract Packed Quadword Integers
+                        case 0xfc://PADDB Qq Pq Add Packed Integers
+                        case 0xfd://PADDW Qq Pq Add Packed Integers
+                        case 0xfe://PADDD Qq Pq Add Packed Integers
                         case 0xff:
                         default:
-                            Dc(6);
+                            abort(6);
                     }
                     break;
+
+                /*
+                  16bit Compatibility Mode Operator Routines
+                  ==========================================================================================
+                   0x1XX  corresponds to the 16-bit compat operator corresponding to the usual 0xXX
+                */
                 default:
-                    switch (b) {
-                        case 0x189:
-                            Ea = Ta[Kb++];
-                            ;
-                            ga = xa[(Ea >> 3) & 7];
-                            if ((Ea >> 6) == 3) {
-                                Wb(Ea & 7, ga);
+                    switch (OPbyte) {
+                        case 0x189://MOV Gvqp Evqp Move
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            x = regs[(mem8 >> 3) & 7];
+                            if ((mem8 >> 6) == 3) {
+                                set_lower_word_in_register(mem8 & 7, x);
                             } else {
-                                fa = Pb(Ea);
-                                ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                st16_mem8_write(x);
                             }
-                            break Fd;
-                        case 0x18b:
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            break EXEC_LOOP;
+                        case 0x18b://MOV Evqp Gvqp Move
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = ib();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_read();
                             }
-                            Wb((Ea >> 3) & 7, ga);
-                            break Fd;
-                        case 0x1b8:
+                            set_lower_word_in_register((mem8 >> 3) & 7, x);
+                            break EXEC_LOOP;
+                        case 0x1b8://MOV Ivqp Zvqp Move
                         case 0x1b9:
                         case 0x1ba:
                         case 0x1bb:
@@ -8344,29 +8448,28 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0x1bd:
                         case 0x1be:
                         case 0x1bf:
-                            Wb(b & 7, Ob());
-                            break Fd;
-                        case 0x1a1:
-                            fa = Ub();
-                            ga = ib();
-                            Wb(0, ga);
-                            break Fd;
-                        case 0x1a3:
-                            fa = Ub();
-                            ub(xa[0]);
-                            break Fd;
-                        case 0x1c7:
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) == 3) {
-                                ga = Ob();
-                                Wb(Ea & 7, ga);
+                            set_lower_word_in_register(OPbyte & 7, ld16_mem8_direct());
+                            break EXEC_LOOP;
+                        case 0x1a1://MOV Ovqp rAX Move
+                            mem8_loc = segmented_mem8_loc_for_MOV();
+                            x = ld_16bits_mem8_read();
+                            set_lower_word_in_register(0, x);
+                            break EXEC_LOOP;
+                        case 0x1a3://MOV rAX Ovqp Move
+                            mem8_loc = segmented_mem8_loc_for_MOV();
+                            st16_mem8_write(regs[0]);
+                            break EXEC_LOOP;
+                        case 0x1c7://MOV Ivds Evqp Move
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) == 3) {
+                                x = ld16_mem8_direct();
+                                set_lower_word_in_register(mem8 & 7, x);
                             } else {
-                                fa = Pb(Ea);
-                                ga = Ob();
-                                ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld16_mem8_direct();
+                                st16_mem8_write(x);
                             }
-                            break Fd;
+                            break EXEC_LOOP;
                         case 0x191:
                         case 0x192:
                         case 0x193:
@@ -8374,349 +8477,329 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0x195:
                         case 0x196:
                         case 0x197:
-                            Ga = b & 7;
-                            ga = xa[0];
-                            Wb(0, xa[Ga]);
-                            Wb(Ga, ga);
-                            break Fd;
-                        case 0x187:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                ga = xa[Fa];
-                                Wb(Fa, xa[Ga]);
+                            reg_idx1 = OPbyte & 7;
+                            x = regs[0];
+                            set_lower_word_in_register(0, regs[reg_idx1]);
+                            set_lower_word_in_register(reg_idx1, x);
+                            break EXEC_LOOP;
+                        case 0x187://XCHG  Gvqp Exchange Register/Memory with Register
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                x = regs[reg_idx0];
+                                set_lower_word_in_register(reg_idx0, regs[reg_idx1]);
                             } else {
-                                fa = Pb(Ea);
-                                ga = ob();
-                                ub(xa[Ga]);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_write();
+                                st16_mem8_write(regs[reg_idx1]);
                             }
-                            Wb(Ga, ga);
-                            break Fd;
-                        case 0x1c4:
-                            Vf(0);
-                            break Fd;
-                        case 0x1c5:
-                            Vf(3);
-                            break Fd;
-                        case 0x101:
-                        case 0x109:
-                        case 0x111:
-                        case 0x119:
-                        case 0x121:
-                        case 0x129:
-                        case 0x131:
-                        case 0x139:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (b >> 3) & 7;
-                            Ha = xa[(Ea >> 3) & 7];
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Wb(Fa, dc(Ja, xa[Fa], Ha));
+                            set_lower_word_in_register(reg_idx1, x);
+                            break EXEC_LOOP;
+                        case 0x1c4://LES Mp ES Load Far Pointer
+                            op_16_load_far_pointer16(0);
+                            break EXEC_LOOP;
+                        case 0x1c5://LDS Mp DS Load Far Pointer
+                            op_16_load_far_pointer16(3);
+                            break EXEC_LOOP;
+                        case 0x101://ADD Gvqp Evqp Add
+                        case 0x109://OR Gvqp Evqp Logical Inclusive OR
+                        case 0x111://ADC Gvqp Evqp Add with Carry
+                        case 0x119://SBB Gvqp Evqp Integer Subtraction with Borrow
+                        case 0x121://AND Gvqp Evqp Logical AND
+                        case 0x129://SUB Gvqp Evqp Subtract
+                        case 0x131://XOR Gvqp Evqp Logical Exclusive OR
+                        case 0x139://CMP Evqp  Compare Two Operands
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (OPbyte >> 3) & 7;
+                            y = regs[(mem8 >> 3) & 7];
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_lower_word_in_register(reg_idx0, do_16bit_math(conditional_var, regs[reg_idx0], y));
                             } else {
-                                fa = Pb(Ea);
-                                if (Ja != 7) {
-                                    ga = ob();
-                                    ga = dc(Ja, ga, Ha);
-                                    ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                if (conditional_var != 7) {
+                                    x = ld_16bits_mem8_write();
+                                    x = do_16bit_math(conditional_var, x, y);
+                                    st16_mem8_write(x);
                                 } else {
-                                    ga = ib();
-                                    dc(7, ga, Ha);
+                                    x = ld_16bits_mem8_read();
+                                    do_16bit_math(7, x, y);
                                 }
                             }
-                            break Fd;
-                        case 0x103:
-                        case 0x10b:
-                        case 0x113:
-                        case 0x11b:
-                        case 0x123:
-                        case 0x12b:
-                        case 0x133:
-                        case 0x13b:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (b >> 3) & 7;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Ha = xa[Ea & 7];
+                            break EXEC_LOOP;
+                        case 0x103://ADD Evqp Gvqp Add
+                        case 0x10b://OR Evqp Gvqp Logical Inclusive OR
+                        case 0x113://ADC Evqp Gvqp Add with Carry
+                        case 0x11b://SBB Evqp Gvqp Integer Subtraction with Borrow
+                        case 0x123://AND Evqp Gvqp Logical AND
+                        case 0x12b://SUB Evqp Gvqp Subtract
+                        case 0x133://XOR Evqp Gvqp Logical Exclusive OR
+                        case 0x13b://CMP Gvqp  Compare Two Operands
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (OPbyte >> 3) & 7;
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                y = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                Ha = ib();
+                                mem8_loc = segment_translation(mem8);
+                                y = ld_16bits_mem8_read();
                             }
-                            Wb(Ga, dc(Ja, xa[Ga], Ha));
-                            break Fd;
-                        case 0x105:
-                        case 0x10d:
-                        case 0x115:
-                        case 0x11d:
-                        case 0x125:
-                        case 0x12d:
-                        case 0x135:
-                        case 0x13d:
-                            Ha = Ob();
-                            Ja = (b >> 3) & 7;
-                            Wb(0, dc(Ja, xa[0], Ha));
-                            break Fd;
-                        case 0x181:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Ha = Ob();
-                                xa[Fa] = dc(Ja, xa[Fa], Ha);
+                            set_lower_word_in_register(reg_idx1, do_16bit_math(conditional_var, regs[reg_idx1], y));
+                            break EXEC_LOOP;
+                        case 0x105://ADD Ivds rAX Add
+                        case 0x10d://OR Ivds rAX Logical Inclusive OR
+                        case 0x115://ADC Ivds rAX Add with Carry
+                        case 0x11d://SBB Ivds rAX Integer Subtraction with Borrow
+                        case 0x125://AND Ivds rAX Logical AND
+                        case 0x12d://SUB Ivds rAX Subtract
+                        case 0x135://XOR Ivds rAX Logical Exclusive OR
+                        case 0x13d://CMP rAX  Compare Two Operands
+                            y = ld16_mem8_direct();
+                            conditional_var = (OPbyte >> 3) & 7;
+                            set_lower_word_in_register(0, do_16bit_math(conditional_var, regs[0], y));
+                            break EXEC_LOOP;
+                        case 0x181://ADD Ivds Evqp Add
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                y = ld16_mem8_direct();
+                                regs[reg_idx0] = do_16bit_math(conditional_var, regs[reg_idx0], y);
                             } else {
-                                fa = Pb(Ea);
-                                Ha = Ob();
-                                if (Ja != 7) {
-                                    ga = ob();
-                                    ga = dc(Ja, ga, Ha);
-                                    ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                y = ld16_mem8_direct();
+                                if (conditional_var != 7) {
+                                    x = ld_16bits_mem8_write();
+                                    x = do_16bit_math(conditional_var, x, y);
+                                    st16_mem8_write(x);
                                 } else {
-                                    ga = ib();
-                                    dc(7, ga, Ha);
+                                    x = ld_16bits_mem8_read();
+                                    do_16bit_math(7, x, y);
                                 }
                             }
-                            break Fd;
-                        case 0x183:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Ha = ((Ta[Kb++] << 24) >> 24);
-                                ;
-                                Wb(Fa, dc(Ja, xa[Fa], Ha));
+                            break EXEC_LOOP;
+                        case 0x183://ADD Ibs Evqp Add
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                                set_lower_word_in_register(reg_idx0, do_16bit_math(conditional_var, regs[reg_idx0], y));
                             } else {
-                                fa = Pb(Ea);
-                                Ha = ((Ta[Kb++] << 24) >> 24);
-                                ;
-                                if (Ja != 7) {
-                                    ga = ob();
-                                    ga = dc(Ja, ga, Ha);
-                                    ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                                if (conditional_var != 7) {
+                                    x = ld_16bits_mem8_write();
+                                    x = do_16bit_math(conditional_var, x, y);
+                                    st16_mem8_write(x);
                                 } else {
-                                    ga = ib();
-                                    dc(7, ga, Ha);
+                                    x = ld_16bits_mem8_read();
+                                    do_16bit_math(7, x, y);
                                 }
                             }
-                            break Fd;
-                        case 0x140:
-                        case 0x141:
-                        case 0x142:
-                        case 0x143:
-                        case 0x144:
-                        case 0x145:
-                        case 0x146:
-                        case 0x147:
-                            Ga = b & 7;
-                            Wb(Ga, ec(xa[Ga]));
-                            break Fd;
-                        case 0x148:
-                        case 0x149:
-                        case 0x14a:
-                        case 0x14b:
-                        case 0x14c:
-                        case 0x14d:
-                        case 0x14e:
-                        case 0x14f:
-                            Ga = b & 7;
-                            Wb(Ga, fc(xa[Ga]));
-                            break Fd;
-                        case 0x16b:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Ha = xa[Ea & 7];
+                            break EXEC_LOOP;
+                        case 0x140://INC  Zv Increment by 1
+                        case 0x141://REX.B   Extension of r/m field, base field, or opcode reg field
+                        case 0x142://REX.X   Extension of SIB index field
+                        case 0x143://REX.XB   REX.X and REX.B combination
+                        case 0x144://REX.R   Extension of ModR/M reg field
+                        case 0x145://REX.RB   REX.R and REX.B combination
+                        case 0x146://REX.RX   REX.R and REX.X combination
+                        case 0x147://REX.RXB   REX.R, REX.X and REX.B combination
+                            reg_idx1 = OPbyte & 7;
+                            set_lower_word_in_register(reg_idx1, increment_16bit(regs[reg_idx1]));
+                            break EXEC_LOOP;
+                        case 0x148://DEC  Zv Decrement by 1
+                        case 0x149://REX.WB   REX.W and REX.B combination
+                        case 0x14a://REX.WX   REX.W and REX.X combination
+                        case 0x14b://REX.WXB   REX.W, REX.X and REX.B combination
+                        case 0x14c://REX.WR   REX.W and REX.R combination
+                        case 0x14d://REX.WRB   REX.W, REX.R and REX.B combination
+                        case 0x14e://REX.WRX   REX.W, REX.R and REX.X combination
+                        case 0x14f://REX.WRXB   REX.W, REX.R, REX.X and REX.B combination
+                            reg_idx1 = OPbyte & 7;
+                            set_lower_word_in_register(reg_idx1, decrement_16bit(regs[reg_idx1]));
+                            break EXEC_LOOP;
+                        case 0x16b://IMUL Evqp Gvqp Signed Multiply
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                y = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                Ha = ib();
+                                mem8_loc = segment_translation(mem8);
+                                y = ld_16bits_mem8_read();
                             }
-                            Ia = ((Ta[Kb++] << 24) >> 24);
-                            ;
-                            Wb(Ga, Rc(Ha, Ia));
-                            break Fd;
-                        case 0x169:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ga = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Ha = xa[Ea & 7];
+                            z = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                            set_lower_word_in_register(reg_idx1, op_16_IMUL(y, z));
+                            break EXEC_LOOP;
+                        case 0x169://IMUL Evqp Gvqp Signed Multiply
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            reg_idx1 = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                y = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                Ha = ib();
+                                mem8_loc = segment_translation(mem8);
+                                y = ld_16bits_mem8_read();
                             }
-                            Ia = Ob();
-                            Wb(Ga, Rc(Ha, Ia));
-                            break Fd;
-                        case 0x185:
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) == 3) {
-                                ga = xa[Ea & 7];
+                            z = ld16_mem8_direct();
+                            set_lower_word_in_register(reg_idx1, op_16_IMUL(y, z));
+                            break EXEC_LOOP;
+                        case 0x185://TEST Evqp  Logical Compare
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) == 3) {
+                                x = regs[mem8 & 7];
                             } else {
-                                fa = Pb(Ea);
-                                ga = ib();
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_read();
                             }
-                            Ha = xa[(Ea >> 3) & 7];
+                            y = regs[(mem8 >> 3) & 7];
                             {
-                                za = (((ga & Ha) << 16) >> 16);
-                                Aa = 13;
+                                _dst = (((x & y) << 16) >> 16);
+                                _op = 13;
                             }
-                            ;
-                            break Fd;
-                        case 0x1a9:
-                            Ha = Ob();
+                            break EXEC_LOOP;
+                        case 0x1a9://TEST rAX  Logical Compare
+                            y = ld16_mem8_direct();
                             {
-                                za = (((xa[0] & Ha) << 16) >> 16);
-                                Aa = 13;
+                                _dst = (((regs[0] & y) << 16) >> 16);
+                                _op = 13;
                             }
-                            ;
-                            break Fd;
-                        case 0x1f7:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            switch (Ja) {
+                            break EXEC_LOOP;
+                        case 0x1f7://TEST Evqp  Logical Compare
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            switch (conditional_var) {
                                 case 0:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    Ha = Ob();
+                                    y = ld16_mem8_direct();
                                     {
-                                        za = (((ga & Ha) << 16) >> 16);
-                                        Aa = 13;
+                                        _dst = (((x & y) << 16) >> 16);
+                                        _op = 13;
                                     }
-                                    ;
                                     break;
                                 case 2:
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Wb(Fa, ~xa[Fa]);
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, ~regs[reg_idx0]);
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        ga = ~ga;
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        x = ~x;
+                                        st16_mem8_write(x);
                                     }
                                     break;
                                 case 3:
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Wb(Fa, dc(5, 0, xa[Fa]));
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, do_16bit_math(5, 0, regs[reg_idx0]));
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        ga = dc(5, 0, ga);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        x = do_16bit_math(5, 0, x);
+                                        st16_mem8_write(x);
                                     }
                                     break;
                                 case 4:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    ga = Qc(xa[0], ga);
-                                    Wb(0, ga);
-                                    Wb(2, ga >> 16);
+                                    x = op_16_MUL(regs[0], x);
+                                    set_lower_word_in_register(0, x);
+                                    set_lower_word_in_register(2, x >> 16);
                                     break;
                                 case 5:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    ga = Rc(xa[0], ga);
-                                    Wb(0, ga);
-                                    Wb(2, ga >> 16);
+                                    x = op_16_IMUL(regs[0], x);
+                                    set_lower_word_in_register(0, x);
+                                    set_lower_word_in_register(2, x >> 16);
                                     break;
                                 case 6:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    Fc(ga);
+                                    op_16_DIV(x);
                                     break;
                                 case 7:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    Gc(ga);
+                                    op_16_IDIV(x);
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            break Fd;
-                        case 0x1c1:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Ha = Ta[Kb++];
-                                ;
-                                Fa = Ea & 7;
-                                Wb(Fa, mc(Ja, xa[Fa], Ha));
+                            break EXEC_LOOP;
+                        case 0x1c1://ROL Ib Evqp Rotate
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                y = phys_mem8[physmem8_ptr++];
+                                reg_idx0 = mem8 & 7;
+                                set_lower_word_in_register(reg_idx0, shift16(conditional_var, regs[reg_idx0], y));
                             } else {
-                                fa = Pb(Ea);
-                                Ha = Ta[Kb++];
-                                ;
-                                ga = ob();
-                                ga = mc(Ja, ga, Ha);
-                                ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                y = phys_mem8[physmem8_ptr++];
+                                x = ld_16bits_mem8_write();
+                                x = shift16(conditional_var, x, y);
+                                st16_mem8_write(x);
                             }
-                            break Fd;
-                        case 0x1d1:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Wb(Fa, mc(Ja, xa[Fa], 1));
+                            break EXEC_LOOP;
+                        case 0x1d1://ROL 1 Evqp Rotate
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_lower_word_in_register(reg_idx0, shift16(conditional_var, regs[reg_idx0], 1));
                             } else {
-                                fa = Pb(Ea);
-                                ga = ob();
-                                ga = mc(Ja, ga, 1);
-                                ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_write();
+                                x = shift16(conditional_var, x, 1);
+                                st16_mem8_write(x);
                             }
-                            break Fd;
-                        case 0x1d3:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            Ha = xa[1] & 0xff;
-                            if ((Ea >> 6) == 3) {
-                                Fa = Ea & 7;
-                                Wb(Fa, mc(Ja, xa[Fa], Ha));
+                            break EXEC_LOOP;
+                        case 0x1d3://ROL CL Evqp Rotate
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            y = regs[1] & 0xff;
+                            if ((mem8 >> 6) == 3) {
+                                reg_idx0 = mem8 & 7;
+                                set_lower_word_in_register(reg_idx0, shift16(conditional_var, regs[reg_idx0], y));
                             } else {
-                                fa = Pb(Ea);
-                                ga = ob();
-                                ga = mc(Ja, ga, Ha);
-                                ub(ga);
+                                mem8_loc = segment_translation(mem8);
+                                x = ld_16bits_mem8_write();
+                                x = shift16(conditional_var, x, y);
+                                st16_mem8_write(x);
                             }
-                            break Fd;
-                        case 0x198:
-                            Wb(0, (xa[0] << 24) >> 24);
-                            break Fd;
-                        case 0x199:
-                            Wb(2, (xa[0] << 16) >> 31);
-                            break Fd;
-                        case 0x190:
-                            break Fd;
-                        case 0x150:
+                            break EXEC_LOOP;
+                        case 0x198://CBW AL AX Convert Byte to Word
+                            set_lower_word_in_register(0, (regs[0] << 24) >> 24);
+                            break EXEC_LOOP;
+                        case 0x199://CWD AX DX Convert Word to Doubleword
+                            set_lower_word_in_register(2, (regs[0] << 16) >> 31);
+                            break EXEC_LOOP;
+                        case 0x190://XCHG  Zvqp Exchange Register/Memory with Register
+                            break EXEC_LOOP;
+                        case 0x150://PUSH Zv SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                         case 0x151:
                         case 0x152:
                         case 0x153:
@@ -8724,9 +8807,9 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0x155:
                         case 0x156:
                         case 0x157:
-                            vd(xa[b & 7]);
-                            break Fd;
-                        case 0x158:
+                            push_word_to_stack(regs[OPbyte & 7]);
+                            break EXEC_LOOP;
+                        case 0x158://POP SS:[rSP] Zv Pop a Value from the Stack
                         case 0x159:
                         case 0x15a:
                         case 0x15b:
@@ -8734,356 +8817,342 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0x15d:
                         case 0x15e:
                         case 0x15f:
-                            ga = yd();
-                            zd();
-                            Wb(b & 7, ga);
-                            break Fd;
-                        case 0x160:
-                            Jf();
-                            break Fd;
-                        case 0x161:
-                            Lf();
-                            break Fd;
-                        case 0x18f:
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) == 3) {
-                                ga = yd();
-                                zd();
-                                Wb(Ea & 7, ga);
+                            x = pop_word_from_stack_read();
+                            pop_word_from_stack_incr_ptr();
+                            set_lower_word_in_register(OPbyte & 7, x);
+                            break EXEC_LOOP;
+                        case 0x160://PUSHA AX SS:[rSP] Push All General-Purpose Registers
+                            op_16_PUSHA();
+                            break EXEC_LOOP;
+                        case 0x161://POPA SS:[rSP] DI Pop All General-Purpose Registers
+                            op_16_POPA();
+                            break EXEC_LOOP;
+                        case 0x18f://POP SS:[rSP] Ev Pop a Value from the Stack
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) == 3) {
+                                x = pop_word_from_stack_read();
+                                pop_word_from_stack_incr_ptr();
+                                set_lower_word_in_register(mem8 & 7, x);
                             } else {
-                                ga = yd();
-                                Ha = xa[4];
-                                zd();
-                                Ia = xa[4];
-                                fa = Pb(Ea);
-                                xa[4] = Ha;
-                                ub(ga);
-                                xa[4] = Ia;
+                                x = pop_word_from_stack_read();
+                                y = regs[4];
+                                pop_word_from_stack_incr_ptr();
+                                z = regs[4];
+                                mem8_loc = segment_translation(mem8);
+                                regs[4] = y;
+                                st16_mem8_write(x);
+                                regs[4] = z;
                             }
-                            break Fd;
-                        case 0x168:
-                            ga = Ob();
-                            vd(ga);
-                            break Fd;
-                        case 0x16a:
-                            ga = ((Ta[Kb++] << 24) >> 24);
-                            ;
-                            vd(ga);
-                            break Fd;
-                        case 0x1c8:
-                            Pf();
-                            break Fd;
-                        case 0x1c9:
-                            Nf();
-                            break Fd;
-                        case 0x106:
-                        case 0x10e:
-                        case 0x116:
-                        case 0x11e:
-                            vd(wa.segs[(b >> 3) & 3].selector);
-                            break Fd;
-                        case 0x107:
-                        case 0x117:
-                        case 0x11f:
-                            Ie((b >> 3) & 3, yd());
-                            zd();
-                            break Fd;
-                        case 0x18d:
-                            Ea = Ta[Kb++];
-                            ;
-                            if ((Ea >> 6) == 3)
-                                Dc(6);
-                            Da = (Da & ~0x000f) | (6 + 1);
-                            Wb((Ea >> 3) & 7, Pb(Ea));
-                            break Fd;
-                        case 0x1ff:
-                            Ea = Ta[Kb++];
-                            ;
-                            Ja = (Ea >> 3) & 7;
-                            switch (Ja) {
+                            break EXEC_LOOP;
+                        case 0x168://PUSH Ivs SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                            x = ld16_mem8_direct();
+                            push_word_to_stack(x);
+                            break EXEC_LOOP;
+                        case 0x16a://PUSH Ibss SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                            x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                            push_word_to_stack(x);
+                            break EXEC_LOOP;
+                        case 0x1c8://ENTER Iw SS:[rSP] Make Stack Frame for Procedure Parameters
+                            op_16_ENTER();
+                            break EXEC_LOOP;
+                        case 0x1c9://LEAVE SS:[rSP] eBP High Level Procedure Exit
+                            op_16_LEAVE();
+                            break EXEC_LOOP;
+                        case 0x106://PUSH ES SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                        case 0x10e://PUSH CS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                        case 0x116://PUSH SS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                        case 0x11e://PUSH DS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                            push_word_to_stack(cpu.segs[(OPbyte >> 3) & 3].selector);
+                            break EXEC_LOOP;
+                        case 0x107://POP SS:[rSP] ES Pop a Value from the Stack
+                        case 0x117://POP SS:[rSP] SS Pop a Value from the Stack
+                        case 0x11f://POP SS:[rSP] DS Pop a Value from the Stack
+                            set_segment_register((OPbyte >> 3) & 3, pop_word_from_stack_read());
+                            pop_word_from_stack_incr_ptr();
+                            break EXEC_LOOP;
+                        case 0x18d://LEA M Gvqp Load Effective Address
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            if ((mem8 >> 6) == 3)
+                                abort(6);
+                            CS_flags = (CS_flags & ~0x000f) | (6 + 1);
+                            set_lower_word_in_register((mem8 >> 3) & 7, segment_translation(mem8));
+                            break EXEC_LOOP;
+                        case 0x1ff://INC  Evqp Increment by 1
+                            mem8 = phys_mem8[physmem8_ptr++];
+                            conditional_var = (mem8 >> 3) & 7;
+                            switch (conditional_var) {
                                 case 0:
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Wb(Fa, ec(xa[Fa]));
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, increment_16bit(regs[reg_idx0]));
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        ga = ec(ga);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        x = increment_16bit(x);
+                                        st16_mem8_write(x);
                                     }
                                     break;
                                 case 1:
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Wb(Fa, fc(xa[Fa]));
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, decrement_16bit(regs[reg_idx0]));
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        ga = fc(ga);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        x = decrement_16bit(x);
+                                        st16_mem8_write(x);
                                     }
                                     break;
                                 case 2:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7] & 0xffff;
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7] & 0xffff;
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    vd((Jb + Kb - Mb));
-                                    Jb = ga, Kb = Mb = 0;
+                                    push_word_to_stack((eip + physmem8_ptr - initial_mem_ptr));
+                                    eip = x, physmem8_ptr = initial_mem_ptr = 0;
                                     break;
                                 case 4:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7] & 0xffff;
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7] & 0xffff;
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    Jb = ga, Kb = Mb = 0;
+                                    eip = x, physmem8_ptr = initial_mem_ptr = 0;
                                     break;
                                 case 6:
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    vd(ga);
+                                    push_word_to_stack(x);
                                     break;
                                 case 3:
                                 case 5:
-                                    if ((Ea >> 6) == 3)
-                                        Dc(6);
-                                    fa = Pb(Ea);
-                                    ga = ib();
-                                    fa = (fa + 2) >> 0;
-                                    Ha = ib();
-                                    if (Ja == 3)
-                                        Ze(0, Ha, ga, (Jb + Kb - Mb));
+                                    if ((mem8 >> 6) == 3)
+                                        abort(6);
+                                    mem8_loc = segment_translation(mem8);
+                                    x = ld_16bits_mem8_read();
+                                    mem8_loc = (mem8_loc + 2) >> 0;
+                                    y = ld_16bits_mem8_read();
+                                    if (conditional_var == 3)
+                                        op_CALLF(0, y, x, (eip + physmem8_ptr - initial_mem_ptr));
                                     else
-                                        Oe(Ha, ga);
+                                        op_JMPF(y, x);
                                     break;
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
-                            break Fd;
-                        case 0x1eb:
-                            ga = ((Ta[Kb++] << 24) >> 24);
-                            ;
-                            Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
-                            break Fd;
-                        case 0x1e9:
-                            ga = Ob();
-                            Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
-                            break Fd;
-                        case 0x170:
-                        case 0x171:
-                        case 0x172:
-                        case 0x173:
-                        case 0x174:
-                        case 0x175:
-                        case 0x176:
-                        case 0x177:
-                        case 0x178:
-                        case 0x179:
-                        case 0x17a:
-                        case 0x17b:
-                        case 0x17c:
-                        case 0x17d:
-                        case 0x17e:
-                        case 0x17f:
-                            ga = ((Ta[Kb++] << 24) >> 24);
-                            ;
-                            Ha = fd(b & 0xf);
-                            if (Ha)
-                                Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
-                            break Fd;
-                        case 0x1c2:
-                            Ha = (Ob() << 16) >> 16;
-                            ga = yd();
-                            xa[4] = (xa[4] & ~Pa) | ((xa[4] + 2 + Ha) & Pa);
-                            Jb = ga, Kb = Mb = 0;
-                            break Fd;
-                        case 0x1c3:
-                            ga = yd();
-                            zd();
-                            Jb = ga, Kb = Mb = 0;
-                            break Fd;
-                        case 0x1e8:
-                            ga = Ob();
-                            vd((Jb + Kb - Mb));
-                            Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
-                            break Fd;
-                        case 0x162:
-                            If();
-                            break Fd;
-                        case 0x1a5:
-                            lg();
-                            break Fd;
-                        case 0x1a7:
-                            ng();
-                            break Fd;
-                        case 0x1ad:
-                            og();
-                            break Fd;
-                        case 0x1af:
-                            pg();
-                            break Fd;
-                        case 0x1ab:
-                            mg();
-                            break Fd;
-                        case 0x16d:
-                            jg();
+                            break EXEC_LOOP;
+                        case 0x1eb://JMP Jbs  Jump
+                            x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                            break EXEC_LOOP;
+                        case 0x1e9://JMP Jvds  Jump
+                            x = ld16_mem8_direct();
+                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                            break EXEC_LOOP;
+                        case 0x170://JO Jbs  Jump short if overflow (OF=1)
+                        case 0x171://JNO Jbs  Jump short if not overflow (OF=0)
+                        case 0x172://JB Jbs  Jump short if below/not above or equal/carry (CF=1)
+                        case 0x173://JNB Jbs  Jump short if not below/above or equal/not carry (CF=0)
+                        case 0x174://JZ Jbs  Jump short if zero/equal (ZF=0)
+                        case 0x175://JNZ Jbs  Jump short if not zero/not equal (ZF=1)
+                        case 0x176://JBE Jbs  Jump short if below or equal/not above (CF=1 AND ZF=1)
+                        case 0x177://JNBE Jbs  Jump short if not below or equal/above (CF=0 AND ZF=0)
+                        case 0x178://JS Jbs  Jump short if sign (SF=1)
+                        case 0x179://JNS Jbs  Jump short if not sign (SF=0)
+                        case 0x17a://JP Jbs  Jump short if parity/parity even (PF=1)
+                        case 0x17b://JNP Jbs  Jump short if not parity/parity odd
+                        case 0x17c://JL Jbs  Jump short if less/not greater (SF!=OF)
+                        case 0x17d://JNL Jbs  Jump short if not less/greater or equal (SF=OF)
+                        case 0x17e://JLE Jbs  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x17f://JNLE Jbs  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
+                            x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                            y = check_status_bits_for_jump(OPbyte & 0xf);
+                            if (y)
+                                eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                            break EXEC_LOOP;
+                        case 0x1c2://RETN SS:[rSP]  Return from procedure
+                            y = (ld16_mem8_direct() << 16) >> 16;
+                            x = pop_word_from_stack_read();
+                            regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + y) & SS_mask);
+                            eip = x, physmem8_ptr = initial_mem_ptr = 0;
+                            break EXEC_LOOP;
+                        case 0x1c3://RETN SS:[rSP]  Return from procedure
+                            x = pop_word_from_stack_read();
+                            pop_word_from_stack_incr_ptr();
+                            eip = x, physmem8_ptr = initial_mem_ptr = 0;
+                            break EXEC_LOOP;
+                        case 0x1e8://CALL Jvds SS:[rSP] Call Procedure
+                            x = ld16_mem8_direct();
+                            push_word_to_stack((eip + physmem8_ptr - initial_mem_ptr));
+                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                            break EXEC_LOOP;
+                        case 0x162://BOUND Gv SS:[rSP] Check Array Index Against Bounds
+                            op_16_BOUND();
+                            break EXEC_LOOP;
+                        case 0x1a5://MOVS DS:[SI] ES:[DI] Move Data from String to String
+                            op_16_MOVS();
+                            break EXEC_LOOP;
+                        case 0x1a7://CMPS ES:[DI]  Compare String Operands
+                            op_16_CMPS();
+                            break EXEC_LOOP;
+                        case 0x1ad://LODS DS:[SI] AX Load String
+                            op_16_LODS();
+                            break EXEC_LOOP;
+                        case 0x1af://SCAS ES:[DI]  Scan String
+                            op_16_SCAS();
+                            break EXEC_LOOP;
+                        case 0x1ab://STOS AX ES:[DI] Store String
+                            op_16_STOS();
+                            break EXEC_LOOP;
+                        case 0x16d://INS DX ES:[DI] Input from Port to String
+                            op_16_INS();
                             {
-                                if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                                    break Bg;
+                                if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                                    break OUTER_LOOP;
                             }
-                            ;
-                            break Fd;
-                        case 0x16f:
-                            kg();
+                            break EXEC_LOOP;
+                        case 0x16f://OUTS DS:[SI] DX Output String to Port
+                            op_16_OUTS();
                             {
-                                if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                                    break Bg;
+                                if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                                    break OUTER_LOOP;
                             }
-                            ;
-                            break Fd;
-                        case 0x1e5:
-                            Sa = (wa.eflags >> 12) & 3;
-                            if (wa.cpl > Sa)
-                                Dc(13);
-                            ga = Ta[Kb++];
-                            ;
-                            Wb(0, wa.ld16_port(ga));
+                            break EXEC_LOOP;
+                        case 0x1e5://IN Ib eAX Input from Port
+                            iopl = (cpu.eflags >> 12) & 3;
+                            if (cpu.cpl > iopl)
+                                abort(13);
+                            x = phys_mem8[physmem8_ptr++];
+                            set_lower_word_in_register(0, cpu.ld16_port(x));
                             {
-                                if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                                    break Bg;
+                                if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                                    break OUTER_LOOP;
                             }
-                            ;
-                            break Fd;
-                        case 0x1e7:
-                            Sa = (wa.eflags >> 12) & 3;
-                            if (wa.cpl > Sa)
-                                Dc(13);
-                            ga = Ta[Kb++];
-                            ;
-                            wa.st16_port(ga, xa[0] & 0xffff);
+                            break EXEC_LOOP;
+                        case 0x1e7://OUT eAX Ib Output to Port
+                            iopl = (cpu.eflags >> 12) & 3;
+                            if (cpu.cpl > iopl)
+                                abort(13);
+                            x = phys_mem8[physmem8_ptr++];
+                            cpu.st16_port(x, regs[0] & 0xffff);
                             {
-                                if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                                    break Bg;
+                                if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                                    break OUTER_LOOP;
                             }
-                            ;
-                            break Fd;
-                        case 0x1ed:
-                            Sa = (wa.eflags >> 12) & 3;
-                            if (wa.cpl > Sa)
-                                Dc(13);
-                            Wb(0, wa.ld16_port(xa[2] & 0xffff));
+                            break EXEC_LOOP;
+                        case 0x1ed://IN DX eAX Input from Port
+                            iopl = (cpu.eflags >> 12) & 3;
+                            if (cpu.cpl > iopl)
+                                abort(13);
+                            set_lower_word_in_register(0, cpu.ld16_port(regs[2] & 0xffff));
                             {
-                                if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                                    break Bg;
+                                if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                                    break OUTER_LOOP;
                             }
-                            ;
-                            break Fd;
-                        case 0x1ef:
-                            Sa = (wa.eflags >> 12) & 3;
-                            if (wa.cpl > Sa)
-                                Dc(13);
-                            wa.st16_port(xa[2] & 0xffff, xa[0] & 0xffff);
+                            break EXEC_LOOP;
+                        case 0x1ef://OUT eAX DX Output to Port
+                            iopl = (cpu.eflags >> 12) & 3;
+                            if (cpu.cpl > iopl)
+                                abort(13);
+                            cpu.st16_port(regs[2] & 0xffff, regs[0] & 0xffff);
                             {
-                                if (wa.hard_irq != 0 && (wa.eflags & 0x00000200))
-                                    break Bg;
+                                if (cpu.hard_irq != 0 && (cpu.eflags & 0x00000200))
+                                    break OUTER_LOOP;
                             }
-                            ;
-                            break Fd;
-                        case 0x166:
-                        case 0x167:
-                        case 0x1f0:
-                        case 0x1f2:
-                        case 0x1f3:
-                        case 0x126:
-                        case 0x12e:
-                        case 0x136:
-                        case 0x13e:
-                        case 0x164:
-                        case 0x165:
-                        case 0x100:
-                        case 0x108:
-                        case 0x110:
-                        case 0x118:
-                        case 0x120:
-                        case 0x128:
-                        case 0x130:
-                        case 0x138:
-                        case 0x102:
-                        case 0x10a:
-                        case 0x112:
-                        case 0x11a:
-                        case 0x122:
-                        case 0x12a:
-                        case 0x132:
-                        case 0x13a:
-                        case 0x104:
-                        case 0x10c:
-                        case 0x114:
-                        case 0x11c:
-                        case 0x124:
-                        case 0x12c:
-                        case 0x134:
-                        case 0x13c:
-                        case 0x1a0:
-                        case 0x1a2:
-                        case 0x1d8:
-                        case 0x1d9:
-                        case 0x1da:
-                        case 0x1db:
-                        case 0x1dc:
-                        case 0x1dd:
-                        case 0x1de:
-                        case 0x1df:
-                        case 0x184:
-                        case 0x1a8:
-                        case 0x1f6:
-                        case 0x1c0:
-                        case 0x1d0:
-                        case 0x1d2:
-                        case 0x1fe:
-                        case 0x1cd:
-                        case 0x1ce:
-                        case 0x1f5:
-                        case 0x1f8:
-                        case 0x1f9:
-                        case 0x1fc:
-                        case 0x1fd:
-                        case 0x1fa:
-                        case 0x1fb:
-                        case 0x19e:
-                        case 0x19f:
-                        case 0x1f4:
-                        case 0x127:
-                        case 0x12f:
-                        case 0x137:
-                        case 0x13f:
-                        case 0x1d4:
-                        case 0x1d5:
-                        case 0x16c:
-                        case 0x16e:
-                        case 0x1a4:
-                        case 0x1a6:
-                        case 0x1aa:
-                        case 0x1ac:
-                        case 0x1ae:
-                        case 0x180:
-                        case 0x182:
-                        case 0x186:
-                        case 0x188:
-                        case 0x18a:
-                        case 0x18c:
-                        case 0x18e:
-                        case 0x19b:
-                        case 0x1b0:
+                            break EXEC_LOOP;
+                        case 0x166://   Operand-size override prefix
+                        case 0x167://   Address-size override prefix
+                        case 0x1f0://LOCK   Assert LOCK# Signal Prefix
+                        case 0x1f2://REPNZ  eCX Repeat String Operation Prefix
+                        case 0x1f3://REPZ  eCX Repeat String Operation Prefix
+                        case 0x126://ES ES  ES segment override prefix
+                        case 0x12e://CS CS  CS segment override prefix
+                        case 0x136://SS SS  SS segment override prefix
+                        case 0x13e://DS DS  DS segment override prefix
+                        case 0x164://FS FS  FS segment override prefix
+                        case 0x165://GS GS  GS segment override prefix
+                        case 0x100://ADD Gb Eb Add
+                        case 0x108://OR Gb Eb Logical Inclusive OR
+                        case 0x110://ADC Gb Eb Add with Carry
+                        case 0x118://SBB Gb Eb Integer Subtraction with Borrow
+                        case 0x120://AND Gb Eb Logical AND
+                        case 0x128://SUB Gb Eb Subtract
+                        case 0x130://XOR Gb Eb Logical Exclusive OR
+                        case 0x138://CMP Eb  Compare Two Operands
+                        case 0x102://ADD Eb Gb Add
+                        case 0x10a://OR Eb Gb Logical Inclusive OR
+                        case 0x112://ADC Eb Gb Add with Carry
+                        case 0x11a://SBB Eb Gb Integer Subtraction with Borrow
+                        case 0x122://AND Eb Gb Logical AND
+                        case 0x12a://SUB Eb Gb Subtract
+                        case 0x132://XOR Eb Gb Logical Exclusive OR
+                        case 0x13a://CMP Gb  Compare Two Operands
+                        case 0x104://ADD Ib AL Add
+                        case 0x10c://OR Ib AL Logical Inclusive OR
+                        case 0x114://ADC Ib AL Add with Carry
+                        case 0x11c://SBB Ib AL Integer Subtraction with Borrow
+                        case 0x124://AND Ib AL Logical AND
+                        case 0x12c://SUB Ib AL Subtract
+                        case 0x134://XOR Ib AL Logical Exclusive OR
+                        case 0x13c://CMP AL  Compare Two Operands
+                        case 0x1a0://MOV Ob AL Move
+                        case 0x1a2://MOV AL Ob Move
+                        case 0x1d8://FADD Msr ST Add
+                        case 0x1d9://FLD ESsr ST Load Floating Point Value
+                        case 0x1da://FIADD Mdi ST Add
+                        case 0x1db://FILD Mdi ST Load Integer
+                        case 0x1dc://FADD Mdr ST Add
+                        case 0x1dd://FLD Mdr ST Load Floating Point Value
+                        case 0x1de://FIADD Mwi ST Add
+                        case 0x1df://FILD Mwi ST Load Integer
+                        case 0x184://TEST Eb  Logical Compare
+                        case 0x1a8://TEST AL  Logical Compare
+                        case 0x1f6://TEST Eb  Logical Compare
+                        case 0x1c0://ROL Ib Eb Rotate
+                        case 0x1d0://ROL 1 Eb Rotate
+                        case 0x1d2://ROL CL Eb Rotate
+                        case 0x1fe://INC  Eb Increment by 1
+                        case 0x1cd://INT Ib SS:[rSP] Call to Interrupt Procedure
+                        case 0x1ce://INTO eFlags SS:[rSP] Call to Interrupt Procedure
+                        case 0x1f5://CMC   Complement Carry Flag
+                        case 0x1f8://CLC   Clear Carry Flag
+                        case 0x1f9://STC   Set Carry Flag
+                        case 0x1fc://CLD   Clear Direction Flag
+                        case 0x1fd://STD   Set Direction Flag
+                        case 0x1fa://CLI   Clear Interrupt Flag
+                        case 0x1fb://STI   Set Interrupt Flag
+                        case 0x19e://SAHF AH  Store AH into Flags
+                        case 0x19f://LAHF  AH Load Status Flags into AH Register
+                        case 0x1f4://HLT   Halt
+                        case 0x127://DAA  AL Decimal Adjust AL after Addition
+                        case 0x12f://DAS  AL Decimal Adjust AL after Subtraction
+                        case 0x137://AAA  AL ASCII Adjust After Addition
+                        case 0x13f://AAS  AL ASCII Adjust AL After Subtraction
+                        case 0x1d4://AAM  AL ASCII Adjust AX After Multiply
+                        case 0x1d5://AAD  AL ASCII Adjust AX Before Division
+                        case 0x16c://INS DX (ES:)[rDI] Input from Port to String
+                        case 0x16e://OUTS (DS):[rSI] DX Output String to Port
+                        case 0x1a4://MOVS (DS:)[rSI] (ES:)[rDI] Move Data from String to String
+                        case 0x1a6://CMPS (ES:)[rDI]  Compare String Operands
+                        case 0x1aa://STOS AL (ES:)[rDI] Store String
+                        case 0x1ac://LODS (DS:)[rSI] AL Load String
+                        case 0x1ae://SCAS (ES:)[rDI]  Scan String
+                        case 0x180://ADD Ib Eb Add
+                        case 0x182://ADD Ib Eb Add
+                        case 0x186://XCHG  Gb Exchange Register/Memory with Register
+                        case 0x188://MOV Gb Eb Move
+                        case 0x18a://MOV Eb Gb Move
+                        case 0x18c://MOV Sw Mw Move
+                        case 0x18e://MOV Ew Sw Move
+                        case 0x19b://FWAIT   Check pending unmasked floating-point exceptions
+                        case 0x1b0://MOV Ib Zb Move
                         case 0x1b1:
                         case 0x1b2:
                         case 0x1b3:
@@ -9091,1361 +9160,491 @@ CPU_X86.prototype.exec_internal = function(ua, va) {
                         case 0x1b5:
                         case 0x1b6:
                         case 0x1b7:
-                        case 0x1c6:
-                        case 0x1cc:
-                        case 0x1d7:
-                        case 0x1e4:
-                        case 0x1e6:
-                        case 0x1ec:
-                        case 0x1ee:
-                        case 0x1cf:
-                        case 0x1ca:
-                        case 0x1cb:
-                        case 0x19a:
-                        case 0x19c:
-                        case 0x19d:
-                        case 0x1ea:
-                        case 0x1e0:
-                        case 0x1e1:
-                        case 0x1e2:
-                        case 0x1e3:
-                            b &= 0xff;
+                        case 0x1c6://MOV Ib Eb Move
+                        case 0x1cc://INT 3 SS:[rSP] Call to Interrupt Procedure
+                        case 0x1d7://XLAT (DS:)[rBX+AL] AL Table Look-up Translation
+                        case 0x1e4://IN Ib AL Input from Port
+                        case 0x1e6://OUT AL Ib Output to Port
+                        case 0x1ec://IN DX AL Input from Port
+                        case 0x1ee://OUT AL DX Output to Port
+                        case 0x1cf://IRET SS:[rSP] Flags Interrupt Return
+                        case 0x1ca://RETF Iw  Return from procedure
+                        case 0x1cb://RETF SS:[rSP]  Return from procedure
+                        case 0x19a://CALLF Ap SS:[rSP] Call Procedure
+                        case 0x19c://PUSHF Flags SS:[rSP] Push FLAGS Register onto the Stack
+                        case 0x19d://POPF SS:[rSP] Flags Pop Stack into FLAGS Register
+                        case 0x1ea://JMPF Ap  Jump
+                        case 0x1e0://LOOPNZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=0
+                        case 0x1e1://LOOPZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=1
+                        case 0x1e2://LOOP Jbs eCX Decrement count; Jump short if count!=0
+                        case 0x1e3://JCXZ Jbs  Jump short if eCX register is 0
+                            OPbyte &= 0xff;
                             break;
-                        case 0x163:
-                        case 0x1d6:
-                        case 0x1f1:
+                        case 0x163://ARPL Ew  Adjust RPL Field of Segment Selector
+                        case 0x1d6://SALC   Undefined and Reserved; Does not Generate #UD
+                        case 0x1f1://INT1   Undefined and Reserved; Does not Generate #UD
                         default:
-                            Dc(6);
+                            abort(6);
+
+                        /*
+                           two byte instructions
+                           ================================================================================
+                         */
+
                         case 0x10f:
-                            b = Ta[Kb++];
-                            ;
-                            b |= 0x0100;
-                            switch (b) {
-                                case 0x180:
-                                case 0x181:
-                                case 0x182:
-                                case 0x183:
-                                case 0x184:
-                                case 0x185:
-                                case 0x186:
-                                case 0x187:
-                                case 0x188:
-                                case 0x189:
-                                case 0x18a:
-                                case 0x18b:
-                                case 0x18c:
-                                case 0x18d:
-                                case 0x18e:
-                                case 0x18f:
-                                    ga = Ob();
-                                    if (fd(b & 0xf))
-                                        Jb = (Jb + Kb - Mb + ga) & 0xffff, Kb = Mb = 0;
-                                    break Fd;
-                                case 0x140:
-                                case 0x141:
-                                case 0x142:
-                                case 0x143:
-                                case 0x144:
-                                case 0x145:
-                                case 0x146:
-                                case 0x147:
-                                case 0x148:
-                                case 0x149:
-                                case 0x14a:
-                                case 0x14b:
-                                case 0x14c:
-                                case 0x14d:
-                                case 0x14e:
-                                case 0x14f:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                            OPbyte = phys_mem8[physmem8_ptr++];
+                            OPbyte |= 0x0100;
+                            switch (OPbyte) {
+                                case 0x180://JO Jvds  Jump short if overflow (OF=1)
+                                case 0x181://JNO Jvds  Jump short if not overflow (OF=0)
+                                case 0x182://JB Jvds  Jump short if below/not above or equal/carry (CF=1)
+                                case 0x183://JNB Jvds  Jump short if not below/above or equal/not carry (CF=0)
+                                case 0x184://JZ Jvds  Jump short if zero/equal (ZF=0)
+                                case 0x185://JNZ Jvds  Jump short if not zero/not equal (ZF=1)
+                                case 0x186://JBE Jvds  Jump short if below or equal/not above (CF=1 AND ZF=1)
+                                case 0x187://JNBE Jvds  Jump short if not below or equal/above (CF=0 AND ZF=0)
+                                case 0x188://JS Jvds  Jump short if sign (SF=1)
+                                case 0x189://JNS Jvds  Jump short if not sign (SF=0)
+                                case 0x18a://JP Jvds  Jump short if parity/parity even (PF=1)
+                                case 0x18b://JNP Jvds  Jump short if not parity/parity odd
+                                case 0x18c://JL Jvds  Jump short if less/not greater (SF!=OF)
+                                case 0x18d://JNL Jvds  Jump short if not less/greater or equal (SF=OF)
+                                case 0x18e://JLE Jvds  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
+                                case 0x18f://JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
+                                    x = ld16_mem8_direct();
+                                    if (check_status_bits_for_jump(OPbyte & 0xf))
+                                        eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                                    break EXEC_LOOP;
+                                case 0x140://CMOVO Evqp Gvqp Conditional Move - overflow (OF=1)
+                                case 0x141://CMOVNO Evqp Gvqp Conditional Move - not overflow (OF=0)
+                                case 0x142://CMOVB Evqp Gvqp Conditional Move - below/not above or equal/carry (CF=1)
+                                case 0x143://CMOVNB Evqp Gvqp Conditional Move - not below/above or equal/not carry (CF=0)
+                                case 0x144://CMOVZ Evqp Gvqp Conditional Move - zero/equal (ZF=0)
+                                case 0x145://CMOVNZ Evqp Gvqp Conditional Move - not zero/not equal (ZF=1)
+                                case 0x146://CMOVBE Evqp Gvqp Conditional Move - below or equal/not above (CF=1 AND ZF=1)
+                                case 0x147://CMOVNBE Evqp Gvqp Conditional Move - not below or equal/above (CF=0 AND ZF=0)
+                                case 0x148://CMOVS Evqp Gvqp Conditional Move - sign (SF=1)
+                                case 0x149://CMOVNS Evqp Gvqp Conditional Move - not sign (SF=0)
+                                case 0x14a://CMOVP Evqp Gvqp Conditional Move - parity/parity even (PF=1)
+                                case 0x14b://CMOVNP Evqp Gvqp Conditional Move - not parity/parity odd
+                                case 0x14c://CMOVL Evqp Gvqp Conditional Move - less/not greater (SF!=OF)
+                                case 0x14d://CMOVNL Evqp Gvqp Conditional Move - not less/greater or equal (SF=OF)
+                                case 0x14e://CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                                case 0x14f://CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND (SF=OF))
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    if (fd(b & 0xf))
-                                        Wb((Ea >> 3) & 7, ga);
-                                    break Fd;
-                                case 0x1b6:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ga = (Ea >> 3) & 7;
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        ga = (xa[Fa & 3] >> ((Fa & 4) << 1)) & 0xff;
+                                    if (check_status_bits_for_jump(OPbyte & 0xf))
+                                        set_lower_word_in_register((mem8 >> 3) & 7, x);
+                                    break EXEC_LOOP;
+                                case 0x1b6://MOVZX Eb Gvqp Move with Zero-Extend
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    reg_idx1 = (mem8 >> 3) & 7;
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = gb();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_8bits_mem8_read();
                                     }
-                                    Wb(Ga, ga);
-                                    break Fd;
-                                case 0x1be:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ga = (Ea >> 3) & 7;
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        ga = (xa[Fa & 3] >> ((Fa & 4) << 1));
+                                    set_lower_word_in_register(reg_idx1, x);
+                                    break EXEC_LOOP;
+                                case 0x1be://MOVSX Eb Gvqp Move with Sign-Extension
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    reg_idx1 = (mem8 >> 3) & 7;
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = gb();
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_8bits_mem8_read();
                                     }
-                                    Wb(Ga, (((ga) << 24) >> 24));
-                                    break Fd;
-                                case 0x1af:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ga = (Ea >> 3) & 7;
-                                    if ((Ea >> 6) == 3) {
-                                        Ha = xa[Ea & 7];
+                                    set_lower_word_in_register(reg_idx1, (((x) << 24) >> 24));
+                                    break EXEC_LOOP;
+                                case 0x1af://IMUL Evqp Gvqp Signed Multiply
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    reg_idx1 = (mem8 >> 3) & 7;
+                                    if ((mem8 >> 6) == 3) {
+                                        y = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        Ha = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        y = ld_16bits_mem8_read();
                                     }
-                                    Wb(Ga, Rc(xa[Ga], Ha));
-                                    break Fd;
-                                case 0x1c1:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ga = (Ea >> 3) & 7;
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        ga = xa[Fa];
-                                        Ha = dc(0, ga, xa[Ga]);
-                                        Wb(Ga, ga);
-                                        Wb(Fa, Ha);
+                                    set_lower_word_in_register(reg_idx1, op_16_IMUL(regs[reg_idx1], y));
+                                    break EXEC_LOOP;
+                                case 0x1c1://XADD  Evqp Exchange and Add
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    reg_idx1 = (mem8 >> 3) & 7;
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        x = regs[reg_idx0];
+                                        y = do_16bit_math(0, x, regs[reg_idx1]);
+                                        set_lower_word_in_register(reg_idx1, x);
+                                        set_lower_word_in_register(reg_idx0, y);
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        Ha = dc(0, ga, xa[Ga]);
-                                        ub(Ha);
-                                        Wb(Ga, ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        y = do_16bit_math(0, x, regs[reg_idx1]);
+                                        st16_mem8_write(y);
+                                        set_lower_word_in_register(reg_idx1, x);
                                     }
-                                    break Fd;
-                                case 0x1a0:
-                                case 0x1a8:
-                                    vd(wa.segs[(b >> 3) & 7].selector);
-                                    break Fd;
-                                case 0x1a1:
-                                case 0x1a9:
-                                    Ie((b >> 3) & 7, yd());
-                                    zd();
-                                    break Fd;
-                                case 0x1b2:
-                                case 0x1b4:
-                                case 0x1b5:
-                                    Vf(b & 7);
-                                    break Fd;
-                                case 0x1a4:
-                                case 0x1ac:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ha = xa[(Ea >> 3) & 7];
-                                    Ja = (b >> 3) & 1;
-                                    if ((Ea >> 6) == 3) {
-                                        Ia = Ta[Kb++];
-                                        ;
-                                        Fa = Ea & 7;
-                                        Wb(Fa, oc(Ja, xa[Fa], Ha, Ia));
+                                    break EXEC_LOOP;
+                                case 0x1a0://PUSH FS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                                case 0x1a8://PUSH GS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
+                                    push_word_to_stack(cpu.segs[(OPbyte >> 3) & 7].selector);
+                                    break EXEC_LOOP;
+                                case 0x1a1://POP SS:[rSP] FS Pop a Value from the Stack
+                                case 0x1a9://POP SS:[rSP] GS Pop a Value from the Stack
+                                    set_segment_register((OPbyte >> 3) & 7, pop_word_from_stack_read());
+                                    pop_word_from_stack_incr_ptr();
+                                    break EXEC_LOOP;
+                                case 0x1b2://LSS Mptp SS Load Far Pointer
+                                case 0x1b4://LFS Mptp FS Load Far Pointer
+                                case 0x1b5://LGS Mptp GS Load Far Pointer
+                                    op_16_load_far_pointer16(OPbyte & 7);
+                                    break EXEC_LOOP;
+                                case 0x1a4://SHLD Gvqp Evqp Double Precision Shift Left
+                                case 0x1ac://SHRD Gvqp Evqp Double Precision Shift Right
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    y = regs[(mem8 >> 3) & 7];
+                                    conditional_var = (OPbyte >> 3) & 1;
+                                    if ((mem8 >> 6) == 3) {
+                                        z = phys_mem8[physmem8_ptr++];
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, op_16_SHRD_SHLD(conditional_var, regs[reg_idx0], y, z));
                                     } else {
-                                        fa = Pb(Ea);
-                                        Ia = Ta[Kb++];
-                                        ;
-                                        ga = ob();
-                                        ga = oc(Ja, ga, Ha, Ia);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        z = phys_mem8[physmem8_ptr++];
+                                        x = ld_16bits_mem8_write();
+                                        x = op_16_SHRD_SHLD(conditional_var, x, y, z);
+                                        st16_mem8_write(x);
                                     }
-                                    break Fd;
-                                case 0x1a5:
-                                case 0x1ad:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ha = xa[(Ea >> 3) & 7];
-                                    Ia = xa[1];
-                                    Ja = (b >> 3) & 1;
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Wb(Fa, oc(Ja, xa[Fa], Ha, Ia));
+                                    break EXEC_LOOP;
+                                case 0x1a5://SHLD Gvqp Evqp Double Precision Shift Left
+                                case 0x1ad://SHRD Gvqp Evqp Double Precision Shift Right
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    y = regs[(mem8 >> 3) & 7];
+                                    z = regs[1];
+                                    conditional_var = (OPbyte >> 3) & 1;
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, op_16_SHRD_SHLD(conditional_var, regs[reg_idx0], y, z));
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        ga = oc(Ja, ga, Ha, Ia);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        x = op_16_SHRD_SHLD(conditional_var, x, y, z);
+                                        st16_mem8_write(x);
                                     }
-                                    break Fd;
-                                case 0x1ba:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ja = (Ea >> 3) & 7;
-                                    switch (Ja) {
+                                    break EXEC_LOOP;
+                                case 0x1ba://BT Evqp  Bit Test
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    conditional_var = (mem8 >> 3) & 7;
+                                    switch (conditional_var) {
                                         case 4:
-                                            if ((Ea >> 6) == 3) {
-                                                ga = xa[Ea & 7];
-                                                Ha = Ta[Kb++];
-                                                ;
+                                            if ((mem8 >> 6) == 3) {
+                                                x = regs[mem8 & 7];
+                                                y = phys_mem8[physmem8_ptr++];
                                             } else {
-                                                fa = Pb(Ea);
-                                                Ha = Ta[Kb++];
-                                                ;
-                                                ga = ib();
+                                                mem8_loc = segment_translation(mem8);
+                                                y = phys_mem8[physmem8_ptr++];
+                                                x = ld_16bits_mem8_read();
                                             }
-                                            tc(ga, Ha);
+                                            op_16_BT(x, y);
                                             break;
                                         case 5:
                                         case 6:
                                         case 7:
-                                            if ((Ea >> 6) == 3) {
-                                                Fa = Ea & 7;
-                                                Ha = Ta[Kb++];
-                                                ;
-                                                xa[Fa] = vc(Ja & 3, xa[Fa], Ha);
+                                            if ((mem8 >> 6) == 3) {
+                                                reg_idx0 = mem8 & 7;
+                                                y = phys_mem8[physmem8_ptr++];
+                                                regs[reg_idx0] = op_16_BTS_BTR_BTC(conditional_var & 3, regs[reg_idx0], y);
                                             } else {
-                                                fa = Pb(Ea);
-                                                Ha = Ta[Kb++];
-                                                ;
-                                                ga = ob();
-                                                ga = vc(Ja & 3, ga, Ha);
-                                                ub(ga);
+                                                mem8_loc = segment_translation(mem8);
+                                                y = phys_mem8[physmem8_ptr++];
+                                                x = ld_16bits_mem8_write();
+                                                x = op_16_BTS_BTR_BTC(conditional_var & 3, x, y);
+                                                st16_mem8_write(x);
                                             }
                                             break;
                                         default:
-                                            Dc(6);
+                                            abort(6);
                                     }
-                                    break Fd;
-                                case 0x1a3:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ha = xa[(Ea >> 3) & 7];
-                                    if ((Ea >> 6) == 3) {
-                                        ga = xa[Ea & 7];
+                                    break EXEC_LOOP;
+                                case 0x1a3://BT Evqp  Bit Test
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    y = regs[(mem8 >> 3) & 7];
+                                    if ((mem8 >> 6) == 3) {
+                                        x = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        fa = (fa + (((Ha & 0xffff) >> 4) << 1)) >> 0;
-                                        ga = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        mem8_loc = (mem8_loc + (((y & 0xffff) >> 4) << 1)) >> 0;
+                                        x = ld_16bits_mem8_read();
                                     }
-                                    tc(ga, Ha);
-                                    break Fd;
-                                case 0x1ab:
-                                case 0x1b3:
-                                case 0x1bb:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ha = xa[(Ea >> 3) & 7];
-                                    Ja = (b >> 3) & 3;
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        Wb(Fa, vc(Ja, xa[Fa], Ha));
+                                    op_16_BT(x, y);
+                                    break EXEC_LOOP;
+                                case 0x1ab://BTS Gvqp Evqp Bit Test and Set
+                                case 0x1b3://BTR Gvqp Evqp Bit Test and Reset
+                                case 0x1bb://BTC Gvqp Evqp Bit Test and Complement
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    y = regs[(mem8 >> 3) & 7];
+                                    conditional_var = (OPbyte >> 3) & 3;
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        set_lower_word_in_register(reg_idx0, op_16_BTS_BTR_BTC(conditional_var, regs[reg_idx0], y));
                                     } else {
-                                        fa = Pb(Ea);
-                                        fa = (fa + (((Ha & 0xffff) >> 4) << 1)) >> 0;
-                                        ga = ob();
-                                        ga = vc(Ja, ga, Ha);
-                                        ub(ga);
+                                        mem8_loc = segment_translation(mem8);
+                                        mem8_loc = (mem8_loc + (((y & 0xffff) >> 4) << 1)) >> 0;
+                                        x = ld_16bits_mem8_write();
+                                        x = op_16_BTS_BTR_BTC(conditional_var, x, y);
+                                        st16_mem8_write(x);
                                     }
-                                    break Fd;
-                                case 0x1bc:
-                                case 0x1bd:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ga = (Ea >> 3) & 7;
-                                    if ((Ea >> 6) == 3) {
-                                        Ha = xa[Ea & 7];
+                                    break EXEC_LOOP;
+                                case 0x1bc://BSF Evqp Gvqp Bit Scan Forward
+                                case 0x1bd://BSR Evqp Gvqp Bit Scan Reverse
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    reg_idx1 = (mem8 >> 3) & 7;
+                                    if ((mem8 >> 6) == 3) {
+                                        y = regs[mem8 & 7];
                                     } else {
-                                        fa = Pb(Ea);
-                                        Ha = ib();
+                                        mem8_loc = segment_translation(mem8);
+                                        y = ld_16bits_mem8_read();
                                     }
-                                    ga = xa[Ga];
-                                    if (b & 1)
-                                        ga = Ac(ga, Ha);
+                                    x = regs[reg_idx1];
+                                    if (OPbyte & 1)
+                                        x = op_16_BSR(x, y);
                                     else
-                                        ga = yc(ga, Ha);
-                                    Wb(Ga, ga);
-                                    break Fd;
-                                case 0x1b1:
-                                    Ea = Ta[Kb++];
-                                    ;
-                                    Ga = (Ea >> 3) & 7;
-                                    if ((Ea >> 6) == 3) {
-                                        Fa = Ea & 7;
-                                        ga = xa[Fa];
-                                        Ha = dc(5, xa[0], ga);
-                                        if (Ha == 0) {
-                                            Wb(Fa, xa[Ga]);
+                                        x = op_16_BSF(x, y);
+                                    set_lower_word_in_register(reg_idx1, x);
+                                    break EXEC_LOOP;
+                                case 0x1b1://CMPXCHG Gvqp Evqp Compare and Exchange
+                                    mem8 = phys_mem8[physmem8_ptr++];
+                                    reg_idx1 = (mem8 >> 3) & 7;
+                                    if ((mem8 >> 6) == 3) {
+                                        reg_idx0 = mem8 & 7;
+                                        x = regs[reg_idx0];
+                                        y = do_16bit_math(5, regs[0], x);
+                                        if (y == 0) {
+                                            set_lower_word_in_register(reg_idx0, regs[reg_idx1]);
                                         } else {
-                                            Wb(0, ga);
+                                            set_lower_word_in_register(0, x);
                                         }
                                     } else {
-                                        fa = Pb(Ea);
-                                        ga = ob();
-                                        Ha = dc(5, xa[0], ga);
-                                        if (Ha == 0) {
-                                            ub(xa[Ga]);
+                                        mem8_loc = segment_translation(mem8);
+                                        x = ld_16bits_mem8_write();
+                                        y = do_16bit_math(5, regs[0], x);
+                                        if (y == 0) {
+                                            st16_mem8_write(regs[reg_idx1]);
                                         } else {
-                                            Wb(0, ga);
+                                            set_lower_word_in_register(0, x);
                                         }
                                     }
-                                    break Fd;
-                                case 0x100:
-                                case 0x101:
-                                case 0x102:
-                                case 0x103:
-                                case 0x120:
-                                case 0x122:
-                                case 0x106:
-                                case 0x123:
-                                case 0x1a2:
-                                case 0x131:
-                                case 0x190:
-                                case 0x191:
-                                case 0x192:
-                                case 0x193:
-                                case 0x194:
-                                case 0x195:
-                                case 0x196:
-                                case 0x197:
-                                case 0x198:
-                                case 0x199:
-                                case 0x19a:
-                                case 0x19b:
-                                case 0x19c:
-                                case 0x19d:
-                                case 0x19e:
-                                case 0x19f:
-                                case 0x1b0:
-                                    b = 0x0f;
-                                    Kb--;
+                                    break EXEC_LOOP;
+                                case 0x100://SLDT LDTR Mw Store Local Descriptor Table Register
+                                case 0x101://SGDT GDTR Ms Store Global Descriptor Table Register
+                                case 0x102://LAR Mw Gvqp Load Access Rights Byte
+                                case 0x103://LSL Mw Gvqp Load Segment Limit
+                                case 0x120://MOV Cd Rd Move to/from Control Registers
+                                case 0x122://MOV Rd Cd Move to/from Control Registers
+                                case 0x106://CLTS  CR0 Clear Task-Switched Flag in CR0
+                                case 0x123://MOV Rd Dd Move to/from Debug Registers
+                                case 0x1a2://CPUID  IA32_BIOS_SIGN_ID CPU Identification
+                                case 0x131://RDTSC IA32_TIME_STAMP_COUNTER EAX Read Time-Stamp Counter
+                                case 0x190://SETO  Eb Set Byte on Condition - overflow (OF=1)
+                                case 0x191://SETNO  Eb Set Byte on Condition - not overflow (OF=0)
+                                case 0x192://SETB  Eb Set Byte on Condition - below/not above or equal/carry (CF=1)
+                                case 0x193://SETNB  Eb Set Byte on Condition - not below/above or equal/not carry (CF=0)
+                                case 0x194://SETZ  Eb Set Byte on Condition - zero/equal (ZF=0)
+                                case 0x195://SETNZ  Eb Set Byte on Condition - not zero/not equal (ZF=1)
+                                case 0x196://SETBE  Eb Set Byte on Condition - below or equal/not above (CF=1 AND ZF=1)
+                                case 0x197://SETNBE  Eb Set Byte on Condition - not below or equal/above (CF=0 AND ZF=0)
+                                case 0x198://SETS  Eb Set Byte on Condition - sign (SF=1)
+                                case 0x199://SETNS  Eb Set Byte on Condition - not sign (SF=0)
+                                case 0x19a://SETP  Eb Set Byte on Condition - parity/parity even (PF=1)
+                                case 0x19b://SETNP  Eb Set Byte on Condition - not parity/parity odd
+                                case 0x19c://SETL  Eb Set Byte on Condition - less/not greater (SF!=OF)
+                                case 0x19d://SETNL  Eb Set Byte on Condition - not less/greater or equal (SF=OF)
+                                case 0x19e://SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                                case 0x19f://SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND (SF=OF))
+                                case 0x1b0://CMPXCHG Gb Eb Compare and Exchange
+                                    OPbyte = 0x0f;
+                                    physmem8_ptr--;
                                     break;
                                 case 0x104:
-                                case 0x105:
-                                case 0x107:
-                                case 0x108:
-                                case 0x109:
+                                case 0x105://LOADALL  AX Load All of the CPU Registers
+                                case 0x107://LOADALL  EAX Load All of the CPU Registers
+                                case 0x108://INVD   Invalidate Internal Caches
+                                case 0x109://WBINVD   Write Back and Invalidate Cache
                                 case 0x10a:
-                                case 0x10b:
+                                case 0x10b://UD2   Undefined Instruction
                                 case 0x10c:
-                                case 0x10d:
+                                case 0x10d://NOP Ev  No Operation
                                 case 0x10e:
                                 case 0x10f:
-                                case 0x110:
-                                case 0x111:
-                                case 0x112:
-                                case 0x113:
-                                case 0x114:
-                                case 0x115:
-                                case 0x116:
-                                case 0x117:
-                                case 0x118:
-                                case 0x119:
-                                case 0x11a:
-                                case 0x11b:
-                                case 0x11c:
-                                case 0x11d:
-                                case 0x11e:
-                                case 0x11f:
-                                case 0x121:
-                                case 0x124:
+                                case 0x110://MOVUPS Wps Vps Move Unaligned Packed Single-FP Values
+                                case 0x111://MOVUPS Vps Wps Move Unaligned Packed Single-FP Values
+                                case 0x112://MOVHLPS Uq Vq Move Packed Single-FP Values High to Low
+                                case 0x113://MOVLPS Vq Mq Move Low Packed Single-FP Values
+                                case 0x114://UNPCKLPS Wq Vps Unpack and Interleave Low Packed Single-FP Values
+                                case 0x115://UNPCKHPS Wq Vps Unpack and Interleave High Packed Single-FP Values
+                                case 0x116://MOVLHPS Uq Vq Move Packed Single-FP Values Low to High
+                                case 0x117://MOVHPS Vq Mq Move High Packed Single-FP Values
+                                case 0x118://HINT_NOP Ev  Hintable NOP
+                                case 0x119://HINT_NOP Ev  Hintable NOP
+                                case 0x11a://HINT_NOP Ev  Hintable NOP
+                                case 0x11b://HINT_NOP Ev  Hintable NOP
+                                case 0x11c://HINT_NOP Ev  Hintable NOP
+                                case 0x11d://HINT_NOP Ev  Hintable NOP
+                                case 0x11e://HINT_NOP Ev  Hintable NOP
+                                case 0x11f://HINT_NOP Ev  Hintable NOP
+                                case 0x121://MOV Dd Rd Move to/from Debug Registers
+                                case 0x124://MOV Td Rd Move to/from Test Registers
                                 case 0x125:
-                                case 0x126:
+                                case 0x126://MOV Rd Td Move to/from Test Registers
                                 case 0x127:
-                                case 0x128:
-                                case 0x129:
-                                case 0x12a:
-                                case 0x12b:
-                                case 0x12c:
-                                case 0x12d:
-                                case 0x12e:
-                                case 0x12f:
-                                case 0x130:
-                                case 0x132:
-                                case 0x133:
-                                case 0x134:
-                                case 0x135:
+                                case 0x128://MOVAPS Wps Vps Move Aligned Packed Single-FP Values
+                                case 0x129://MOVAPS Vps Wps Move Aligned Packed Single-FP Values
+                                case 0x12a://CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
+                                case 0x12b://MOVNTPS Vps Mps Store Packed Single-FP Values Using Non-Temporal Hint
+                                case 0x12c://CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW Integers
+                                case 0x12d://CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW Integers
+                                case 0x12e://UCOMISS Vss  Unordered Compare Scalar Single-FP Values and Set EFLAGS
+                                case 0x12f://COMISS Vss  Compare Scalar Ordered Single-FP Values and Set EFLAGS
+                                case 0x130://WRMSR rCX MSR Write to Model Specific Register
+                                case 0x132://RDMSR rCX rAX Read from Model Specific Register
+                                case 0x133://RDPMC PMC EAX Read Performance-Monitoring Counters
+                                case 0x134://SYSENTER IA32_SYSENTER_CS SS Fast System Call
+                                case 0x135://SYSEXIT IA32_SYSENTER_CS SS Fast Return from Fast System Call
                                 case 0x136:
-                                case 0x137:
-                                case 0x138:
+                                case 0x137://GETSEC EAX  GETSEC Leaf Functions
+                                case 0x138://PSHUFB Qq Pq Packed Shuffle Bytes
                                 case 0x139:
-                                case 0x13a:
+                                case 0x13a://ROUNDPS Wps Vps Round Packed Single-FP Values
                                 case 0x13b:
                                 case 0x13c:
                                 case 0x13d:
                                 case 0x13e:
                                 case 0x13f:
-                                case 0x150:
-                                case 0x151:
-                                case 0x152:
-                                case 0x153:
-                                case 0x154:
-                                case 0x155:
-                                case 0x156:
-                                case 0x157:
-                                case 0x158:
-                                case 0x159:
-                                case 0x15a:
-                                case 0x15b:
-                                case 0x15c:
-                                case 0x15d:
-                                case 0x15e:
-                                case 0x15f:
-                                case 0x160:
-                                case 0x161:
-                                case 0x162:
-                                case 0x163:
-                                case 0x164:
-                                case 0x165:
-                                case 0x166:
-                                case 0x167:
-                                case 0x168:
-                                case 0x169:
-                                case 0x16a:
-                                case 0x16b:
-                                case 0x16c:
-                                case 0x16d:
-                                case 0x16e:
-                                case 0x16f:
-                                case 0x170:
-                                case 0x171:
-                                case 0x172:
-                                case 0x173:
-                                case 0x174:
-                                case 0x175:
-                                case 0x176:
-                                case 0x177:
-                                case 0x178:
-                                case 0x179:
+                                case 0x150://MOVMSKPS Ups Gdqp Extract Packed Single-FP Sign Mask
+                                case 0x151://SQRTPS Wps Vps Compute Square Roots of Packed Single-FP Values
+                                case 0x152://RSQRTPS Wps Vps Compute Recipr. of Square Roots of Packed Single-FP Values
+                                case 0x153://RCPPS Wps Vps Compute Reciprocals of Packed Single-FP Values
+                                case 0x154://ANDPS Wps Vps Bitwise Logical AND of Packed Single-FP Values
+                                case 0x155://ANDNPS Wps Vps Bitwise Logical AND NOT of Packed Single-FP Values
+                                case 0x156://ORPS Wps Vps Bitwise Logical OR of Single-FP Values
+                                case 0x157://XORPS Wps Vps Bitwise Logical XOR for Single-FP Values
+                                case 0x158://ADDPS Wps Vps Add Packed Single-FP Values
+                                case 0x159://MULPS Wps Vps Multiply Packed Single-FP Values
+                                case 0x15a://CVTPS2PD Wps Vpd Convert Packed Single-FP Values to1.11 PackedDouble-FP Values
+                                case 0x15b://CVTDQ2PS Wdq Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
+                                case 0x15c://SUBPS Wps Vps Subtract Packed Single-FP Values
+                                case 0x15d://MINPS Wps Vps Return Minimum Packed Single-FP Values
+                                case 0x15e://DIVPS Wps Vps Divide Packed Single-FP Values
+                                case 0x15f://MAXPS Wps Vps Return Maximum Packed Single-FP Values
+                                case 0x160://PUNPCKLBW Qd Pq Unpack Low Data
+                                case 0x161://PUNPCKLWD Qd Pq Unpack Low Data
+                                case 0x162://PUNPCKLDQ Qd Pq Unpack Low Data
+                                case 0x163://PACKSSWB Qd Pq Pack with Signed Saturation
+                                case 0x164://PCMPGTB Qd Pq Compare Packed Signed Integers for Greater Than
+                                case 0x165://PCMPGTW Qd Pq Compare Packed Signed Integers for Greater Than
+                                case 0x166://PCMPGTD Qd Pq Compare Packed Signed Integers for Greater Than
+                                case 0x167://PACKUSWB Qq Pq Pack with Unsigned Saturation
+                                case 0x168://PUNPCKHBW Qq Pq Unpack High Data
+                                case 0x169://PUNPCKHWD Qq Pq Unpack High Data
+                                case 0x16a://PUNPCKHDQ Qq Pq Unpack High Data
+                                case 0x16b://PACKSSDW Qq Pq Pack with Signed Saturation
+                                case 0x16c://PUNPCKLQDQ Wdq Vdq Unpack Low Data
+                                case 0x16d://PUNPCKHQDQ Wdq Vdq Unpack High Data
+                                case 0x16e://MOVD Ed Pq Move Doubleword
+                                case 0x16f://MOVQ Qq Pq Move Quadword
+                                case 0x170://PSHUFW Qq Pq Shuffle Packed Words
+                                case 0x171://PSRLW Ib Nq Shift Packed Data Right Logical
+                                case 0x172://PSRLD Ib Nq Shift Double Quadword Right Logical
+                                case 0x173://PSRLQ Ib Nq Shift Packed Data Right Logical
+                                case 0x174://PCMPEQB Qq Pq Compare Packed Data for Equal
+                                case 0x175://PCMPEQW Qq Pq Compare Packed Data for Equal
+                                case 0x176://PCMPEQD Qq Pq Compare Packed Data for Equal
+                                case 0x177://EMMS   Empty MMX Technology State
+                                case 0x178://VMREAD Gd Ed Read Field from Virtual-Machine Control Structure
+                                case 0x179://VMWRITE Gd  Write Field to Virtual-Machine Control Structure
                                 case 0x17a:
                                 case 0x17b:
-                                case 0x17c:
-                                case 0x17d:
-                                case 0x17e:
-                                case 0x17f:
+                                case 0x17c://HADDPD Wpd Vpd Packed Double-FP Horizontal Add
+                                case 0x17d://HSUBPD Wpd Vpd Packed Double-FP Horizontal Subtract
+                                case 0x17e://MOVD Pq Ed Move Doubleword
+                                case 0x17f://MOVQ Pq Qq Move Quadword
                                 case 0x1a6:
                                 case 0x1a7:
-                                case 0x1aa:
-                                case 0x1ae:
-                                case 0x1b7:
-                                case 0x1b8:
-                                case 0x1b9:
-                                case 0x1bf:
-                                case 0x1c0:
+                                case 0x1aa://RSM  Flags Resume from System Management Mode
+                                case 0x1ae://FXSAVE ST Mstx Save x87 FPU, MMX, XMM, and MXCSR State
+                                case 0x1b7://MOVZX Ew Gvqp Move with Zero-Extend
+                                case 0x1b8://JMPE   Jump to IA-64 Instruction Set
+                                case 0x1b9://UD G  Undefined Instruction
+                                case 0x1bf://MOVSX Ew Gvqp Move with Sign-Extension
+                                case 0x1c0://XADD  Eb Exchange and Add
                                 default:
-                                    Dc(6);
+                                    abort(6);
                             }
                             break;
                     }
             }
         }
-    } while (--Ka);
-    this.cycle_count += (ua - Ka);
-    this.eip = (Jb + Kb - Mb);
-    this.cc_src = ya;
-    this.cc_dst = za;
-    this.cc_op = Aa;
-    this.cc_op2 = Ba;
-    this.cc_dst2 = Ca;
-    return La;
+    } while (--cycles_left); //End Giant Core DO WHILE Execution Loop
+    this.cycle_count += (N_cycles - cycles_left);
+    this.eip           = (eip + physmem8_ptr - initial_mem_ptr);
+    this.cc_src        = _src;
+    this.cc_dst        = _dst;
+    this.cc_op         = _op;
+    this.cc_op2        = _op2;
+    this.cc_dst2       = _dst2;
+    return exit_code;
 };
-CPU_X86.prototype.exec = function(ua) {
-    var Dg, La, Eg, va;
-    Eg = this.cycle_count + ua;
-    La = 256;
-    va = null;
-    while (this.cycle_count < Eg) {
+
+
+/*
+  Execution Wrapper
+  ==========================================================================================
+  This seems to primarily catch internal interrupts.
+*/
+
+CPU_X86.prototype.exec = function(N_cycles) {
+    var exit_code, final_cycle_count, interrupt;
+    final_cycle_count = this.cycle_count + N_cycles;
+    exit_code = 256;
+    interrupt = null;
+    while (this.cycle_count < final_cycle_count) {
         try {
-            La = this.exec_internal(Eg - this.cycle_count, va);
-            if (La != 256)
+            exit_code = this.exec_internal(final_cycle_count - this.cycle_count, interrupt);
+            if (exit_code != 256)
                 break;
-            va = null;
-        } catch (Fg) {
-            if (Fg.hasOwnProperty("intno")) {
-                va = Fg;
+            interrupt = null;
+        } catch (cpu_exception) {
+            if (cpu_exception.hasOwnProperty("intno")) { //an interrupt
+                interrupt = cpu_exception;
             } else {
-                throw Fg;
+                throw cpu_exception;
             }
         }
     }
-    return La;
+    return exit_code;
 };
-CPU_X86.prototype.load_binary_ie9 = function(Gg, fa) {
-    var Hg, Ig, tg, i;
-    Hg = new XMLHttpRequest();
-    Hg.open('GET', Gg, false);
-    Hg.send(null);
-    if (Hg.status != 200 && Hg.status != 0) {
-        throw "Error while loading " + Gg;
-    }
-    Ig = new VBArray(Hg.responseBody).toArray();
-    tg = Ig.length;
-    for (i = 0; i < tg; i++) {
-        this.st8_phys(fa + i, Ig[i]);
-    }
-    return tg;
-};
-function Lg(a) {
-    return ((a / 10) << 4) | (a % 10);
-}
-function Mg(Ng) {
-    var Og, d;
-    Og = new Uint8Array(128);
-    this.cmos_data = Og;
-    this.cmos_index = 0;
-    d = new Date();
-    Og[0] = Lg(d.getUTCSeconds());
-    Og[2] = Lg(d.getUTCMinutes());
-    Og[4] = Lg(d.getUTCHours());
-    Og[6] = Lg(d.getUTCDay());
-    Og[7] = Lg(d.getUTCDate());
-    Og[8] = Lg(d.getUTCMonth() + 1);
-    Og[9] = Lg(d.getUTCFullYear() % 100);
-    Og[10] = 0x26;
-    Og[11] = 0x02;
-    Og[12] = 0x00;
-    Og[13] = 0x80;
-    Og[0x14] = 0x02;
-    Ng.register_ioport_write(0x70, 2, 1, this.ioport_write.bind(this));
-    Ng.register_ioport_read(0x70, 2, 1, this.ioport_read.bind(this));
-}
-Mg.prototype.ioport_write = function(fa, Ig) {
-    if (fa == 0x70) {
-        this.cmos_index = Ig & 0x7f;
-    }
-};
-Mg.prototype.ioport_read = function(fa) {
-    var Pg;
-    if (fa == 0x70) {
-        return 0xff;
-    } else {
-        Pg = this.cmos_data[this.cmos_index];
-        if (this.cmos_index == 10)
-            this.cmos_data[10] ^= 0x80;
-        else if (this.cmos_index == 12)
-            this.cmos_data[12] = 0x00;
-        return Pg;
-    }
-};
-function Qg(Ng, Zf) {
-    Ng.register_ioport_write(Zf, 2, 1, this.ioport_write.bind(this));
-    Ng.register_ioport_read(Zf, 2, 1, this.ioport_read.bind(this));
-    this.reset();
-}
-Qg.prototype.reset = function() {
-    this.last_irr = 0;
-    this.irr = 0;
-    this.imr = 0;
-    this.isr = 0;
-    this.priority_add = 0;
-    this.irq_base = 0;
-    this.read_reg_select = 0;
-    this.special_mask = 0;
-    this.init_state = 0;
-    this.auto_eoi = 0;
-    this.rotate_on_autoeoi = 0;
-    this.init4 = 0;
-    this.elcr = 0;
-    this.elcr_mask = 0;
-};
-Qg.prototype.set_irq1 = function(Rg, Qf) {
-    var wc;
-    wc = 1 << Rg;
-    if (Qf) {
-        if ((this.last_irr & wc) == 0)
-            this.irr |= wc;
-        this.last_irr |= wc;
-    } else {
-        this.last_irr &= ~wc;
-    }
-};
-Qg.prototype.get_priority = function(wc) {
-    var Sg;
-    if (wc == 0)
-        return -1;
-    Sg = 7;
-    while ((wc & (1 << ((Sg + this.priority_add) & 7))) == 0)
-        Sg--;
-    return Sg;
-};
-Qg.prototype.get_irq = function() {
-    var wc, Tg, Sg;
-    wc = this.irr & ~this.imr;
-    Sg = this.get_priority(wc);
-    if (Sg < 0)
-        return -1;
-    Tg = this.get_priority(this.isr);
-    if (Sg > Tg) {
-        return Sg;
-    } else {
-        return -1;
-    }
-};
-Qg.prototype.intack = function(Rg) {
-    if (this.auto_eoi) {
-        if (this.rotate_on_auto_eoi)
-            this.priority_add = (Rg + 1) & 7;
-    } else {
-        this.isr |= (1 << Rg);
-    }
-    if (!(this.elcr & (1 << Rg)))
-        this.irr &= ~(1 << Rg);
-};
-Qg.prototype.ioport_write = function(fa, ga) {
-    var Sg;
-    fa &= 1;
-    if (fa == 0) {
-        if (ga & 0x10) {
-            this.reset();
-            this.init_state = 1;
-            this.init4 = ga & 1;
-            if (ga & 0x02)
-                throw "single mode not supported";
-            if (ga & 0x08)
-                throw "level sensitive irq not supported";
-        } else if (ga & 0x08) {
-            if (ga & 0x02)
-                this.read_reg_select = ga & 1;
-            if (ga & 0x40)
-                this.special_mask = (ga >> 5) & 1;
-        } else {
-            switch (ga) {
-                case 0x00:
-                case 0x80:
-                    this.rotate_on_autoeoi = ga >> 7;
-                    break;
-                case 0x20:
-                case 0xa0:
-                    Sg = this.get_priority(this.isr);
-                    if (Sg >= 0) {
-                        this.isr &= ~(1 << ((Sg + this.priority_add) & 7));
-                    }
-                    if (ga == 0xa0)
-                        this.priority_add = (this.priority_add + 1) & 7;
-                    break;
-                case 0x60:
-                case 0x61:
-                case 0x62:
-                case 0x63:
-                case 0x64:
-                case 0x65:
-                case 0x66:
-                case 0x67:
-                    Sg = ga & 7;
-                    this.isr &= ~(1 << Sg);
-                    break;
-                case 0xc0:
-                case 0xc1:
-                case 0xc2:
-                case 0xc3:
-                case 0xc4:
-                case 0xc5:
-                case 0xc6:
-                case 0xc7:
-                    this.priority_add = (ga + 1) & 7;
-                    break;
-                case 0xe0:
-                case 0xe1:
-                case 0xe2:
-                case 0xe3:
-                case 0xe4:
-                case 0xe5:
-                case 0xe6:
-                case 0xe7:
-                    Sg = ga & 7;
-                    this.isr &= ~(1 << Sg);
-                    this.priority_add = (Sg + 1) & 7;
-                    break;
-            }
-        }
-    } else {
-        switch (this.init_state) {
-            case 0:
-                this.imr = ga;
-                this.update_irq();
-                break;
-            case 1:
-                this.irq_base = ga & 0xf8;
-                this.init_state = 2;
-                break;
-            case 2:
-                if (this.init4) {
-                    this.init_state = 3;
-                } else {
-                    this.init_state = 0;
-                }
-                break;
-            case 3:
-                this.auto_eoi = (ga >> 1) & 1;
-                this.init_state = 0;
-                break;
-        }
-    }
-};
-Qg.prototype.ioport_read = function(Ug) {
-    var fa, Pg;
-    fa = Ug & 1;
-    if (fa == 0) {
-        if (this.read_reg_select)
-            Pg = this.isr;
-        else
-            Pg = this.irr;
-    } else {
-        Pg = this.imr;
-    }
-    return Pg;
-};
-function Vg(Ng, Wg, Ug, Xg) {
-    this.pics = new Array();
-    this.pics[0] = new Qg(Ng, Wg);
-    this.pics[1] = new Qg(Ng, Ug);
-    this.pics[0].elcr_mask = 0xf8;
-    this.pics[1].elcr_mask = 0xde;
-    this.irq_requested = 0;
-    this.cpu_set_irq = Xg;
-    this.pics[0].update_irq = this.update_irq.bind(this);
-    this.pics[1].update_irq = this.update_irq.bind(this);
-}
-Vg.prototype.update_irq = function() {
-    var Yg, Rg;
-    Yg = this.pics[1].get_irq();
-    if (Yg >= 0) {
-        this.pics[0].set_irq1(2, 1);
-        this.pics[0].set_irq1(2, 0);
-    }
-    Rg = this.pics[0].get_irq();
-    if (Rg >= 0) {
-        this.cpu_set_irq(1);
-    } else {
-        this.cpu_set_irq(0);
-    }
-};
-Vg.prototype.set_irq = function(Rg, Qf) {
-    this.pics[Rg >> 3].set_irq1(Rg & 7, Qf);
-    this.update_irq();
-};
-Vg.prototype.get_hard_intno = function() {
-    var Rg, Yg, intno;
-    Rg = this.pics[0].get_irq();
-    if (Rg >= 0) {
-        this.pics[0].intack(Rg);
-        if (Rg == 2) {
-            Yg = this.pics[1].get_irq();
-            if (Yg >= 0) {
-                this.pics[1].intack(Yg);
-            } else {
-                Yg = 7;
-            }
-            intno = this.pics[1].irq_base + Yg;
-            Rg = Yg + 8;
-        } else {
-            intno = this.pics[0].irq_base + Rg;
-        }
-    } else {
-        Rg = 7;
-        intno = this.pics[0].irq_base + Rg;
-    }
-    this.update_irq();
-    return intno;
-};
-function Zg(Ng, ah, bh) {
-    var s, i;
-    this.pit_channels = new Array();
-    for (i = 0; i < 3; i++) {
-        s = new ch(bh);
-        this.pit_channels[i] = s;
-        s.mode = 3;
-        s.gate = (i != 2) >> 0;
-        s.pit_load_count(0);
-    }
-    this.speaker_data_on = 0;
-    this.set_irq = ah;
-    Ng.register_ioport_write(0x40, 4, 1, this.ioport_write.bind(this));
-    Ng.register_ioport_read(0x40, 3, 1, this.ioport_read.bind(this));
-    Ng.register_ioport_read(0x61, 1, 1, this.speaker_ioport_read.bind(this));
-    Ng.register_ioport_write(0x61, 1, 1, this.speaker_ioport_write.bind(this));
-}
-function ch(bh) {
-    this.count = 0;
-    this.latched_count = 0;
-    this.rw_state = 0;
-    this.mode = 0;
-    this.bcd = 0;
-    this.gate = 0;
-    this.count_load_time = 0;
-    this.get_ticks = bh;
-    this.pit_time_unit = 1193182 / 2000000;
-}
-ch.prototype.get_time = function() {
-    return Math.floor(this.get_ticks() * this.pit_time_unit);
-};
-ch.prototype.pit_get_count = function() {
-    var d, dh;
-    d = this.get_time() - this.count_load_time;
-    switch (this.mode) {
-        case 0:
-        case 1:
-        case 4:
-        case 5:
-            dh = (this.count - d) & 0xffff;
-            break;
-        default:
-            dh = this.count - (d % this.count);
-            break;
-    }
-    return dh;
-};
-ch.prototype.pit_get_out = function() {
-    var d, eh;
-    d = this.get_time() - this.count_load_time;
-    switch (this.mode) {
-        default:
-        case 0:
-            eh = (d >= this.count) >> 0;
-            break;
-        case 1:
-            eh = (d < this.count) >> 0;
-            break;
-        case 2:
-            if ((d % this.count) == 0 && d != 0)
-                eh = 1;
-            else
-                eh = 0;
-            break;
-        case 3:
-            eh = ((d % this.count) < (this.count >> 1)) >> 0;
-            break;
-        case 4:
-        case 5:
-            eh = (d == this.count) >> 0;
-            break;
-    }
-    return eh;
-};
-ch.prototype.get_next_transition_time = function() {
-    var d, fh, base, gh;
-    d = this.get_time() - this.count_load_time;
-    switch (this.mode) {
-        default:
-        case 0:
-        case 1:
-            if (d < this.count)
-                fh = this.count;
-            else
-                return -1;
-            break;
-        case 2:
-            base = (d / this.count) * this.count;
-            if ((d - base) == 0 && d != 0)
-                fh = base + this.count;
-            else
-                fh = base + this.count + 1;
-            break;
-        case 3:
-            base = (d / this.count) * this.count;
-            gh = ((this.count + 1) >> 1);
-            if ((d - base) < gh)
-                fh = base + gh;
-            else
-                fh = base + this.count;
-            break;
-        case 4:
-        case 5:
-            if (d < this.count)
-                fh = this.count;
-            else if (d == this.count)
-                fh = this.count + 1;
-            else
-                return -1;
-            break;
-    }
-    fh = this.count_load_time + fh;
-    return fh;
-};
-ch.prototype.pit_load_count = function(ga) {
-    if (ga == 0)
-        ga = 0x10000;
-    this.count_load_time = this.get_time();
-    this.count = ga;
-};
-Zg.prototype.ioport_write = function(fa, ga) {
-    var hh, ih, s;
-    fa &= 3;
-    if (fa == 3) {
-        hh = ga >> 6;
-        if (hh == 3)
-            return;
-        s = this.pit_channels[hh];
-        ih = (ga >> 4) & 3;
-        switch (ih) {
-            case 0:
-                s.latched_count = s.pit_get_count();
-                s.rw_state = 4;
-                break;
-            default:
-                s.mode = (ga >> 1) & 7;
-                s.bcd = ga & 1;
-                s.rw_state = ih - 1 + 0;
-                break;
-        }
-    } else {
-        s = this.pit_channels[fa];
-        switch (s.rw_state) {
-            case 0:
-                s.pit_load_count(ga);
-                break;
-            case 1:
-                s.pit_load_count(ga << 8);
-                break;
-            case 2:
-            case 3:
-                if (s.rw_state & 1) {
-                    s.pit_load_count((s.latched_count & 0xff) | (ga << 8));
-                } else {
-                    s.latched_count = ga;
-                }
-                s.rw_state ^= 1;
-                break;
-        }
-    }
-};
-Zg.prototype.ioport_read = function(fa) {
-    var Pg, ma, s;
-    fa &= 3;
-    s = this.pit_channels[fa];
-    switch (s.rw_state) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-            ma = s.pit_get_count();
-            if (s.rw_state & 1)
-                Pg = (ma >> 8) & 0xff;
-            else
-                Pg = ma & 0xff;
-            if (s.rw_state & 2)
-                s.rw_state ^= 1;
-            break;
-        default:
-        case 4:
-        case 5:
-            if (s.rw_state & 1)
-                Pg = s.latched_count >> 8;
-            else
-                Pg = s.latched_count & 0xff;
-            s.rw_state ^= 1;
-            break;
-    }
-    return Pg;
-};
-Zg.prototype.speaker_ioport_write = function(fa, ga) {
-    this.speaker_data_on = (ga >> 1) & 1;
-    this.pit_channels[2].gate = ga & 1;
-};
-Zg.prototype.speaker_ioport_read = function(fa) {
-    var eh, s, ga;
-    s = this.pit_channels[2];
-    eh = s.pit_get_out();
-    ga = (this.speaker_data_on << 1) | s.gate | (eh << 5);
-    return ga;
-};
-Zg.prototype.update_irq = function() {
-    this.set_irq(1);
-    this.set_irq(0);
-};
-function jh(Ng, fa, kh, lh) {
-    this.divider = 0;
-    this.rbr = 0;
-    this.ier = 0;
-    this.iir = 0x01;
-    this.lcr = 0;
-    this.mcr;
-    this.lsr = 0x40 | 0x20;
-    this.msr = 0;
-    this.scr = 0;
-    this.set_irq_func = kh;
-    this.write_func = lh;
-    this.receive_fifo = "";
-    Ng.register_ioport_write(0x3f8, 8, 1, this.ioport_write.bind(this));
-    Ng.register_ioport_read(0x3f8, 8, 1, this.ioport_read.bind(this));
-}
-jh.prototype.update_irq = function() {
-    if ((this.lsr & 0x01) && (this.ier & 0x01)) {
-        this.iir = 0x04;
-    } else if ((this.lsr & 0x20) && (this.ier & 0x02)) {
-        this.iir = 0x02;
-    } else {
-        this.iir = 0x01;
-    }
-    if (this.iir != 0x01) {
-        this.set_irq_func(1);
-    } else {
-        this.set_irq_func(0);
-    }
-};
-jh.prototype.ioport_write = function(fa, ga) {
-    fa &= 7;
-    switch (fa) {
-        default:
-        case 0:
-            if (this.lcr & 0x80) {
-                this.divider = (this.divider & 0xff00) | ga;
-            } else {
-                this.lsr &= ~0x20;
-                this.update_irq();
-                this.write_func(String.fromCharCode(ga));
-                this.lsr |= 0x20;
-                this.lsr |= 0x40;
-                this.update_irq();
-            }
-            break;
-        case 1:
-            if (this.lcr & 0x80) {
-                this.divider = (this.divider & 0x00ff) | (ga << 8);
-            } else {
-                this.ier = ga;
-                this.update_irq();
-            }
-            break;
-        case 2:
-            break;
-        case 3:
-            this.lcr = ga;
-            break;
-        case 4:
-            this.mcr = ga;
-            break;
-        case 5:
-            break;
-        case 6:
-            this.msr = ga;
-            break;
-        case 7:
-            this.scr = ga;
-            break;
-    }
-};
-jh.prototype.ioport_read = function(fa) {
-    var Pg;
-    fa &= 7;
-    switch (fa) {
-        default:
-        case 0:
-            if (this.lcr & 0x80) {
-                Pg = this.divider & 0xff;
-            } else {
-                Pg = this.rbr;
-                this.lsr &= ~(0x01 | 0x10);
-                this.update_irq();
-                this.send_char_from_fifo();
-            }
-            break;
-        case 1:
-            if (this.lcr & 0x80) {
-                Pg = (this.divider >> 8) & 0xff;
-            } else {
-                Pg = this.ier;
-            }
-            break;
-        case 2:
-            Pg = this.iir;
-            break;
-        case 3:
-            Pg = this.lcr;
-            break;
-        case 4:
-            Pg = this.mcr;
-            break;
-        case 5:
-            Pg = this.lsr;
-            break;
-        case 6:
-            Pg = this.msr;
-            break;
-        case 7:
-            Pg = this.scr;
-            break;
-    }
-    return Pg;
-};
-jh.prototype.send_break = function() {
-    this.rbr = 0;
-    this.lsr |= 0x10 | 0x01;
-    this.update_irq();
-};
-jh.prototype.send_char = function(mh) {
-    this.rbr = mh;
-    this.lsr |= 0x01;
-    this.update_irq();
-};
-jh.prototype.send_char_from_fifo = function() {
-    var nh;
-    nh = this.receive_fifo;
-    if (nh != "" && !(this.lsr & 0x01)) {
-        this.send_char(nh.charCodeAt(0));
-        this.receive_fifo = nh.substr(1, nh.length - 1);
-    }
-};
-jh.prototype.send_chars = function(na) {
-    this.receive_fifo += na;
-    this.send_char_from_fifo();
-};
-function oh(Ng, ph) {
-    Ng.register_ioport_read(0x64, 1, 1, this.read_status.bind(this));
-    Ng.register_ioport_write(0x64, 1, 1, this.write_command.bind(this));
-    this.reset_request = ph;
-}
-oh.prototype.read_status = function(fa) {
-    return 0;
-};
-oh.prototype.write_command = function(fa, ga) {
-    switch (ga) {
-        case 0xfe:
-            this.reset_request();
-            break;
-        default:
-            break;
-    }
-};
-function qh(Ng, Zf, rh, lh, sh) {
-    Ng.register_ioport_read(Zf, 16, 4, this.ioport_readl.bind(this));
-    Ng.register_ioport_write(Zf, 16, 4, this.ioport_writel.bind(this));
-    Ng.register_ioport_read(Zf + 8, 1, 1, this.ioport_readb.bind(this));
-    Ng.register_ioport_write(Zf + 8, 1, 1, this.ioport_writeb.bind(this));
-    this.cur_pos = 0;
-    this.doc_str = "";
-    this.read_func = rh;
-    this.write_func = lh;
-    this.get_boot_time = sh;
-}
-qh.prototype.ioport_writeb = function(fa, ga) {
-    this.doc_str += String.fromCharCode(ga);
-};
-qh.prototype.ioport_readb = function(fa) {
-    var c, na, ga;
-    na = this.doc_str;
-    if (this.cur_pos < na.length) {
-        ga = na.charCodeAt(this.cur_pos) & 0xff;
-    } else {
-        ga = 0;
-    }
-    this.cur_pos++;
-    return ga;
-};
-qh.prototype.ioport_writel = function(fa, ga) {
-    var na;
-    fa = (fa >> 2) & 3;
-    switch (fa) {
-        case 0:
-            this.doc_str = this.doc_str.substr(0, ga >>> 0);
-            break;
-        case 1:
-            return this.cur_pos = ga >>> 0;
-        case 2:
-            na = String.fromCharCode(ga & 0xff) + String.fromCharCode((ga >> 8) & 0xff) + String.fromCharCode((ga >> 16) & 0xff) + String.fromCharCode((ga >> 24) & 0xff);
-            this.doc_str += na;
-            break;
-        case 3:
-            this.write_func(this.doc_str);
-    }
-};
-qh.prototype.ioport_readl = function(fa) {
-    var ga;
-    fa = (fa >> 2) & 3;
-    switch (fa) {
-        case 0:
-            this.doc_str = this.read_func();
-            return this.doc_str.length >> 0;
-        case 1:
-            return this.cur_pos >> 0;
-        case 2:
-            ga = this.ioport_readb(0);
-            ga |= this.ioport_readb(0) << 8;
-            ga |= this.ioport_readb(0) << 16;
-            ga |= this.ioport_readb(0) << 24;
-            return ga;
-        case 3:
-            if (this.get_boot_time)
-                return this.get_boot_time() >> 0;
-            else
-                return 0;
-    }
-};
-function Xg(Qf) {
-    this.hard_irq = Qf;
-}
-function th() {
-    return this.cycle_count;
-}
-function PCEmulator(uh) {
-    var wa;
-    wa = new CPU_X86();
-    this.cpu = wa;
-    wa.phys_mem_resize(uh.mem_size);
-    this.init_ioports();
-    this.register_ioport_write(0x80, 1, 1, this.ioport80_write);
-    this.pic = new Vg(this, 0x20, 0xa0, Xg.bind(wa));
-    this.pit = new Zg(this, this.pic.set_irq.bind(this.pic, 0), th.bind(wa));
-    this.cmos = new Mg(this);
-    this.serial = new jh(this, 0x3f8, this.pic.set_irq.bind(this.pic, 4), uh.serial_write);
-    this.kbd = new oh(this, this.reset.bind(this));
-    this.reset_request = 0;
-    if (uh.clipboard_get && uh.clipboard_set) {
-        this.jsclipboard = new qh(this, 0x3c0, uh.clipboard_get, uh.clipboard_set, uh.get_boot_time);
-    }
-    wa.ld8_port = this.ld8_port.bind(this);
-    wa.ld16_port = this.ld16_port.bind(this);
-    wa.ld32_port = this.ld32_port.bind(this);
-    wa.st8_port = this.st8_port.bind(this);
-    wa.st16_port = this.st16_port.bind(this);
-    wa.st32_port = this.st32_port.bind(this);
-    wa.get_hard_intno = this.pic.get_hard_intno.bind(this.pic);
-}
-PCEmulator.prototype.load_binary = function(Gg, ha) {
-    return this.cpu.load_binary(Gg, ha);
-};
-PCEmulator.prototype.start = function() {
-    setTimeout(this.timer_func.bind(this), 10);
-};
-PCEmulator.prototype.timer_func = function() {
-    var La, vh, wh, xh, yh, Ng, wa;
-    Ng = this;
-    wa = Ng.cpu;
-    wh = wa.cycle_count + 100000;
-    xh = false;
-    yh = false;
-    zh: while (wa.cycle_count < wh) {
-        Ng.pit.update_irq();
-        La = wa.exec(wh - wa.cycle_count);
-        if (La == 256) {
-            if (Ng.reset_request) {
-                xh = true;
-                break;
-            }
-        } else if (La == 257) {
-            yh = true;
-            break;
-        } else {
-            xh = true;
-            break;
-        }
-    }
-    if (!xh) {
-        if (yh) {
-            setTimeout(this.timer_func.bind(this), 10);
-        } else {
-            setTimeout(this.timer_func.bind(this), 0);
-        }
-    }
-};
-PCEmulator.prototype.init_ioports = function() {
-    var i, Ah, Bh;
-    this.ioport_readb_table = new Array();
-    this.ioport_writeb_table = new Array();
-    this.ioport_readw_table = new Array();
-    this.ioport_writew_table = new Array();
-    this.ioport_readl_table = new Array();
-    this.ioport_writel_table = new Array();
-    Ah = this.default_ioport_readw.bind(this);
-    Bh = this.default_ioport_writew.bind(this);
-    for (i = 0; i < 1024; i++) {
-        this.ioport_readb_table[i] = this.default_ioport_readb;
-        this.ioport_writeb_table[i] = this.default_ioport_writeb;
-        this.ioport_readw_table[i] = Ah;
-        this.ioport_writew_table[i] = Bh;
-        this.ioport_readl_table[i] = this.default_ioport_readl;
-        this.ioport_writel_table[i] = this.default_ioport_writel;
-    }
-};
-PCEmulator.prototype.default_ioport_readb = function(Zf) {
-    var ga;
-    ga = 0xff;
-    return ga;
-};
-PCEmulator.prototype.default_ioport_readw = function(Zf) {
-    var ga;
-    ga = this.ioport_readb_table[Zf](Zf);
-    Zf = (Zf + 1) & (1024 - 1);
-    ga |= this.ioport_readb_table[Zf](Zf) << 8;
-    return ga;
-};
-PCEmulator.prototype.default_ioport_readl = function(Zf) {
-    var ga;
-    ga = -1;
-    return ga;
-};
-PCEmulator.prototype.default_ioport_writeb = function(Zf, ga) {
-};
-PCEmulator.prototype.default_ioport_writew = function(Zf, ga) {
-    this.ioport_writeb_table[Zf](Zf, ga & 0xff);
-    Zf = (Zf + 1) & (1024 - 1);
-    this.ioport_writeb_table[Zf](Zf, (ga >> 8) & 0xff);
-};
-PCEmulator.prototype.default_ioport_writel = function(Zf, ga) {
-};
-PCEmulator.prototype.ld8_port = function(Zf) {
-    var ga;
-    ga = this.ioport_readb_table[Zf & (1024 - 1)](Zf);
-    return ga;
-};
-PCEmulator.prototype.ld16_port = function(Zf) {
-    var ga;
-    ga = this.ioport_readw_table[Zf & (1024 - 1)](Zf);
-    return ga;
-};
-PCEmulator.prototype.ld32_port = function(Zf) {
-    var ga;
-    ga = this.ioport_readl_table[Zf & (1024 - 1)](Zf);
-    return ga;
-};
-PCEmulator.prototype.st8_port = function(Zf, ga) {
-    this.ioport_writeb_table[Zf & (1024 - 1)](Zf, ga);
-};
-PCEmulator.prototype.st16_port = function(Zf, ga) {
-    this.ioport_writew_table[Zf & (1024 - 1)](Zf, ga);
-};
-PCEmulator.prototype.st32_port = function(Zf, ga) {
-    this.ioport_writel_table[Zf & (1024 - 1)](Zf, ga);
-};
-PCEmulator.prototype.register_ioport_read = function(start, tg, cc, Ch) {
-    var i;
-    switch (cc) {
-        case 1:
-            for (i = start; i < start + tg; i++) {
-                this.ioport_readb_table[i] = Ch;
-            }
-            break;
-        case 2:
-            for (i = start; i < start + tg; i += 2) {
-                this.ioport_readw_table[i] = Ch;
-            }
-            break;
-        case 4:
-            for (i = start; i < start + tg; i += 4) {
-                this.ioport_readl_table[i] = Ch;
-            }
-            break;
-    }
-};
-PCEmulator.prototype.register_ioport_write = function(start, tg, cc, Ch) {
-    var i;
-    switch (cc) {
-        case 1:
-            for (i = start; i < start + tg; i++) {
-                this.ioport_writeb_table[i] = Ch;
-            }
-            break;
-        case 2:
-            for (i = start; i < start + tg; i += 2) {
-                this.ioport_writew_table[i] = Ch;
-            }
-            break;
-        case 4:
-            for (i = start; i < start + tg; i += 4) {
-                this.ioport_writel_table[i] = Ch;
-            }
-            break;
-    }
-};
-PCEmulator.prototype.ioport80_write = function(fa, Ig) {
-};
-PCEmulator.prototype.reset = function() {
-    this.request_request = 1;
+
+
+/*
+  Binary Loader
+  ==========================================================================================
+  This routine loads a binary array into memory.
+*/
+
+CPU_X86.prototype.load_binary = function(binary_array, mem8_loc) {
+  var len, i, typed_binary_array;
+  len = binary_array.byteLength;
+  typed_binary_array = new Uint8Array(binary_array, 0, len);
+  for (i = 0; i < len; i++) {
+    this.st8_phys(mem8_loc + i, typed_binary_array[i]);
+  }
+  return len;
 };
