@@ -1,6 +1,7 @@
 /* Intel CPU
-  created by Fabrice Bellard
-*/
+ * Created by Fabrice Bellard
+ * Model: Intel MMX
+ */
 "use strict";
 
 function test_typed_arrays()
