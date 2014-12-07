@@ -4,6 +4,11 @@
  */
 "use strict";
 
+var include = function (filename) {
+    document.write('<script type="text/javascript" src="' + filename + 
+        '"><' + '/script>');
+}
+
 function test_typed_arrays()
 {
     return (window.Uint8Array &&
