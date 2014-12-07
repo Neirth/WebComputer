@@ -3,15 +3,12 @@ body {
   background: #F5F5F5;
 }
 .term {
-  font-family: courier.fixed,swiss,monospace,sans-serif;
-  font-size: 8px;
+  font-family: courier,fixed,swiss,monospace,sans-serif;
+  font-size: 14px;
   color: #00BCFF;
   background: #F5F5F5;
 }
-.anti {
-  color: #000;
-  background: #000;
-}
-#font ¨{
-  font-size: 12px;
+.termReverse {
+  color: #FBA300;
+  background: #F5F5F5;
 }
