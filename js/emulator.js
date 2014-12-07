@@ -79,7 +79,7 @@ function start3_(ret)
 {
     if (ret < 0)
         return;
-    pc.load_binary("disk/root.bin", 0x00400000, start4);
+    pc.load_binary("disk/disk.bin", 0x00400000, start4);
 }
 
 function start4(ret)
