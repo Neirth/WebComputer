@@ -93,7 +93,8 @@ function start_emulation(ret)
 {
     var cmdline_addr;
     
-    params= new Object();
+    params = new Object();
+    ret = new Object();
 
     /* memory size (in bytes) */
     params.mem_size = 16 * 1024 * 1024;
