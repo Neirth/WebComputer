@@ -4,7 +4,7 @@
  */
 "use strict";
 
-var term, pc, boot_start_time, init_state, Term;
+var term, pc, boot_start_time, init_state;
 
 function term_start()
 {
