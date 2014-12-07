@@ -26,7 +26,7 @@ function get_boot_system_time()
 /* Load System Disk */
 function start_emulation()
 {
-    pc = new PCEmulator(params)
+    pc = new PCEmulator()
 
     pc.load_binary("disk/vmkernel.bin",   0x00100000, callsystem);
     pc.load_binary("disk/boot-start.bin", 0x10000,    callsystem);
