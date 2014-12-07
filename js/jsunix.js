@@ -78,9 +78,9 @@ function checkbinaries() {
 
 function load_binaries() {
   console.log("Requesting binaries");
-  loadbinary("disk/vmkernel.bin", 0);
-  loadbinary("disk/disk.bin", 1);
-  loadbinary("disk/boot-system.bin", 2);
+  loadbinary("./disk/vmkernel.bin", 0);
+  loadbinary("./disk/disk.bin", 1);
+  loadbinary("./disk/boot-system.bin", 2);
   
   checkbinaries();
 };
