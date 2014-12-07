@@ -18,4 +18,7 @@ function test_typed_arrays()
 
 if (test_typed_arrays()) {
     include("mmx_cpu-ta.js");
+} else {
+    include("mmx_cpu-std.js");
+    document.write('<canvas id="dummy_canvas" width="1" height="1"></canvas>');
 }
