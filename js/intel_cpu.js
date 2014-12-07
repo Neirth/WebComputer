@@ -9593,7 +9593,7 @@ CPU_X86.prototype.load_binary = function(Gg, fa) {
     if (Kg && 'mozResponseType' in Hg) {
         Hg.mozResponseType = 'arraybuffer';
     } else if (Kg && 'responseType' in Hg) {
-        Hg.responseType = 'arraybuffer';
+        Hg.responseType = 'ArrayBuffer';
     } else {
         Hg.overrideMimeType('text/plain; charset=x-user-defined');
         Kg = false;
