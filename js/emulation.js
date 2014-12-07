@@ -34,9 +34,9 @@ function loadbinary(url,slot)
   
   typed_arrays_exist = ('ArrayBuffer' in window && 'Uint8Array' in window);
   if (typed_arrays_exist && 'mozResponseType' in req){
-      reg.responseType = 'arraybuffer';
+      reg.responseType = 'ArrayBuffer';
     } else if (typed_arrays_exist && 'responseType' in req) {
-      req.responseType = ' arraybuffer';
+      req.responseType = ' ArrayBuffer';
     } else {
       req.overrideMimeType('text/plain; charset=x-user-defined');
       typed_arrays_exist = false;
