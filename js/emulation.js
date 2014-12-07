@@ -28,8 +28,8 @@ function start_emulation()
 {
     pc = new PCEmulator(params)
 
-    pc.load_binary("disk/vmlinux.bin",    0x00100000, callsystem);
-    pc.load_binary("disk/bioss-tart.bin", 0x10000,    callsystem);
+    pc.load_binary("disk/vmkernel.bin",   0x00100000, callsystem);
+    pc.load_binary("disk/boot-start.bin", 0x10000,    callsystem);
     pc.load_binary("disk/disk.bin",       0x00400000, callsystem);
 }
 
