@@ -4,7 +4,7 @@
  */
 "use strict";
 
-var term, pc, boot_start_time, init_state;
+var term, pc, boot_start_time, params, init_state;
 
 function terminal_start()
 {
