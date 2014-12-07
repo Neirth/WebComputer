@@ -91,7 +91,7 @@ function load_binaries()
 
 function start_emulation(ret)
 {
-    var cmdline_addr;
+    var cmdline_addr, initrd_size;
     
     params = new Object();
     ret = new Object();
@@ -99,21 +99,22 @@ function start_emulation(ret)
     /* memory size (in bytes) */
     params.mem_size = 16 * 1024 * 1024;
 
-    /* Now booting from /dev/ram0 in the system emulated */
-    init_state.initrd_size = ret;
+    pc = new PCEmulator(params);
+    pc.load_binary(binaries[0], 0x00100000);
+    initrd_size = pc.load_binary(binaries[1], 0x00400000);
+    pc.load_binary(binaries[2], 0x10000);
 
     /* Set the kernel cmdline */
     cmdline_addr = 0xf800;
     pc.cpu.write_string(cmdline_addr, "console=ttyS0 root=/dev/ram0 rw init=/sbin/init username=root quiet");
 
-    pc.cpu.eip = init_state.start_addr;
-    pc.cpu.regs[0] = init_state.params.mem_size; /* eax */
-    pc.cpu.regs[3] = init_state.initrd_size; /* ebx = initrd_size (optional ram disk) */
+    pc.cpu.eip = start_addr;
+    pc.cpu.regs[0] = params.mem_size; /* eax */
+    pc.cpu.regs[3] = initrd_size; /* ebx = initrd_size (optional ram disk) */
     pc.cpu.regs[1] = cmdline_addr; /* ecx */
 
     boot_start_time = (+new Date());
 
     pc.start();
-    
 }
 terminal_start();
