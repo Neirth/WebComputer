@@ -9591,7 +9591,7 @@ CPU_X86.prototype.load_binary = function(Gg, fa) {
     Hg.open('GET', Gg, false);
     Kg = ('ArrayBuffer' in window && 'Uint8Array' in window);
     if (Kg && 'mozResponseType' in Hg) {
-        Hg.mozResponseType = 'arraybuffer';
+        Hg.mozResponseType = 'ArrayBuffer';
     } else if (Kg && 'responseType' in Hg) {
         Hg.responseType = 'ArrayBuffer';
     } else {
