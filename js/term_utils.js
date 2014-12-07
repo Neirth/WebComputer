@@ -504,7 +504,7 @@ function include(filename)
  * len = -1 in case of error. Otherwise len is the length in
  * bytes. data can be a string, Array or Uint8Array depending on
  * the implementation. */
-function load_binary(url, cb)
+function this.cpu.load_binary(url, cb)
 {
     var req, typed_array, is_ie;
 
