@@ -9584,43 +9584,70 @@ CPU_X86.prototype.load_binary_ie9 = function(Gg, fa) {
 };
 CPU_X86.prototype.load_binary = function(Gg, fa) {
     var Hg, Ig, tg, i, Jg, Kg;
-    if (typeof ActiveXObject == "function")
-        return this.load_binary_ie9(Gg, fa);
-    Hg = new XMLHttpRequest();
-    Hg.open('GET', Gg, false);
-    Kg = ('ArrayBuffer' in window && 'Uint8Array' in window);
-    if (Kg && 'mozResponseType' in Hg) {
-        Hg.mozResponseType = 'ArrayBuffer';
-    } else if (Kg && 'responseType' in Hg) {
-        Hg.responseType = 'ArrayBuffer';
-    } else {
-        Hg.overrideMimeType('text/plain; charset=x-user-defined');
-        Kg = false;
-    }
+    var req, typed_array, is_ie;
 
-    if (Kg && 'mozResponse' in Hg) {
-        Ig = Hg.mozResponse;
-    } else if (Kg && Hg.mozResponseArrayBuffer) {
-        Ig = Hg.mozResponseArrayBuffer;
-    } else if ('responseType' in Hg) {
-        Ig = Hg.response;
-    } else {
-        Ig = Hg.responseText;
-        Kg = false;
-    }
-    if (Kg) {
-        tg = Ig.byteLength;
-        Jg = new Uint8Array(Ig, 0, tg);
-        for (i = 0; i < tg; i++) {
-            this.st8_phys(fa + i, Jg[i]);
+    //    console.log("load_binary: url=" + url);
+
+    req = new XMLHttpRequest();
+    req.open('GET', url, true);
+
+    /* completion function */
+    req.onreadystatechange = function() {
+        var err, data, len, i, buf;
+
+        if (req.readyState == 4) {
+            //            console.log("req status=" + req.status);
+            if (req.status != 200 && req.status != 0) {
+                cb(null, -1);
+            } else {
+                if (is_ie) {
+                    data = new VBArray(req.responseBody).toArray();
+                    len = data.length;
+                    cb(data, len);
+                } else {
+                    if (typed_array && 'mozResponse' in req) {
+                        /* firefox 6 beta */
+                        data = req.mozResponse;
+                    } else if (typed_array && req.mozResponseArrayBuffer) {
+                        /* Firefox 4 */
+                        data = req.mozResponseArrayBuffer;
+                    } else if ('responseType' in req) {
+                        /* Note: in Android 3.0 there is no typed arrays so its
+                           returns UTF8 text */
+                        data = req.response;
+                    } else {
+                        data = req.responseText;
+                        typed_array = false;
+                    }
+                
+                    if (typed_array) {
+                        len = data.byteLength;
+                        buf = new Uint8Array(data, 0, len);
+                        cb(buf, len);
+                    } else {
+                        len = data.length;
+                        cb(data, len);
+                    }
+                }
+            }
         }
-    } else {
-        tg = Ig.length;
-        for (i = 0; i < tg; i++) {
-            this.st8_phys(fa + i, Ig.charCodeAt(i));
+    };
+
+    is_ie = (typeof ActiveXObject == "function");
+    if (!is_ie) {
+        typed_array = ('ArrayBuffer' in window && 'Uint8Array' in window);
+        if (typed_array && 'mozResponseType' in req) {
+            /* firefox 6 beta */
+            req.mozResponseType = 'arraybuffer';
+        } else if (typed_array && 'responseType' in req) {
+            /* Chrome */
+            req.responseType = 'arraybuffer';
+        } else {
+            req.overrideMimeType('text/plain; charset=x-user-defined');
+            typed_array = false;
         }
     }
-    return tg;
+    req.send(null);
 };
 function Lg(a) {
     return ((a / 10) << 4) | (a % 10);
