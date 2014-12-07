@@ -9597,10 +9597,7 @@ CPU_X86.prototype.load_binary = function(Gg, fa) {
         Hg.overrideMimeType('text/plain; charset=x-user-defined');
         Kg = false;
     }
-    Hg.send(null);
-    if (Hg.status != 200 && Hg.status != 0) {
-        throw "Error while loading " + Gg;
-    }
+
     if (Kg && 'mozResponse' in Hg) {
         Ig = Hg.mozResponse;
     } else if (Kg && Hg.mozResponseArrayBuffer) {
