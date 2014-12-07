@@ -49,7 +49,8 @@ function start()
     pc = new PCEmulator(params);
 
     init_state.params = params;
-  
+
+    
     pc.load_binary("disk/vmkernel.bin", 0x00100000, start2);
 }
 
@@ -59,7 +60,7 @@ function start2(ret)
         return;
     init_state.start_addr = 0x10000;
     init_state.initrd_size = 0;
-    //pc.load_binary("linuxstart.bin", init_state.start_addr, start3);
+    //pc.load_binary("disk/boot-start.bin", init_state.start_addr, start3);
     pc.load_binary("disk/boot-start.bin", init_state.start_addr, start3_);
 }
 
@@ -78,7 +79,7 @@ function start3_(ret)
 {
     if (ret < 0)
         return;
-    pc.load_binary("disk/disk.bin", 0x00400000, start4);
+    pc.load_binary("disk/root.bin", 0x00400000, start4);
 }
 
 function start4(ret)
