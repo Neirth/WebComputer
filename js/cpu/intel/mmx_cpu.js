@@ -17,8 +17,8 @@ function test_typed_arrays()
 }
 
 if (test_typed_arrays()) {
-    include("./js/cpu/intel/mmx_cpu-ta.js");
+    include("js/cpu/intel/mmx_cpu-ta.js");
 } else {
-    include("./js/cpu/intel/mmx_cpu-std.js");
+    include("js/cpu/intel/mmx_cpu-std.js");
     document.write('<canvas id="dummy_canvas" width="1" height="1"></canvas>');
 }
