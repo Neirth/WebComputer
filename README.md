@@ -1,5 +1,5 @@
 Unix JavaScript Emulator
 ===========
 
-The emulator Unix PC (Compatible for kernel Linux, XNU, FreeNOS, TNU, FreeBSD)
+The emulator Unix PC (Compatible for Linux Kernel)
 Charge at the kernel: Linux
