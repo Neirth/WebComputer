@@ -49,7 +49,6 @@ function start()
     pc = new PCEmulator(params);
 
     init_state.params = params;
-
     
     pc.load_binary("disk/vmkernel.bin", 0x00100000, start2);
 }
@@ -60,8 +59,8 @@ function start2(ret)
         return;
     init_state.start_addr = 0x10000;
     init_state.initrd_size = 0;
-    //pc.load_binary("disk/boot-start.bin", init_state.start_addr, start3);
-    pc.load_binary("disk/boot-start.bin", init_state.start_addr, start3_);
+    //pc.load_binary("disk/boot_start.bin", init_state.start_addr, start3);
+    pc.load_binary("disk/boot_start.bin", init_state.start_addr, start3_);
 }
 
 function start3(ret)
@@ -97,7 +96,7 @@ function start4(ret)
     /* set the Linux kernel command line */
     cmdline_addr = 0xf800;
     //pc.cpu.write_string(cmdline_addr, "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1 hdb=none");
-    pc.cpu.write_string(cmdline_addr, "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1");
+    pc.cpu.write_string(cmdline_addr, "console=ttyS0 root=/dev/ram0 rw init=/sbin/init hostname=GNU/Linux quiet");
 
     pc.cpu.eip = init_state.start_addr;
     pc.cpu.regs[0] = init_state.params.mem_size; /* eax */
