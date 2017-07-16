@@ -1,14 +1,20 @@
 /* The terminal Styles */
 body {
-  background: #F5F5F5;
+  background:  #F4D03F;
 }
 .term {
-  font-family: courier,fixed,swiss,monospace,sans-serif;
+  font-family: Lucida Console,Lucida Sans Typewriter,monaco,Bitstream Vera Sans Mono,monospace;
   font-size: 14px;
-  color: #00BCFF;
-  background: #F5F5F5;
+  color:  #2E4053;
+  background:  #F4D03F;
 }
 .termReverse {
-  color: #FBA300;
+  color:  #2E4053;
   background: #F5F5F5;
+}
+
+table {
+  position: absolute;
+  top: 25%;
+  left: 30%;
 }
