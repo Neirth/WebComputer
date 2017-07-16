@@ -1,6 +1,6 @@
-/* Javascript Terminal
- * Created by: @lordsergioinspa
- * MODEL: PC_01
+/* Project Prompt
+ * Modded by: @lordsergio
+ * MODEL: COM01
  */
 "use strict";
 

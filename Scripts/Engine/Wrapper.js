@@ -4,7 +4,7 @@
  */
 "use strict";
 var include = function (filename) {
-    document.write('<script type="text/javascript" src="' + filename + 
+    document.write('<script type="text/javascript" src="' + filename +
         '"><' + '/script>');
 }
 
@@ -17,8 +17,8 @@ function test_typed_arrays()
 }
 
 if (test_typed_arrays()) {
-    include("js/cpu/intel/mmx_cpu-ta.js");
+    include("Scripts/Engine/Processor.js");
 } else {
-    include("js/cpu/intel/mmx_cpu-std.js");
+    include("Scripts/Engine/Processor.js");
     document.write('<canvas id="dummy_canvas" width="1" height="1"></canvas>');
 }

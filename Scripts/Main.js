@@ -1,6 +1,6 @@
-/* UNIX Launcher
- * Created by: @lordsergioinspa
- * MODEL: PC_01
+/* Computer Launcher
+ * Modded by: @lordsergio
+ * MODEL: COM01
  */
 "use strict";
 
@@ -28,7 +28,7 @@ function get_boot_time()
 function start()
 {
     var params;
-    
+
     init_state = new Object();
 
     params = new Object();
@@ -42,15 +42,15 @@ function start()
     params.get_boot_time = get_boot_time;
 
     /* IDE drive. The raw disk image is split into files of
-     * 'block_size' KB. 
+     * 'block_size' KB.
      */
     //params.hda = { url: "hda%d.bin", block_size: 64, nb_blocks: 912 };
 
     pc = new PCEmulator(params);
 
     init_state.params = params;
-    
-    pc.load_binary("disk/vmkernel.bin", 0x00100000, start2);
+
+    pc.load_binary("Means/Disks/vmlinuz.bin", 0x00100000, start2);
 }
 
 function start2(ret)
@@ -60,7 +60,7 @@ function start2(ret)
     init_state.start_addr = 0x10000;
     init_state.initrd_size = 0;
     //pc.load_binary("disk/boot_start.bin", init_state.start_addr, start3);
-    pc.load_binary("disk/boot_start.bin", init_state.start_addr, start3_);
+    pc.load_binary("Means/Disks/bootcode.bin", init_state.start_addr, start3_);
 }
 
 function start3(ret)
@@ -78,7 +78,7 @@ function start3_(ret)
 {
     if (ret < 0)
         return;
-    pc.load_binary("disk/disk.bin", 0x00400000, start4);
+    pc.load_binary("Means/Disks/ramdisk.bin", 0x00400000, start4);
 }
 
 function start4(ret)
@@ -88,7 +88,7 @@ function start4(ret)
     if (ret < 0)
         return;
 
-    /* Assume booting from /dev/ram0 - result of previous load_binary("root.bin") call equals to the 
+    /* Assume booting from /dev/ram0 - result of previous load_binary("root.bin") call equals to the
      * size of the ram image.
      */
     init_state.initrd_size = ret;

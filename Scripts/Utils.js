@@ -1,6 +1,6 @@
-/* Javascript Utils
- * Created by: @lordsergioinspa
- * MODEL: PC_01
+/* Project Utils
+ * Modded by: @lordsergio
+ * MODEL: COM01
  */
 "use strict";
 
@@ -13,13 +13,13 @@ if (!Function.prototype.bind) {
         nop = function () {},
         bound = function () {
             return self.apply( this instanceof nop ? this : ( obj || {} ),
-                               args.concat( slice1.call(arguments) ) );   
+                               args.concat( slice1.call(arguments) ) );
         };
-        
+
         nop.prototype = self.prototype;
-        
+
         bound.prototype = new nop();
-        
+
         return bound;
     };
 }
@@ -27,7 +27,7 @@ if (!Function.prototype.bind) {
 /* include script 'filename' */
 function include(filename)
 {
-   document.write('<script type="text/javascript" src="' + filename + 
+   document.write('<script type="text/javascript" src="' + filename +
                   '"><' + '/script>');
 }
 
@@ -72,7 +72,7 @@ function load_binary(url, cb)
                         data = req.responseText;
                         typed_array = false;
                     }
-                
+
                     if (typed_array) {
                         len = data.byteLength;
                         buf = new Uint8Array(data, 0, len);
