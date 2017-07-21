@@ -14,7 +14,7 @@ body {
 }
 
 table {
-  position: absolute;
-  top: 25%;
-  left: 33%;
+  margin: auto;
+  width: 50%;
+  padding-top: 8%;
 }
