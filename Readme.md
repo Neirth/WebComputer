@@ -11,8 +11,11 @@ The specifications what can run these machines is:
 Speed Processor: No defined (Theoretically runs in 233MHz, but possibly run more than) 
 
 >  **Number of VCPUS**: 1
+>
 >  **Memory RAM**:  14104 kB
+>
 >  **Kernel Running**: 2.6.20 
+>
 >  **Chroot Running**: buildbot (Pending to equip a most-used linux distribution)
 
 ## Why created these project?
