@@ -2,7 +2,7 @@
 It is project is desinged to emulates a PC with Intel Pentium MMX Processor in a single Webpage
 
 ## How to execute these project?
-Easy, you can [click here](https://lordsergio.github.io/WebComputer/) to open the new windows on you do can execute these project
+Easy, you can [click here](https://neirth.github.io/WebComputer/) to open the new windows on you do can execute these project
 
 Also, you can fork the project in the own account of Github.
 
@@ -16,7 +16,7 @@ Speed Processor: No defined (Theoretically runs in 233MHz, but possibly run more
 >
 >  **Kernel Running**: 2.6.20 
 >
->  **Chroot Running**: buildbot (Pending to equip a most-used linux distribution)
+>  **Chroot Running**: buildbot
 
 ## Why created these project?
 It is one of my first projects in a computing world, these project is a mod of other [project](https://vfsync.org/index.html), the intention for fork these project is investigate how it worked a X86-Instructions in a Web Browser... 
